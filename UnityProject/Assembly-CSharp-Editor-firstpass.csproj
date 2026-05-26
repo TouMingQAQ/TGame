@@ -46,7 +46,11 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\TUI\Editor\UIManagerMenu.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\IToolBoxContent.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxWindow.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxAttribute.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\HelloBox\HelloBox.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\PathBox.cs" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -920,11 +924,11 @@
     <Reference Include="Unity.AI.Navigation.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="PPv2URPConverters">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.Addressables">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Addressables.dll</HintPath>
+    </Reference>
+    <Reference Include="PPv2URPConverters">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime.Shared">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.Shared.dll</HintPath>
@@ -935,11 +939,11 @@
     <Reference Include="Unity.VisualScripting.Shared.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.Searcher.Editor">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.ScriptableBuildPipeline.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.ScriptableBuildPipeline.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Searcher.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.PlasticSCM.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.PlasticSCM.Editor.dll</HintPath>
@@ -986,11 +990,11 @@
     <Reference Include="Unity.Collections">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.InputSystem.ForUI">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.Profiling.Core">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Profiling.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.InputSystem.ForUI">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.GPUDriven.Runtime">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.GPUDriven.Runtime.dll</HintPath>

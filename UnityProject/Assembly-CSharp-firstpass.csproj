@@ -46,13 +46,8 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\TGame.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Module\ObjectPoolModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Module\EventModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Module\TimerModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\TGame.Extension.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\TGame.BaseClass.cs" />
-    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\TGame.Interface.cs" />
+    <Compile Include="Assets\Plugins\TGame\Common\IToolBoxContent.cs" />
+    <Compile Include="Assets\Plugins\TGame\Common\ToolBoxAttribute.cs" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -854,6 +849,9 @@
     <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.ScriptableBuildPipeline">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.ScriptableBuildPipeline.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualScripting.SettingsProvider.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.SettingsProvider.Editor.dll</HintPath>
     </Reference>
@@ -872,6 +870,9 @@
     <Reference Include="Unity.AI.Navigation.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.AI.Navigation.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Addressables.dll</HintPath>
+    </Reference>
     <Reference Include="PPv2URPConverters">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\PPv2URPConverters.dll</HintPath>
     </Reference>
@@ -883,6 +884,9 @@
     </Reference>
     <Reference Include="Unity.VisualScripting.Shared.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.Shared.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.ScriptableBuildPipeline.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.ScriptableBuildPipeline.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Searcher.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Searcher.Editor.dll</HintPath>
@@ -923,11 +927,17 @@
     <Reference Include="Unity.VisualScripting.Flow.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.Flow.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.ResourceManager">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.ResourceManager.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualStudio.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualStudio.Editor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Collections">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Collections.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Profiling.Core">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Profiling.Core.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem.ForUI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.ForUI.dll</HintPath>
@@ -989,11 +999,29 @@
     <Reference Include="Unity.InputSystem">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Addressables.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Addressables.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.AutoGroupGenerator.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.AutoGroupGenerator.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="TGame.csproj">
+      <Project>{128553ee-b53c-69bb-c552-622579ec687e}</Project>
+      <Name>TGame</Name>
+    </ProjectReference>
+    <ProjectReference Include="TUI.csproj">
+      <Project>{de43b63c-0c29-db70-f6c4-f4e9eacdd77a}</Project>
+      <Name>TUI</Name>
+    </ProjectReference>
+    <ProjectReference Include="ToolBox.csproj">
+      <Project>{e7ee9d7d-d51c-04a1-2acc-289c874cb64b}</Project>
+      <Name>ToolBox</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

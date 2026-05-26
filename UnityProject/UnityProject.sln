@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TUI", "TUI.csproj", "{de43b
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor-firstpass", "Assembly-CSharp-Editor-firstpass.csproj", "{0290611a-9a4b-1661-9b31-d1ec3c3efba5}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame", "TGame.csproj", "{128553ee-b53c-69bb-c552-622579ec687e}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{2106585b-b409-cb68-b5f4-5b9dd210a60f}"
@@ -18,6 +20,8 @@ Global
 		{de43b63c-0c29-db70-f6c4-f4e9eacdd77a}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0290611a-9a4b-1661-9b31-d1ec3c3efba5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0290611a-9a4b-1661-9b31-d1ec3c3efba5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{128553ee-b53c-69bb-c552-622579ec687e}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{128553ee-b53c-69bb-c552-622579ec687e}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2106585b-b409-cb68-b5f4-5b9dd210a60f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
