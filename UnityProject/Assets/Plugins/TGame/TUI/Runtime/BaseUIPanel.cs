@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 namespace TGame.TUI
 {
@@ -6,55 +7,150 @@ namespace TGame.TUI
     /// UI 面板抽象基类，每个面板自带独立 Canvas 和 CanvasGroup。
     /// 独立 Canvas 避免一个面板 UI 变化导致其他面板重建网格。
     /// CanvasGroup 用于控制面板整体透明度、交互和射线检测。
+    /// Show/Hide 通过 DOTween Sequence 播放动画，子类重写 BuildAnimation 自定义动画效果。
     /// </summary>
     [RequireComponent(typeof(Canvas))]
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class BaseUIPanel : MonoBehaviour, IUIPanel
     {
-        [SerializeField] private Canvas _canvas;
-        [SerializeField] private CanvasGroup _canvasGroup;
+        private enum AnimState { None, Showing, Hiding }
+
+        [Header("Animation")]
+        [SerializeField] protected float _animationDuration = 0.3f;
+        [SerializeField] protected AnimationCurve _animationCurve;
+        [SerializeField] protected bool _ignoreTimeScale = true;
+
+        [SerializeField] protected Canvas _canvas;
+        [SerializeField] protected CanvasGroup _canvasGroup;
 
         public Canvas Canvas => _canvas;
         public CanvasGroup CanvasGroup => _canvasGroup;
         public bool IsVisible => gameObject.activeSelf;
 
-        /// <summary>
-        /// 编辑器添加组件或 Reset 时，缓存 Canvas/CanvasGroup 引用
-        /// </summary>
+        private Sequence _sequence;
+        private AnimState _animState = AnimState.None;
+
         private void Reset()
         {
             TryGetComponent(out _canvas);
             TryGetComponent(out _canvasGroup);
+            _animationCurve = CreateDefaultCurve();
         }
 
-        /// <summary>
-        /// 运行时获取 Canvas/CanvasGroup 引用
-        /// </summary>
         protected virtual void Awake()
         {
             TryGetComponent(out _canvas);
             TryGetComponent(out _canvasGroup);
+            _canvasGroup.alpha = 0f;
+            if (_animationCurve == null || _animationCurve.length == 0)
+                _animationCurve = CreateDefaultCurve();
+
+            _sequence = BuildAnimation();
+            _sequence.SetAutoKill(false);
+            _sequence.Pause();
+            _sequence.SetLink(gameObject);
+            _sequence.SetUpdate(_ignoreTimeScale);
+            _sequence.OnComplete(OnShowComplete);
+            _sequence.OnRewind(OnHideComplete);
         }
 
-        /// <summary>
-        /// 面板加载完成后调用，子类重写用于初始化逻辑
-        /// </summary>
         public virtual void Init() { }
 
         /// <summary>
-        /// 显示面板，子类可重写添加动画
+        /// 构建动画 Sequence，子类重写以自定义 Show/Hide 动画。
+        /// Sequence 通过 PlayForward 播放 Show 动画，PlayBackwards 播放 Hide 动画。
+        /// 默认实现：CanvasGroup alpha 0→1 淡入动画。
         /// </summary>
-        public virtual void Show()
+        protected virtual Sequence BuildAnimation()
         {
-            gameObject.SetActive(true);
+            var seq = DOTween.Sequence();
+            seq.Append(
+                DOTween.To(() => _canvasGroup.alpha, x => _canvasGroup.alpha = x, 1f, _animationDuration)
+                    .SetEase(_animationCurve));
+            seq.SetLoops(1);
+            return seq;
         }
 
         /// <summary>
-        /// 隐藏面板，子类可重写添加动画
+        /// 显示面板，向前播放动画 Sequence。方法立即返回，动画异步播放。
+        /// </summary>
+        public virtual void Show()
+        {
+            if (_animState == AnimState.Showing) return;
+
+            BeforeShow();
+
+            _sequence.Pause();
+            _animState = AnimState.None;
+
+            gameObject.SetActive(true);
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+
+            _animState = AnimState.Showing;
+            _sequence.PlayForward();
+        }
+
+        /// <summary>
+        /// 隐藏面板，反向播放动画 Sequence。方法立即返回，动画异步播放。
+        /// GameObject 在动画完成后才 Deactivate。
         /// </summary>
         public virtual void Hide()
         {
+            if (_animState == AnimState.Hiding) return;
+            if (!gameObject.activeSelf && _animState == AnimState.None) return;
+
+            BeforeHide();
+
+            _sequence.Pause();
+            _animState = AnimState.None;
+
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
+
+            _animState = AnimState.Hiding;
+            _sequence.SmoothRewind();
+        }
+
+        private void OnShowComplete()
+        {
+            _animState = AnimState.None;
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true;
+            AfterShow();
+        }
+
+        private void OnHideComplete()
+        {
+            _animState = AnimState.None;
             gameObject.SetActive(false);
+            AfterHide();
+        }
+
+        /// <summary>Show 动画开始前调用</summary>
+        protected virtual void BeforeShow() { }
+
+        /// <summary>Show 动画完成后调用，此时面板完全可见且可交互</summary>
+        protected virtual void AfterShow() { }
+
+        /// <summary>Hide 动画开始前调用</summary>
+        protected virtual void BeforeHide() { }
+
+        /// <summary>Hide 动画完成后调用，此时 GameObject 已 Deactivate</summary>
+        protected virtual void AfterHide() { }
+
+        private static AnimationCurve CreateDefaultCurve()
+        {
+            var curve = new AnimationCurve();
+            curve.AddKey(new Keyframe(0f, 0f, 0f, 2f));
+            curve.AddKey(new Keyframe(1f, 1f, 0f, 0f));
+            return curve;
+        }
+
+        protected virtual void OnDestroy()
+        {
+            _sequence?.Kill();
+            _sequence = null;
         }
     }
 }
