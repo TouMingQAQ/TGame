@@ -1,0 +1,72 @@
+# ============================================
+# Unity generated folders
+# ============================================
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+
+# ============================================
+# Unity generated files
+# ============================================
+MemoryCaptures/
+
+# Crash reports
+sysinfo.txt
+*.pidb
+*.pidb.meta
+
+# ============================================
+# AI tools
+# ============================================
+.claude/
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/
+.idea/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Visual Studio cache (tracked by Unity, regenerated)
+.vs/
+
+# ============================================
+# OS generated
+# ============================================
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ============================================
+# Build artifacts
+# ============================================
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# ============================================
+# Android
+# ============================================
+*.jdk
+*.gradle/
+
+# ============================================
+# Asset meta data — only ignore when the
+# corresponding asset is also ignored
+# ============================================
+!/[Aa]ssets/**/*.meta
+!/[Pp]ackages/**/*.meta
+
+# Addressables build cache
+[Aa]ssets/[Ss]treaming[Aa]ssets/aa.meta
+[Aa]ssets/[Ss]treaming[Aa]ssets/aa/*

@@ -1,0 +1,16 @@
+{
+    "name": "TUI",
+    "rootNamespace": "TGame.TUI",
+    "references": [
+        "GUID:fdd566e303b577841905c151dd32fa26"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
