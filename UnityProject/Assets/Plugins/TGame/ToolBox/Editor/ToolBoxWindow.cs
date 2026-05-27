@@ -2,25 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace TGame.ToolBox
 {
     public class ToolBoxWindow : EditorWindow
     {
-        private const float MinSidebarWidth = 120f;
-        private const float MaxSidebarWidth = 400f;
-        private const float DividerWidth = 4f;
-
         private List<TabEntry> _tabs = new();
         private int _selectedIndex = -1;
-        private float _sidebarWidth;
-        private bool _isDraggingDivider;
-        private Vector2 _sidebarScrollPos;
-        private Vector2 _contentScrollPos;
+        private Vector2 _imguiContentScrollPos;
 
-        private GUIStyle _tabButtonStyle;
-        private GUIStyle _selectedTabStyle;
+        private TwoPaneSplitView _splitView;
+        private VisualElement _contentContainer;
+        private List<Button> _sidebarButtons = new();
 
         [MenuItem("Tools/ToolBox")]
         private static void Open()
@@ -36,48 +32,79 @@ namespace TGame.ToolBox
 
         private void OnEnable()
         {
-            _sidebarWidth = EditorPrefs.GetFloat("ToolBox.SidebarWidth", 200f);
-            _sidebarWidth = Mathf.Clamp(_sidebarWidth, MinSidebarWidth, MaxSidebarWidth);
-
             RefreshTabs();
         }
 
         private void OnDisable()
         {
-            EditorPrefs.SetFloat("ToolBox.SidebarWidth", _sidebarWidth);
+            SaveSplitterPosition();
             DestroyEditors();
         }
 
-        private void EnsureStyles()
+        private void CreateGUI()
         {
-            if (_tabButtonStyle != null) return;
+            var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(
+                "Assets/Plugins/TGame/ToolBox/Editor/ToolBoxWindow.uss");
+            if (sheet != null)
+                rootVisualElement.styleSheets.Add(sheet);
 
-            _tabButtonStyle = new GUIStyle(EditorStyles.toolbarButton)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                fontSize = 12,
-                fixedHeight = 0,
-                stretchHeight = true,
-                normal = { textColor = Color.white }
-            };
+            var savedWidth = EditorPrefs.GetFloat("ToolBox.SidebarWidth", 200f);
 
-            _selectedTabStyle = new GUIStyle(_tabButtonStyle)
+            _splitView = new TwoPaneSplitView(0, savedWidth, TwoPaneSplitViewOrientation.Horizontal);
+            rootVisualElement.Add(_splitView);
+
+            var sidebar = new VisualElement { name = "sidebar" };
+            var scrollView = new ScrollView();
+            sidebar.Add(scrollView);
+            _splitView.Add(sidebar);
+
+            _contentContainer = new VisualElement { name = "content-area" };
+            _splitView.Add(_contentContainer);
+
+            BuildSidebar(scrollView);
+
+            if (_tabs.Count > 0)
             {
-                normal =
-                {
-                    background = MakeColorTex(new Color(0.24f, 0.48f, 0.90f)),
-                    textColor = Color.white
-                },
-                fontStyle = FontStyle.Bold
-            };
+                if (_selectedIndex < 0)
+                    _selectedIndex = 0;
+                SelectTab(_selectedIndex);
+            }
+            else
+            {
+                ShowEmptyState();
+            }
         }
 
-        private static Texture2D MakeColorTex(Color color)
+        private void BuildSidebar(ScrollView scrollView)
         {
-            var tex = new Texture2D(1, 1);
-            tex.SetPixel(0, 0, color);
-            tex.Apply();
-            return tex;
+            _sidebarButtons.Clear();
+            scrollView.Clear();
+
+            for (int i = 0; i < _tabs.Count; i++)
+            {
+                var index = i;
+                var button = new Button(() => SelectTab(index))
+                {
+                    text = _tabs[i].Attribute.Name,
+                    name = $"tab-{i}"
+                };
+                button.AddToClassList("sidebar-tab-button");
+                scrollView.Add(button);
+                _sidebarButtons.Add(button);
+            }
+
+            UpdateSidebarSelection();
+        }
+
+        private void UpdateSidebarSelection()
+        {
+            for (int i = 0; i < _sidebarButtons.Count; i++)
+            {
+                if (i == _selectedIndex)
+                    _sidebarButtons[i].AddToClassList("sidebar-tab-button--selected");
+                else
+                    _sidebarButtons[i].RemoveFromClassList("sidebar-tab-button--selected");
+            }
         }
 
         private void RefreshTabs()
@@ -152,118 +179,41 @@ namespace TGame.ToolBox
             }
 
             _selectedIndex = index;
-            _contentScrollPos = Vector2.zero;
-            Repaint();
+            _imguiContentScrollPos = Vector2.zero;
+
+            _contentContainer.Clear();
+            ShowContent(_tabs[_selectedIndex]);
+            UpdateSidebarSelection();
         }
 
-        private void DestroyEditors()
+        private void ShowContent(TabEntry entry)
         {
-            foreach (var entry in _tabs)
+            if (entry.Instance is IToolBoxContentVisualElement veContent)
             {
-                if (entry.Editor != null)
+                var scrollView = new ScrollView();
+                scrollView.Add(veContent.CreateContent());
+                _contentContainer.Add(scrollView);
+            }
+            else if (entry.Instance is ScriptableObject)
+            {
+                var container = new IMGUIContainer(() =>
                 {
-                    DestroyImmediate(entry.Editor);
-                    entry.Editor = null;
-                }
+                    _imguiContentScrollPos = EditorGUILayout.BeginScrollView(_imguiContentScrollPos);
+                    DrawEntryContent(entry);
+                    EditorGUILayout.EndScrollView();
+                });
+                _contentContainer.Add(container);
             }
-        }
-
-        private void OnGUI()
-        {
-            var totalWidth = position.width;
-            var totalHeight = position.height;
-
-            var sidebarRect = new Rect(0, 0, _sidebarWidth, totalHeight);
-            var dividerRect = new Rect(_sidebarWidth, 0, DividerWidth, totalHeight);
-            var contentRect = new Rect(_sidebarWidth + DividerWidth, 0,
-                totalWidth - _sidebarWidth - DividerWidth, totalHeight);
-
-            DrawSidebar(sidebarRect);
-            HandleDivider(dividerRect);
-            DrawContent(contentRect);
-        }
-
-        private void DrawSidebar(Rect rect)
-        {
-            EnsureStyles();
-            GUI.Box(rect, GUIContent.none, EditorStyles.helpBox);
-
-            var innerRect = new Rect(rect.x + 2, rect.y + 2, rect.width - 4, rect.height - 4);
-
-            GUILayout.BeginArea(innerRect);
-            _sidebarScrollPos = EditorGUILayout.BeginScrollView(_sidebarScrollPos);
-
-            for (int i = 0; i < _tabs.Count; i++)
+            else if (entry.Instance is IToolBoxContent content)
             {
-                var tab = _tabs[i];
-                var style = i == _selectedIndex ? _selectedTabStyle : _tabButtonStyle;
-
-                if (GUILayout.Button(tab.Attribute.Name, style, GUILayout.Height(30)))
-                    SelectTab(i);
+                var container = new IMGUIContainer(() =>
+                {
+                    _imguiContentScrollPos = EditorGUILayout.BeginScrollView(_imguiContentScrollPos);
+                    content.DrawContent();
+                    EditorGUILayout.EndScrollView();
+                });
+                _contentContainer.Add(container);
             }
-
-            EditorGUILayout.EndScrollView();
-            GUILayout.EndArea();
-        }
-
-        private void HandleDivider(Rect rect)
-        {
-            EditorGUIUtility.AddCursorRect(rect, MouseCursor.ResizeHorizontal);
-
-            var color = _isDraggingDivider
-                ? new Color(0.3f, 0.6f, 0.9f, 1f)
-                : new Color(0.3f, 0.3f, 0.3f, 1f);
-            EditorGUI.DrawRect(rect, color);
-
-            var e = Event.current;
-            switch (e.type)
-            {
-                case EventType.MouseDown:
-                    if (rect.Contains(e.mousePosition))
-                    {
-                        _isDraggingDivider = true;
-                        e.Use();
-                    }
-                    break;
-                case EventType.MouseUp:
-                    if (_isDraggingDivider)
-                    {
-                        _isDraggingDivider = false;
-                        e.Use();
-                    }
-                    break;
-                case EventType.MouseDrag:
-                    if (_isDraggingDivider)
-                    {
-                        _sidebarWidth += e.delta.x;
-                        _sidebarWidth = Mathf.Clamp(_sidebarWidth, MinSidebarWidth, Mathf.Min(MaxSidebarWidth, position.width - 80));
-                        Repaint();
-                        e.Use();
-                    }
-                    break;
-            }
-        }
-
-        private void DrawContent(Rect rect)
-        {
-            if (_selectedIndex < 0 || _selectedIndex >= _tabs.Count)
-            {
-                GUILayout.BeginArea(rect);
-                EditorGUILayout.HelpBox(
-                    "没有可用的 ToolBox 标签。\n\n为类添加 [ToolBox(\"名称\")] 特性即可在此显示。",
-                    MessageType.Info);
-                GUILayout.EndArea();
-                return;
-            }
-
-            GUILayout.BeginArea(rect);
-            _contentScrollPos = EditorGUILayout.BeginScrollView(_contentScrollPos);
-
-            var entry = _tabs[_selectedIndex];
-            DrawEntryContent(entry);
-
-            EditorGUILayout.EndScrollView();
-            GUILayout.EndArea();
         }
 
         private void DrawEntryContent(TabEntry entry)
@@ -281,10 +231,36 @@ namespace TGame.ToolBox
 
                 entry.Editor.OnInspectorGUI();
             }
-            else if (entry.Instance is IToolBoxContent content)
+        }
+
+        private void DestroyEditors()
+        {
+            foreach (var entry in _tabs)
             {
-                content.DrawContent();
+                if (entry.Editor != null)
+                {
+                    DestroyImmediate(entry.Editor);
+                    entry.Editor = null;
+                }
             }
+        }
+
+        private void ShowEmptyState()
+        {
+            var label = new Label("没有可用的 ToolBox 标签。\n\n为类添加 [ToolBox(\"名称\")] 特性即可在此显示。");
+            label.style.whiteSpace = WhiteSpace.Normal;
+            label.style.marginLeft = 10;
+            label.style.marginTop = 10;
+            label.style.color = Color.gray;
+            _contentContainer.Add(label);
+        }
+
+        private void SaveSplitterPosition()
+        {
+            if (_splitView == null) return;
+            var leftPane = _splitView.Children().FirstOrDefault();
+            if (leftPane != null)
+                EditorPrefs.SetFloat("ToolBox.SidebarWidth", leftPane.resolvedStyle.width);
         }
 
         private class TabEntry

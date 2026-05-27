@@ -1028,6 +1028,10 @@
       <Project>{de43b63c-0c29-db70-f6c4-f4e9eacdd77a}</Project>
       <Name>TUI</Name>
     </ProjectReference>
+    <ProjectReference Include="TGame.Console.csproj">
+      <Project>{abb38e15-2a78-29ee-c0cd-e6250d940c14}</Project>
+      <Name>TGame.Console</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

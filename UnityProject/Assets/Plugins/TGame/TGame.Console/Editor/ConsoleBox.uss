@@ -1,0 +1,27 @@
+.console-hint-item {
+    -unity-font-style: normal;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+}
+
+.console-hint-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-left-color: rgb(102, 204, 255);
+}
+
+.console-log-entry {
+    border-left: 2px solid transparent;
+    padding-left: 6px;
+}
+
+.console-log-entry--log {
+    border-left-color: rgb(136, 136, 136);
+}
+
+.console-log-entry--warning {
+    border-left-color: rgb(255, 170, 0);
+}
+
+.console-log-entry--error {
+    border-left-color: rgb(255, 68, 68);
+}
