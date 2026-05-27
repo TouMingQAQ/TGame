@@ -1016,6 +1016,10 @@
       <Project>{128553ee-b53c-69bb-c552-622579ec687e}</Project>
       <Name>TGame</Name>
     </ProjectReference>
+    <ProjectReference Include="SceneNavigator.Runtime.csproj">
+      <Project>{dca23936-8eb1-c5f6-8149-61e03f34451c}</Project>
+      <Name>SceneNavigator.Runtime</Name>
+    </ProjectReference>
     <ProjectReference Include="DOTween.Modules.csproj">
       <Project>{5f7fc198-0e7f-f342-8636-8c8aeba0c87d}</Project>
       <Name>DOTween.Modules</Name>

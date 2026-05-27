@@ -226,8 +226,11 @@ namespace TGame.ToolBox
                     }
                     break;
                 case EventType.MouseUp:
-                    _isDraggingDivider = false;
-                    e.Use();
+                    if (_isDraggingDivider)
+                    {
+                        _isDraggingDivider = false;
+                        e.Use();
+                    }
                     break;
                 case EventType.MouseDrag:
                     if (_isDraggingDivider)
