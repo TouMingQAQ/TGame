@@ -50,12 +50,16 @@
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\IToolBoxContent.cs" />
     <Compile Include="Assets\Plugins\TGame\SceneNavigator\Editor\ScenePathDrawer.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxWindow.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\AnimationCurveBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\IToolBoxContentVisualElement.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\CurveLibrary.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxAttribute.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ColorBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\HelloBox\HelloBox.cs" />
     <Compile Include="Assets\Plugins\TGame\TGame.Console\Editor\ConsoleEditor.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\PathBox.cs" />
     <Compile Include="Assets\Plugins\TGame\SceneNavigator\Editor\SceneNavigatorBox.cs" />
+    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ColorLibrary.cs" />
     <None Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxWindow.uss" />
     <None Include="Assets\Plugins\TGame\TGame.Console\Editor\ConsoleBox.uss" />
     <Reference Include="UnityEngine">
