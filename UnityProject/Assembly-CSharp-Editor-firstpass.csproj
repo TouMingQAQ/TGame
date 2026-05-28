@@ -1081,6 +1081,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
+      <Project>{f190e6fd-6f62-a0ff-5754-e83120972a79}</Project>
+      <Name>Assembly-CSharp-firstpass</Name>
+    </ProjectReference>
     <ProjectReference Include="TGame.csproj">
       <Project>{128553ee-b53c-69bb-c552-622579ec687e}</Project>
       <Name>TGame</Name>

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace TGame.ToolBox
 {
-    [ToolBox("PathBox", Order = 0)]
+    [ToolBox("常用路径", Order = 0)]
     public class PathBox : IToolBoxContent
     {
         private List<PathEntry> _paths;

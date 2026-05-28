@@ -10,7 +10,7 @@ using Application = UnityEngine.Application;
 
 namespace TGame.Console.Editor
 {
-    [ToolBox("Console", Order = 1)]
+    [ToolBox("控制台", Order = 1)]
     public class ConsoleBox : IToolBoxContentVisualElement
     {
         private const string UssPath = "Assets/Plugins/TGame/TGame.Console/Editor/ConsoleBox.uss";
