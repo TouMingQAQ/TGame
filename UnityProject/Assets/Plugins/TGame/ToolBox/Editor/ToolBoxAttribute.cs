@@ -1,10 +1,9 @@
-using System;
+﻿using System;
 
 namespace TGame.ToolBox
 {
     /// <summary>
-    /// 标记类为 ToolBox 内容，自动在 ToolBox 窗口中生成左侧 Tab。
-    /// </summary>
+    /// 标记类为 ToolBox 内容，自动在 ToolBox 窗口中生成左侧 Tab。    /// </summary>
     [AttributeUsage(AttributeTargets.Class)]
     public class ToolBoxAttribute : Attribute
     {
@@ -23,3 +22,4 @@ namespace TGame.ToolBox
         }
     }
 }
+

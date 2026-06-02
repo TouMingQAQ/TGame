@@ -40,6 +40,7 @@ namespace TGame.Console.Editor
             if (sheet != null)
                 _root.styleSheets.Add(sheet);
 
+            BuildBakeRow();
             BuildLogPanel();
             BuildHintList();
             BuildInputRow();
@@ -52,6 +53,15 @@ namespace TGame.Console.Editor
 
             RefreshHints();
             return _root;
+        }
+
+        private void BuildBakeRow()
+        {
+            var btn = new Button(ConsoleControl.Init);
+            btn.text = "Init";
+            btn.style.height = 26;
+            btn.style.marginBottom = 4;
+            _root.Add(btn);
         }
 
         private void BuildLogPanel()

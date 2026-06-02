@@ -25,6 +25,15 @@ namespace TGame.Console.Editor
 
 
 
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Bake", GUILayout.Height(30)))
+            {
+                ConsoleControl.BakeStringToValue();
+                ConsoleControl.BakeValueTip();
+                ConsoleControl.BakeCommand();
+            }
+            GUILayout.EndHorizontal();
+
             GUILayout.Label("输入指令");
             GUILayout.BeginHorizontal();
             commandValue = GUILayout.TextField(commandValue);

@@ -19,53 +19,71 @@ namespace TGame.Console
         public static Dictionary<Type, MethodInfo> parseMap = new();
         public static Dictionary<Type, MethodInfo> valueTipMap = new();
 
-#if UNITY_EDITOR
-        [InitializeOnLoadMethod]
-#else
-        [RuntimeInitializeOnLoadMethod]
-#endif
+
         public static void Init()
         {
+            BakeCommand();
             BakeStringToValue();
             BakeValueTip();
-            BakeCommand();
         }
-
-        static void BakeStringToValue()
+        
+        public static void BakeStringToValue()
         {
             parseMap.Clear();
             Debug.Log("BakeStringToValue");
-            var assembly = Assembly.GetExecutingAssembly();
-            var types = assembly.GetTypes();
-
-            foreach (var type in types)
+            var assemblies =  AppDomain.CurrentDomain.GetAssemblies();
+            foreach (var assembly in assemblies)
             {
-                var methods = type.GetMethods();
-                var methodInfos = methods.Where(info => Attribute.IsDefined(info, typeof(StringToValueAttribute)));
-                foreach (var methodInfo in methodInfos)
+                var types = assembly.GetTypes();
+                foreach (var type in types)
                 {
-                    var ats = methodInfo.GetCustomAttributes<StringToValueAttribute>();
-                    foreach (var attribute in ats)
+                    var properties = type.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                    foreach (var prop in properties)
                     {
-                        var valueType = attribute.ValueType;
-                        parseMap[valueType] = methodInfo;
+                        var attr = prop.GetCustomAttribute<ValueTipAttribute>();
+                        if (attr == null) continue;
+                        valueTipMap[attr.ValueType] = prop.GetMethod;
+                    }
+
+                    var methods = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                    foreach (var method in methods)
+                    {
+                        var attr = method.GetCustomAttribute<ValueTipAttribute>();
+                        if (attr == null) continue;
+                        valueTipMap[attr.ValueType] = method;
                     }
                 }
-                var properties = type.GetProperties();
-                var propertyInfos = properties.Where(info => Attribute.IsDefined(info, typeof(StringToValueAttribute)));
-                foreach (var propertyInfo in propertyInfos)
+                foreach (var type in types)
                 {
-                    var ats = propertyInfo.GetCustomAttributes<StringToValueAttribute>();
-                    foreach (var attribute in ats)
+                    var methods = type.GetMethods();
+                    var methodInfos = methods.Where(info => Attribute.IsDefined(info, typeof(StringToValueAttribute)));
+                    foreach (var methodInfo in methodInfos)
                     {
-                        var valueType = attribute.ValueType;
-                        parseMap[valueType] = propertyInfo.GetMethod;
+                        var ats = methodInfo.GetCustomAttributes<StringToValueAttribute>();
+                        foreach (var attribute in ats)
+                        {
+                            var valueType = attribute.ValueType;
+                            parseMap[valueType] = methodInfo;
+                        }
+                    }
+                    var properties = type.GetProperties();
+                    var propertyInfos = properties.Where(info => Attribute.IsDefined(info, typeof(StringToValueAttribute)));
+                    foreach (var propertyInfo in propertyInfos)
+                    {
+                        var ats = propertyInfo.GetCustomAttributes<StringToValueAttribute>();
+                        foreach (var attribute in ats)
+                        {
+                            var valueType = attribute.ValueType;
+                            parseMap[valueType] = propertyInfo.GetMethod;
+                        }
                     }
                 }
             }
+
+            
         }
 
-        static void BakeValueTip()
+        public static void BakeValueTip()
         {
             valueTipMap.Clear();
             Debug.Log("BakeValueTip");
@@ -94,7 +112,7 @@ namespace TGame.Console
             }
         }
 
-        static void BakeCommand()
+        public static void BakeCommand()
         {
             cmdList.Clear();
             cmdMap.Clear();

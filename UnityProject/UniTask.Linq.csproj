@@ -49,8 +49,8 @@
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\pt-BR\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\zh-Hans\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\es\System.Text.Json.SourceGeneration.resources.dll" />
-    <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\de\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\fr\System.Text.Json.SourceGeneration.resources.dll" />
+    <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\de\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\it\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\tr\System.Text.Json.SourceGeneration.resources.dll" />
     <Analyzer Include="D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\analyzers\dotnet\roslyn4.0\cs\cs\System.Text.Json.SourceGeneration.resources.dll" />
@@ -99,8 +99,8 @@
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\ToObservable.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\Repeat.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\Where.cs" />
-    <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\UnityExtensions\Timer.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\Create.cs" />
+    <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\UnityExtensions\Timer.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\Concat.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\SelectMany.cs" />
     <Compile Include="Assets\Plugins\UniTask\Runtime\Linq\ToUniTaskAsyncEnumerable.cs" />
@@ -542,8 +542,20 @@
     <Reference Include="UnityEditor.WindowsStandalone.Extensions">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\PlaybackEngines\WindowsStandaloneSupport\UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
     </Reference>
+    <Reference Include="System.Security.AccessControl">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.AccessControl.6.0.0\lib\netstandard2.0\System.Security.AccessControl.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.Abstractions.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="EPPlus.Interfaces">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\EPPlus.Interfaces.8.4.0\lib\netstandard2.1\EPPlus.Interfaces.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualScripting.YamlDotNet">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\Dependencies\YamlDotNet\Unity.VisualScripting.YamlDotNet.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Physical">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileProviders.Physical.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Physical.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Collections.LowLevel.ILSupport">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.LowLevel.ILSupport\Unity.Collections.LowLevel.ILSupport.dll</HintPath>
@@ -551,8 +563,23 @@
     <Reference Include="nunit.framework">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.ext.nunit@d8c07649098d\net40\unity-custom\nunit.framework.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.Annotations">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.ComponentModel.Annotations.5.0.0\lib\netstandard2.1\System.ComponentModel.Annotations.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.FileExtensions">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.FileExtensions.8.0.1\lib\netstandard2.0\Microsoft.Extensions.Configuration.FileExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Encodings.Web">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Encodings.Web.8.0.0\lib\netstandard2.0\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.Plastic.Antlr3.Runtime">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collab-proxy@3351acaba9c9\Lib\Editor\Unity.Plastic.Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Primitives">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Primitives.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="DOTweenEditor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Plugins\Demigiant\DOTween\Editor\DOTweenEditor.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Plastic.Newtonsoft.Json">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collab-proxy@3351acaba9c9\Lib\Editor\Unity.Plastic.Newtonsoft.Json.dll</HintPath>
@@ -563,14 +590,47 @@
     <Reference Include="Unity.VisualScripting.IonicZip">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\Dependencies\DotNetZip\Unity.VisualScripting.IonicZip.dll</HintPath>
     </Reference>
+    <Reference Include="System.Security.Cryptography.Pkcs">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Cryptography.Pkcs.8.0.1\lib\netstandard2.1\System.Security.Cryptography.Pkcs.dll</HintPath>
+    </Reference>
     <Reference Include="unityplastic">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collab-proxy@3351acaba9c9\Lib\Editor\unityplastic.dll</HintPath>
     </Reference>
     <Reference Include="System.IO.Hashing">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.IO.Hashing\System.IO.Hashing.dll</HintPath>
     </Reference>
+    <Reference Include="DOTween">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Plugins\Demigiant\DOTween\DOTween.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration.Json">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.Json.8.0.1\lib\netstandard2.1\Microsoft.Extensions.Configuration.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.IO.RecyclableMemoryStream">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.IO.RecyclableMemoryStream.3.0.1\lib\netstandard2.1\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileSystemGlobbing">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileSystemGlobbing.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileSystemGlobbing.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Cryptography.Cng">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Cryptography.Cng.5.0.0\lib\netstandard2.1\System.Security.Cryptography.Cng.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualScripting.Antlr3.Runtime">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Security.Principal.Windows">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.Configuration">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileProviders.Abstractions.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Abstractions.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Text.Json">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\lib\netstandard2.0\System.Text.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="NuGetForUnity.PluginAPI">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\NuGet\Editor\NuGetForUnity.PluginAPI.dll</HintPath>
     </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
@@ -578,89 +638,29 @@
     <Reference Include="Mono.Cecil">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff\Mono.Cecil.dll</HintPath>
     </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="DOTweenEditor">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Plugins\Demigiant\DOTween\Editor\DOTweenEditor.dll</HintPath>
-    </Reference>
-    <Reference Include="DOTween">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Plugins\Demigiant\DOTween\DOTween.dll</HintPath>
-    </Reference>
-    <Reference Include="NuGetForUnity.PluginAPI">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\NuGet\Editor\NuGetForUnity.PluginAPI.dll</HintPath>
-    </Reference>
     <Reference Include="NugetForUnity">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\NuGet\Editor\NugetForUnity.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Configuration.Json">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.Json.8.0.1\lib\netstandard2.1\Microsoft.Extensions.Configuration.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="EPPlus">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\EPPlus.8.5.4\lib\netstandard2.1\EPPlus.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.FileSystemGlobbing">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileSystemGlobbing.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileSystemGlobbing.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Newtonsoft.Json.13.0.4\lib\netstandard2.0\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.Extensions.Configuration">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.Cryptography.Cng">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Cryptography.Cng.5.0.0\lib\netstandard2.1\System.Security.Cryptography.Cng.dll</HintPath>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
     <Reference Include="System.Security.Cryptography.Xml">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Cryptography.Xml.8.0.3\lib\netstandard2.0\System.Security.Cryptography.Xml.dll</HintPath>
     </Reference>
-    <Reference Include="System.Security.Principal.Windows">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Principal.Windows.5.0.0\lib\netstandard2.0\System.Security.Principal.Windows.dll</HintPath>
+    <Reference Include="System.Text.Encoding.CodePages">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Encoding.CodePages.8.0.0\lib\netstandard2.0\System.Text.Encoding.CodePages.dll</HintPath>
     </Reference>
-    <Reference Include="System.Text.Encodings.Web">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Encodings.Web.8.0.0\lib\netstandard2.0\System.Text.Encodings.Web.dll</HintPath>
-    </Reference>
-    <Reference Include="EPPlus.Interfaces">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\EPPlus.Interfaces.8.4.0\lib\netstandard2.1\EPPlus.Interfaces.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ComponentModel.Annotations">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.ComponentModel.Annotations.5.0.0\lib\netstandard2.1\System.ComponentModel.Annotations.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Primitives">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Primitives.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Primitives.dll</HintPath>
+    <Reference Include="EPPlus">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\EPPlus.8.5.4\lib\netstandard2.1\EPPlus.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\netstandard2.1\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
     </Reference>
-    <Reference Include="System.Security.Cryptography.Pkcs">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.Cryptography.Pkcs.8.0.1\lib\netstandard2.1\System.Security.Cryptography.Pkcs.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.FileProviders.Abstractions">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileProviders.Abstractions.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Encoding.CodePages">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Encoding.CodePages.8.0.0\lib\netstandard2.0\System.Text.Encoding.CodePages.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Json">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Text.Json.8.0.5\lib\netstandard2.0\System.Text.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.FileProviders.Physical">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.FileProviders.Physical.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Physical.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.Abstractions.8.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Security.AccessControl">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Security.AccessControl.6.0.0\lib\netstandard2.0\System.Security.AccessControl.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Extensions.Configuration.FileExtensions">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.Extensions.Configuration.FileExtensions.8.0.1\lib\netstandard2.0\Microsoft.Extensions.Configuration.FileExtensions.dll</HintPath>
-    </Reference>
     <Reference Include="System.Formats.Asn1">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\System.Formats.Asn1.8.0.1\lib\netstandard2.0\System.Formats.Asn1.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.IO.RecyclableMemoryStream">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Microsoft.IO.RecyclableMemoryStream.3.0.1\lib\netstandard2.1\Microsoft.IO.RecyclableMemoryStream.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\NetStandard\ref\2.1.0\netstandard.dll</HintPath>
