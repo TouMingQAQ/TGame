@@ -107,11 +107,8 @@ namespace TGame.ToolBox
             _versionUnity   = AddReadOnlyField(container, "Unity Version");
 
             var sep = new Label("────────── 平台构建 ──────────");
+            sep.AddToClassList("tbx-label");
             sep.style.unityTextAlign = TextAnchor.MiddleCenter;
-            sep.style.marginTop = 6;
-            sep.style.marginBottom = 4;
-            sep.style.fontSize = 11;
-            sep.style.color = new Color(0.5f, 0.5f, 0.5f);
             container.Add(sep);
 
             _versionAndroid = AddReadOnlyField(container, "Android bundleVersionCode");
@@ -130,21 +127,13 @@ namespace TGame.ToolBox
 
         private static Label AddReadOnlyField(VisualElement parent, string label)
         {
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.marginBottom = 2;
-
-            var lbl = new Label(label);
-            lbl.style.width = 200;
-            lbl.style.fontSize = 11;
-            lbl.style.color = new Color(0.6f, 0.6f, 0.6f);
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2 } };
+            var lbl = new Label(label) { style = { width = 200 } };
+            lbl.AddToClassList("tbx-label");
             row.Add(lbl);
-
             var value = new Label();
-            value.style.fontSize = 12;
-            value.style.unityFontStyleAndWeight = FontStyle.Bold;
+            value.AddToClassList("tbx-value");
             row.Add(value);
-
             parent.Add(row);
             return value;
         }

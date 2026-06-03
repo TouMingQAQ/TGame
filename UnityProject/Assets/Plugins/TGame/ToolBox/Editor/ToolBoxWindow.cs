@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
@@ -12,11 +12,12 @@ namespace TGame.ToolBox
     {
         private List<TabEntry> _tabs = new();
         private int _selectedIndex = -1;
-        private Vector2 _imguiContentScrollPos;
 
         private TwoPaneSplitView _splitView;
         private VisualElement _contentContainer;
         private List<Button> _sidebarButtons = new();
+
+        private static readonly string[] _tabIcons = { "d_Help", "d_console.infoicon", "d_FolderOpened", "d_Animation", "d_ColorPicker.ColorPalette", "d_PreMatQuad" };
 
         [MenuItem("Tools/ToolBox")]
         private static void Open()
@@ -38,7 +39,6 @@ namespace TGame.ToolBox
         private void OnDisable()
         {
             SaveSplitterPosition();
-            DestroyEditors();
         }
 
         private void CreateGUI()
@@ -83,17 +83,41 @@ namespace TGame.ToolBox
             for (int i = 0; i < _tabs.Count; i++)
             {
                 var index = i;
-                var button = new Button(() => SelectTab(index))
-                {
-                    text = _tabs[i].Attribute.Name,
-                    name = $"tab-{i}"
-                };
-                button.AddToClassList("sidebar-tab-button");
-                scrollView.Add(button);
-                _sidebarButtons.Add(button);
+                var attr = _tabs[i].Attribute;
+                var name = attr.Name;
+
+                var btn = new Button();
+                btn.name = $"tab-{i}";
+                btn.AddToClassList("sidebar-tab-button");
+                btn.style.flexDirection = FlexDirection.Row;
+                btn.style.alignItems = Align.Center;
+
+                var icon = new Image();
+                icon.image = GetTabIcon(i);
+                icon.style.width = 16;
+                icon.style.height = 16;
+                icon.style.marginRight = 6;
+                icon.style.flexShrink = 0;
+                btn.Add(icon);
+
+                var label = new Label(name);
+                label.style.unityTextAlign = TextAnchor.MiddleLeft;
+                label.style.flexGrow = 1;
+                btn.Add(label);
+
+                btn.clicked += () => SelectTab(index);
+                scrollView.Add(btn);
+                _sidebarButtons.Add(btn);
             }
 
             UpdateSidebarSelection();
+        }
+
+        private Texture2D GetTabIcon(int index)
+        {
+            var iconName = _tabIcons[index % _tabIcons.Length];
+            var content = EditorGUIUtility.IconContent(iconName);
+            return content?.image as Texture2D;
         }
 
         private void UpdateSidebarSelection()
@@ -109,7 +133,6 @@ namespace TGame.ToolBox
 
         private void RefreshTabs()
         {
-            DestroyEditors();
             _tabs.Clear();
 
             var types = TypeCache.GetTypesWithAttribute<ToolBoxAttribute>();
@@ -166,21 +189,9 @@ namespace TGame.ToolBox
 
         private void SelectTab(int index)
         {
-            if (_selectedIndex == index) return;
-
-            if (_selectedIndex >= 0 && _selectedIndex < _tabs.Count)
-            {
-                var oldEntry = _tabs[_selectedIndex];
-                if (oldEntry.Editor != null)
-                {
-                    DestroyImmediate(oldEntry.Editor);
-                    oldEntry.Editor = null;
-                }
-            }
+            if (index < 0 || index >= _tabs.Count) return;
 
             _selectedIndex = index;
-            _imguiContentScrollPos = Vector2.zero;
-
             _contentContainer.Clear();
             ShowContent(_tabs[_selectedIndex]);
             UpdateSidebarSelection();
@@ -188,61 +199,62 @@ namespace TGame.ToolBox
 
         private void ShowContent(TabEntry entry)
         {
+            var wrapper = new VisualElement();
+            wrapper.style.flexGrow = 1;
+
+            // content header
+            var header = new VisualElement();
+            header.style.backgroundColor = new Color(0.13f, 0.13f, 0.13f);
+            header.style.paddingLeft = 12;
+            header.style.paddingRight = 12;
+            header.style.paddingTop = 6;
+            header.style.paddingBottom = 6;
+            header.style.borderBottomWidth = 1;
+            header.style.borderBottomColor = new Color(0.2f, 0.2f, 0.2f);
+
+            var title = new Label(entry.Attribute.Name);
+            title.style.fontSize = 14;
+            title.style.unityFontStyleAndWeight = FontStyle.Bold;
+            title.style.color = new Color(0.8f, 0.8f, 0.8f);
+            header.Add(title);
+            wrapper.Add(header);
+
             if (entry.Instance is IToolBoxContentVisualElement veContent)
             {
-                var scrollView = new ScrollView();
-                scrollView.Add(veContent.CreateContent());
-                _contentContainer.Add(scrollView);
+                wrapper.Add(veContent.CreateContent());
             }
             else if (entry.Instance is ScriptableObject)
             {
-                var container = new IMGUIContainer(() =>
+                var scrollView = new ScrollView();
+                var imguiContainer = new IMGUIContainer(() =>
                 {
-                    _imguiContentScrollPos = EditorGUILayout.BeginScrollView(_imguiContentScrollPos);
-                    DrawEntryContent(entry);
-                    EditorGUILayout.EndScrollView();
+                    if (entry.Editor == null)
+                        entry.Editor = Editor.CreateEditor(entry.Instance as ScriptableObject);
+                    if (entry.IsTemporary)
+                    {
+                        EditorGUILayout.HelpBox("此 SO 为临时实例（未找到资产文件），修改不会保存。",
+                            MessageType.Warning);
+                    }
+                    entry.Editor.OnInspectorGUI();
                 });
-                _contentContainer.Add(container);
+                scrollView.Add(imguiContainer);
+                wrapper.Add(scrollView);
             }
             else if (entry.Instance is IToolBoxContent content)
             {
-                var container = new IMGUIContainer(() =>
+                var scrollView = new ScrollView();
+                var imguiContainer = new IMGUIContainer(() =>
                 {
-                    _imguiContentScrollPos = EditorGUILayout.BeginScrollView(_imguiContentScrollPos);
+                    var prevColor = GUI.color;
+                    GUI.color = Color.white;
                     content.DrawContent();
-                    EditorGUILayout.EndScrollView();
+                    GUI.color = prevColor;
                 });
-                _contentContainer.Add(container);
+                scrollView.Add(imguiContainer);
+                wrapper.Add(scrollView);
             }
-        }
 
-        private void DrawEntryContent(TabEntry entry)
-        {
-            if (entry.Instance is ScriptableObject so)
-            {
-                if (entry.Editor == null)
-                    entry.Editor = Editor.CreateEditor(so);
-
-                if (entry.IsTemporary)
-                {
-                    EditorGUILayout.HelpBox("此 SO 为临时实例（未找到资产文件），修改不会保存。",
-                        MessageType.Warning);
-                }
-
-                entry.Editor.OnInspectorGUI();
-            }
-        }
-
-        private void DestroyEditors()
-        {
-            foreach (var entry in _tabs)
-            {
-                if (entry.Editor != null)
-                {
-                    DestroyImmediate(entry.Editor);
-                    entry.Editor = null;
-                }
-            }
+            _contentContainer.Add(wrapper);
         }
 
         private void ShowEmptyState()
