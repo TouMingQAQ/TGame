@@ -27,6 +27,11 @@ namespace TGame.ToolBox
         private const string PrefUseCustomPipeline = "TGame.BuildBox.UseCustomPipeline";
         private const string PrefUseCustomABPipeline = "TGame.BuildBox.UseCustomABPipeline";
 
+        private const string PrefFoldoutVersion = "TGame.BuildBox.FoldoutVersion";
+        private const string PrefFoldoutConfig  = "TGame.BuildBox.FoldoutConfig";
+        private const string PrefFoldoutAB      = "TGame.BuildBox.FoldoutAB";
+        private const string PrefFoldoutPlayer  = "TGame.BuildBox.FoldoutPlayer";
+
         // --- platform list ---
         private static readonly (string name, BuildTarget target)[] Platforms =
         {
@@ -54,11 +59,7 @@ namespace TGame.ToolBox
         private TextField _abOutputPathField;
         private Toggle _toggleABFullRebuild;
         private DropdownField _abPipelineDropdown;
-        private VisualElement _abPipelineDropdownArea;
-        private RadioButton _radioABDefault, _radioABCustom;
-        private RadioButton _radioPlayerDefault, _radioPlayerCustom;
         private DropdownField _playerPipelineDropdown;
-        private VisualElement _playerPipelineDropdownArea;
         private HelpBox _statusHelp;
         private VisualElement _playerFoldoutContent;
 
@@ -92,8 +93,9 @@ namespace TGame.ToolBox
         {
             var foldout = new Foldout();
             foldout.text = "版本信息";
-            foldout.value = true;
+            foldout.value = EditorPrefs.GetBool(PrefFoldoutVersion, true);
             root.Add(foldout);
+            foldout.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefFoldoutVersion, evt.newValue));
 
             var container = new VisualElement();
             container.style.marginLeft = 12;
@@ -176,8 +178,9 @@ namespace TGame.ToolBox
         {
             var foldout = new Foldout();
             foldout.text = "构建配置";
-            foldout.value = true;
+            foldout.value = EditorPrefs.GetBool(PrefFoldoutConfig, true);
             root.Add(foldout);
+            foldout.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefFoldoutConfig, evt.newValue));
 
             var container = new VisualElement();
             container.style.marginLeft = 12;
@@ -270,8 +273,9 @@ namespace TGame.ToolBox
         {
             var foldout = new Foldout();
             foldout.text = "AssetBundle 构建";
-            foldout.value = false;
+            foldout.value = EditorPrefs.GetBool(PrefFoldoutAB, false);
             root.Add(foldout);
+            foldout.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefFoldoutAB, evt.newValue));
 
             var container = new VisualElement();
             container.style.marginLeft = 12;
@@ -333,62 +337,48 @@ namespace TGame.ToolBox
             pipelineLabel.style.marginBottom = 2;
             parent.Add(pipelineLabel);
 
-            var radioRow = new VisualElement();
-            radioRow.style.flexDirection = FlexDirection.Row;
-            radioRow.style.marginBottom = 4;
-            parent.Add(radioRow);
-
-            var radioDefault = new RadioButton("默认");
-            radioDefault.style.marginRight = 12;
-            radioRow.Add(radioDefault);
-
-            var radioCustom = new RadioButton("自定义");
-            radioRow.Add(radioCustom);
-
-            // Restore saved selection from config
-            radioDefault.value = !_config.useCustomABPipeline;
-            radioCustom.value = _config.useCustomABPipeline;
-
-            _abPipelineDropdownArea = new VisualElement();
-            _abPipelineDropdownArea.style.marginBottom = 4;
-            parent.Add(_abPipelineDropdownArea);
-
             _abPipelineDropdown = new DropdownField();
             _abPipelineDropdown.style.flexGrow = 1;
-            _abPipelineDropdown.RegisterValueChangedCallback(_ =>
+            parent.Add(_abPipelineDropdown);
+
+            // Build choices: "默认" + custom pipeline names
+            var choices = new List<string> { "默认" };
+            choices.AddRange(_abPipelines.Select(p => p.name));
+            _abPipelineDropdown.choices = choices;
+
+            // Restore saved selection
+            if (_config.useCustomABPipeline && !string.IsNullOrEmpty(_config.selectedABPipelineTypeName))
             {
-                if (_abPipelines.Count > 0 && _abPipelineDropdown.index >= 0 &&
-                    _abPipelineDropdown.index < _abPipelines.Count)
+                var savedIdx = _abPipelines.FindIndex(p => p.type.FullName == _config.selectedABPipelineTypeName);
+                _abPipelineDropdown.index = savedIdx >= 0 ? savedIdx + 1 : 0;
+            }
+            else
+            {
+                _abPipelineDropdown.index = 0;
+            }
+
+            _abPipelineDropdown.RegisterValueChangedCallback(evt =>
+            {
+                var idx = _abPipelineDropdown.index;
+                if (idx <= 0)
                 {
-                    _config.selectedABPipelineTypeName = _abPipelines[_abPipelineDropdown.index].type.FullName;
-                    EditorUtility.SetDirty(_config);
+                    _config.useCustomABPipeline = false;
+                    _config.selectedABPipelineTypeName = "";
+                    EditorPrefs.SetBool(PrefUseCustomABPipeline, false);
                 }
+                else
+                {
+                    var pipeIdx = idx - 1;
+                    if (pipeIdx < _abPipelines.Count)
+                    {
+                        _config.useCustomABPipeline = true;
+                        _config.selectedABPipelineTypeName = _abPipelines[pipeIdx].type.FullName;
+                        EditorPrefs.SetBool(PrefUseCustomABPipeline, true);
+                    }
+                }
+                EditorUtility.SetDirty(_config);
+                AssetDatabase.SaveAssetIfDirty(_config);
             });
-            _abPipelineDropdownArea.Add(_abPipelineDropdown);
-
-            PopulatePipelineDropdown(_abPipelineDropdown, _abPipelines,
-                _config.selectedABPipelineTypeName);
-
-            _abPipelineDropdownArea.style.display = radioCustom.value ? DisplayStyle.Flex : DisplayStyle.None;
-
-            _radioABDefault = radioDefault;
-            _radioABCustom = radioCustom;
-
-            radioDefault.RegisterValueChangedCallback(evt =>
-            {
-                  if (!evt.newValue) return;
-                  radioCustom.SetValueWithoutNotify(false);
-                  _abPipelineDropdownArea.style.display = DisplayStyle.None;
-                  EditorPrefs.SetBool(PrefUseCustomABPipeline, false);
-              });
-
-            radioCustom.RegisterValueChangedCallback(evt =>
-            {
-                  if (!evt.newValue) return;
-                  radioDefault.SetValueWithoutNotify(false);
-                  _abPipelineDropdownArea.style.display = DisplayStyle.Flex;
-                  EditorPrefs.SetBool(PrefUseCustomABPipeline, true);
-              });
         }
 
         // ============================================================
@@ -399,8 +389,9 @@ namespace TGame.ToolBox
         {
             var foldout = new Foldout();
             foldout.text = "Player 构建";
-            foldout.value = true;
+            foldout.value = EditorPrefs.GetBool(PrefFoldoutPlayer, true);
             root.Add(foldout);
+            foldout.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefFoldoutPlayer, evt.newValue));
 
             _playerFoldoutContent = new VisualElement();
             _playerFoldoutContent.style.marginLeft = 12;
@@ -413,60 +404,48 @@ namespace TGame.ToolBox
             pipelineLabel.style.marginBottom = 2;
             _playerFoldoutContent.Add(pipelineLabel);
 
-            var radioRow = new VisualElement();
-            radioRow.style.flexDirection = FlexDirection.Row;
-            radioRow.style.marginBottom = 4;
-            _playerFoldoutContent.Add(radioRow);
-
-            _radioPlayerDefault = new RadioButton("默认 (BuildPipeline.BuildPlayer)");
-            _radioPlayerDefault.style.marginRight = 12;
-            radioRow.Add(_radioPlayerDefault);
-
-            _radioPlayerCustom = new RadioButton("自定义");
-            radioRow.Add(_radioPlayerCustom);
-
-            // Restore saved selection from config
-            _radioPlayerDefault.value = !_config.useCustomPipeline;
-            _radioPlayerCustom.value = _config.useCustomPipeline;
-
-            _playerPipelineDropdownArea = new VisualElement();
-            _playerPipelineDropdownArea.style.marginBottom = 4;
-            _playerFoldoutContent.Add(_playerPipelineDropdownArea);
-
             _playerPipelineDropdown = new DropdownField();
             _playerPipelineDropdown.style.flexGrow = 1;
-            _playerPipelineDropdown.RegisterValueChangedCallback(_ =>
+            _playerFoldoutContent.Add(_playerPipelineDropdown);
+
+            // Build choices: "默认 (BuildPipeline.BuildPlayer)" + custom pipeline names
+            var choices = new List<string> { "默认 (BuildPipeline.BuildPlayer)" };
+            choices.AddRange(_playerPipelines.Select(p => p.name));
+            _playerPipelineDropdown.choices = choices;
+
+            // Restore saved selection
+            if (_config.useCustomPipeline && !string.IsNullOrEmpty(_config.selectedPipelineTypeName))
             {
-                if (_playerPipelines.Count > 0 && _playerPipelineDropdown.index >= 0 &&
-                    _playerPipelineDropdown.index < _playerPipelines.Count)
+                var savedIdx = _playerPipelines.FindIndex(p => p.type.FullName == _config.selectedPipelineTypeName);
+                _playerPipelineDropdown.index = savedIdx >= 0 ? savedIdx + 1 : 0;
+            }
+            else
+            {
+                _playerPipelineDropdown.index = 0;
+            }
+
+            _playerPipelineDropdown.RegisterValueChangedCallback(evt =>
+            {
+                var idx = _playerPipelineDropdown.index;
+                if (idx <= 0)
                 {
-                    _config.selectedPipelineTypeName = _playerPipelines[_playerPipelineDropdown.index].type.FullName;
-                    EditorUtility.SetDirty(_config);
+                    _config.useCustomPipeline = false;
+                    _config.selectedPipelineTypeName = "";
+                    EditorPrefs.SetBool(PrefUseCustomPipeline, false);
                 }
+                else
+                {
+                    var pipeIdx = idx - 1;
+                    if (pipeIdx < _playerPipelines.Count)
+                    {
+                        _config.useCustomPipeline = true;
+                        _config.selectedPipelineTypeName = _playerPipelines[pipeIdx].type.FullName;
+                        EditorPrefs.SetBool(PrefUseCustomPipeline, true);
+                    }
+                }
+                EditorUtility.SetDirty(_config);
+                AssetDatabase.SaveAssetIfDirty(_config);
             });
-            _playerPipelineDropdownArea.Add(_playerPipelineDropdown);
-
-            PopulatePipelineDropdown(_playerPipelineDropdown, _playerPipelines,
-                _config.selectedPipelineTypeName);
-
-            _playerPipelineDropdownArea.style.display = _radioPlayerCustom.value ? DisplayStyle.Flex : DisplayStyle.None;
-
-
-            _radioPlayerDefault.RegisterValueChangedCallback(evt =>
-            {
-                  if (!evt.newValue) return;
-                  _radioPlayerCustom.SetValueWithoutNotify(false);
-                  _playerPipelineDropdownArea.style.display = DisplayStyle.None;
-                  EditorPrefs.SetBool(PrefUseCustomPipeline, false);
-              });
-
-            _radioPlayerCustom.RegisterValueChangedCallback(evt =>
-            {
-                  if (!evt.newValue) return;
-                  _radioPlayerDefault.SetValueWithoutNotify(false);
-                  _playerPipelineDropdownArea.style.display = DisplayStyle.Flex;
-                  EditorPrefs.SetBool(PrefUseCustomPipeline, true);
-              });
 
             // Warning text
             var warning = new Label("提示：每次构建前将自动递增对应平台的构建号码");
@@ -576,21 +555,6 @@ namespace TGame.ToolBox
             }
         }
 
-        private static void PopulatePipelineDropdown(DropdownField dropdown, List<(string name, Type type)> pipelines, string savedTypeName)
-        {
-            if (pipelines.Count == 0)
-            {
-                dropdown.choices = new List<string> { "(无可用流水线)" };
-                dropdown.index = 0;
-                return;
-            }
-
-            dropdown.choices = pipelines.Select(p => p.name).ToList();
-
-            var savedIndex = pipelines.FindIndex(p => p.type.FullName == savedTypeName);
-            dropdown.index = savedIndex >= 0 ? savedIndex : 0;
-        }
-
         private void RefreshPlatformBuildNumberEntries()
         {
             // Ensure all platforms have entries
@@ -642,20 +606,22 @@ namespace TGame.ToolBox
             _config.abFullRebuild = _toggleABFullRebuild.value;
             EditorPrefs.SetBool(PrefABFullRebuild, _config.abFullRebuild);
 
-            _config.useCustomPipeline = _radioPlayerCustom.value;
+            _config.useCustomPipeline = _playerPipelineDropdown.index > 0;
             EditorPrefs.SetBool(PrefUseCustomPipeline, _config.useCustomPipeline);
-            if (_playerPipelines.Count > 0 && _playerPipelineDropdown.index >= 0 &&
-                _playerPipelineDropdown.index < _playerPipelines.Count)
+            if (_config.useCustomPipeline && _playerPipelineDropdown.index > 0)
             {
-                _config.selectedPipelineTypeName = _playerPipelines[_playerPipelineDropdown.index].type.FullName;
+                var pipeIdx = _playerPipelineDropdown.index - 1;
+                if (pipeIdx < _playerPipelines.Count)
+                    _config.selectedPipelineTypeName = _playerPipelines[pipeIdx].type.FullName;
             }
 
-            _config.useCustomABPipeline = _radioABCustom.value;
+            _config.useCustomABPipeline = _abPipelineDropdown.index > 0;
             EditorPrefs.SetBool(PrefUseCustomABPipeline, _config.useCustomABPipeline);
-            if (_abPipelines.Count > 0 && _abPipelineDropdown.index >= 0 &&
-                _abPipelineDropdown.index < _abPipelines.Count)
+            if (_config.useCustomABPipeline && _abPipelineDropdown.index > 0)
             {
-                _config.selectedABPipelineTypeName = _abPipelines[_abPipelineDropdown.index].type.FullName;
+                var pipeIdx = _abPipelineDropdown.index - 1;
+                if (pipeIdx < _abPipelines.Count)
+                    _config.selectedABPipelineTypeName = _abPipelines[pipeIdx].type.FullName;
             }
 
             EditorUtility.SetDirty(_config);

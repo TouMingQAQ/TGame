@@ -19,9 +19,17 @@ MonoBehaviour:
   buildScriptsOnly: 0
   cleanBuild: 0
   abOutputPath: Builds/AssetBundles
-  abFullRebuild: 0
-  useCustomPipeline: 0
+  abFullRebuild: 1
+  useCustomPipeline: 1
   selectedPipelineTypeName: 
-  useCustomABPipeline: 0
+  useCustomABPipeline: 1
   selectedABPipelineTypeName: 
-  platformBuildNumbers: []
+  platformBuildNumbers:
+  - platformName: Windows
+    buildNumber: 0
+  - platformName: macOS
+    buildNumber: 0
+  - platformName: Linux
+    buildNumber: 0
+  - platformName: WebGL
+    buildNumber: 0
