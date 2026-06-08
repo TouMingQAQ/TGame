@@ -1,0 +1,15 @@
+Font: DengXian  Style: Bold
+Point Size: 30   Padding: 9   SP/PD Ratio: 30.0%
+
+Characters included: 7081/7083
+Missing characters: 2
+Excluded characters: 0
+
+Characters missing from font file:
+----------------------------------------
+ID: 9	Hex: 9	Char [	]
+ID: 10	Hex: A	Char [
+]
+
+Characters excluded from packing:
+----------------------------------------
