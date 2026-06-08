@@ -27,7 +27,10 @@ namespace TGame.ToolBox
         public VisualElement CreateContent()
         {
             var root = new VisualElement();
-            root.style.padding = 12;
+            root.style.paddingLeft = 12;
+            root.style.paddingRight = 12;
+            root.style.paddingTop = 12;
+            root.style.paddingBottom = 12;
 
             var title = new Label("Unity 路径速查");
             title.AddToClassList("tbx-section-title");
@@ -39,40 +42,34 @@ namespace TGame.ToolBox
             {
                 var entry = _paths[i];
                 var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
-                row.style.alignItems = Align.Center;
-                row.style.marginBottom = 6;
+                row.AddToClassList("tbx-path-row");
 
                 var label = new Label(entry.Label);
-                label.style.width = 200;
-                label.style.fontSize = 11;
-                label.style.color = new Color(0.6f, 0.6f, 0.6f);
-                label.style.unityTextAlign = TextAnchor.MiddleLeft;
-                label.style.flexShrink = 0;
+                label.AddToClassList("tbx-path-label");
                 row.Add(label);
 
                 var pathField = new TextField();
                 pathField.value = entry.Path;
                 pathField.isReadOnly = true;
-                pathField.style.flexGrow = 1;
-                pathField.style.marginRight = 4;
+                pathField.AddToClassList("tbx-path-field");
                 row.Add(pathField);
                 _pathFields.Add(pathField);
 
-                var copyBtn = new Button(() =>
+                Button copyBtn = null;
+                copyBtn = new Button(() =>
                 {
                     EditorGUIUtility.systemCopyBuffer = entry.Path;
                     ShowCopyFeedback(copyBtn, "已复制");
                 })
                 { text = "复制" };
-                copyBtn.style.width = 50;
+                copyBtn.AddToClassList("tbx-btn-secondary");
                 row.Add(copyBtn);
 
                 if (entry.ShowInExplorer)
                 {
                     var openBtn = new Button(() => EditorUtility.RevealInFinder(entry.Path))
                     { text = "打开" };
-                    openBtn.style.width = 50;
+                    openBtn.AddToClassList("tbx-btn-secondary");
                     row.Add(openBtn);
                 }
 
@@ -80,13 +77,10 @@ namespace TGame.ToolBox
             }
 
             // Refresh button
-            var refreshRow = new VisualElement();
-            refreshRow.style.marginTop = 8;
-            var refreshBtn = new Button(RefreshAll)
-            { text = "刷新" };
-            refreshBtn.style.width = 100;
-            refreshRow.Add(refreshBtn);
-            root.Add(refreshRow);
+            var refreshBtn = new Button(RefreshAll) { text = "刷新" };
+            refreshBtn.AddToClassList("tbx-btn-secondary");
+            refreshBtn.style.marginTop = 8;
+            root.Add(refreshBtn);
 
             return root;
         }
@@ -128,3 +122,4 @@ namespace TGame.ToolBox
         }
     }
 }
+
