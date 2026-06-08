@@ -26,7 +26,7 @@ namespace TGame.ToolBox
         {
             Name = "曲线工具箱",
             Group = "资源",
-            Icon = "d_Animation",
+            Icon = "Animator Icon",
             Factory = () => new AnimationCurveBox().CreateContent()
         };
 

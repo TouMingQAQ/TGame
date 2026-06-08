@@ -16,7 +16,7 @@ namespace TGame.ToolBox
         {
             Name = "构建打包",
             Group = "构建",
-            Icon = "d_PreMatQuad",
+            Icon = "Prefab Icon",
             Factory = () => new BuildBox().CreateContent()
         };
 

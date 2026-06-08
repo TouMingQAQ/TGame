@@ -11,7 +11,7 @@ namespace TGame.ToolBox
         {
             Name = "常用路径",
             Group = "程序",
-            Icon = "d_FolderOpened",
+            Icon = "Folder Icon",
             Factory = () => new PathBox().CreateContent()
         };
 
