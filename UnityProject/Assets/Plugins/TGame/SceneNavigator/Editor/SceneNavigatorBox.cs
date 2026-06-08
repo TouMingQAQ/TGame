@@ -1,4 +1,5 @@
 using System.Linq;
+using TGame.TCore.Runtime;
 using TGame.ToolBox;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -316,8 +317,7 @@ namespace TGame.SceneNavigator
             _prePlayScenePath = SceneManager.GetActiveScene().path;
 
             // 通过 PlayerPrefs 将目标场景路径传递给运行时 GameBootstrapper
-            PlayerPrefs.SetString("TGame_InitBoot_TargetScene", _prePlayScenePath);
-            PlayerPrefs.Save();
+            EditorPrefs.SetString(GameBootstrapper.TargetSceneKey, _prePlayScenePath);
 
             EditorSceneManager.playModeStartScene = sceneAsset;
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -361,7 +361,7 @@ namespace TGame.SceneNavigator
             if (hasBootstrapper)
             {
                 _initBootHelpBox.messageType = HelpBoxMessageType.Info;
-                _initBootHelpBox.text = "已将当前场景路径写入 PlayerPrefs，初始化完成后自动跳回。";
+                _initBootHelpBox.text = "检测到 GameBootstrapper，初始化完成后自动跳回当前场景。";
             }
             else
             {
@@ -462,9 +462,8 @@ namespace TGame.SceneNavigator
             {
                 EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
 
-                // 清理初始化引导 PlayerPrefs 标记（如有残留）
-                PlayerPrefs.DeleteKey("TGame_InitBoot_TargetScene");
-                PlayerPrefs.Save();
+                // 清理初始化引导 EditorPrefs 标记（如有残留）
+                EditorPrefs.DeleteKey(GameBootstrapper.TargetSceneKey);
 
                 var savedPath = _prePlayScenePath;
                 _prePlayScenePath = null;
