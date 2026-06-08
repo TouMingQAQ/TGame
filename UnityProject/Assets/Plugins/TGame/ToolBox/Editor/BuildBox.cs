@@ -10,7 +10,6 @@ using UnityEngine.UIElements;
 
 namespace TGame.ToolBox
 {
-    [ToolBox("构建打包", Order = 4)]
     public class BuildBox : IToolBoxContentVisualElement
     {
         private const string ConfigPath = "Assets/Resources/BuildConfig.asset";
@@ -106,9 +105,8 @@ namespace TGame.ToolBox
             _versionBundle  = AddReadOnlyField(container, "Bundle Version");
             _versionUnity   = AddReadOnlyField(container, "Unity Version");
 
-            var sep = new Label("────────── 平台构建 ──────────");
-            sep.AddToClassList("tbx-label");
-            sep.style.unityTextAlign = TextAnchor.MiddleCenter;
+            var sep = new Label();
+            sep.AddToClassList("tbx-separator");
             container.Add(sep);
 
             _versionAndroid = AddReadOnlyField(container, "Android bundleVersionCode");
@@ -127,9 +125,10 @@ namespace TGame.ToolBox
 
         private static Label AddReadOnlyField(VisualElement parent, string label)
         {
-            var row = new VisualElement { style = { flexDirection = FlexDirection.Row, marginBottom = 2 } };
-            var lbl = new Label(label) { style = { width = 200 } };
-            lbl.AddToClassList("tbx-label");
+            var row = new VisualElement();
+            row.AddToClassList("tbx-form-row");
+            var lbl = new Label(label);
+            lbl.AddToClassList("tbx-form-label-wide");
             row.Add(lbl);
             var value = new Label();
             value.AddToClassList("tbx-value");
@@ -320,14 +319,13 @@ namespace TGame.ToolBox
         private void BuildABPipelineSelector(VisualElement parent)
         {
             var pipelineLabel = new Label("AB 流水线");
-            pipelineLabel.style.fontSize = 11;
-            pipelineLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            pipelineLabel.AddToClassList("tbx-label");
             pipelineLabel.style.marginTop = 4;
             pipelineLabel.style.marginBottom = 2;
             parent.Add(pipelineLabel);
 
             _abPipelineDropdown = new DropdownField();
-            _abPipelineDropdown.style.flexGrow = 1;
+            _abPipelineDropdown.AddToClassList("tbx-form-field");
             parent.Add(_abPipelineDropdown);
 
             // Build choices: "默认" + custom pipeline names
@@ -394,7 +392,7 @@ namespace TGame.ToolBox
             _playerFoldoutContent.Add(pipelineLabel);
 
             _playerPipelineDropdown = new DropdownField();
-            _playerPipelineDropdown.style.flexGrow = 1;
+            _playerPipelineDropdown.AddToClassList("tbx-form-field");
             _playerFoldoutContent.Add(_playerPipelineDropdown);
 
             // Build choices: "默认 (BuildPipeline.BuildPlayer)" + custom pipeline names
@@ -967,5 +965,11 @@ namespace TGame.ToolBox
         }
     }
 }
+
+
+
+
+
+
 
 

@@ -1,6 +1,5 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using TGame.ToolBox;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -21,7 +20,6 @@ namespace TGame.ToolBox
         }
     }
 
-    [ToolBox("曲线工具箱", Order = 2)]
     public class AnimationCurveBox : IToolBoxContentVisualElement
     {
         private const string LibPath = "Assets/Resources/CurveLibrary.asset";
@@ -42,9 +40,7 @@ namespace TGame.ToolBox
             _root.style.paddingTop = 4;
 
             var title = new Label("Animation Curve 工具箱");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.fontSize = 14;
-            title.style.marginBottom = 4;
+            title.AddToClassList("tbx-section-title");
             _root.Add(title);
 
             if (_classicCurves == null)
@@ -66,17 +62,15 @@ namespace TGame.ToolBox
             _root.Add(foldout);
 
             var addRow = new VisualElement();
-            addRow.style.flexDirection = FlexDirection.Row;
-            addRow.style.marginBottom = 4;
+            addRow.AddToClassList("tbx-add-row");
             foldout.Add(addRow);
 
             _newNameField = new TextField();
-            _newNameField.style.flexGrow = 1;
             addRow.Add(_newNameField);
 
             var addBtn = new Button(AddCurve);
-            addBtn.text = "➕ 添加";
-            addBtn.style.width = 70;
+            addBtn.text = "添加";
+            addBtn.AddToClassList("tbx-btn-secondary");
             addRow.Add(addBtn);
 
             _diyContainer = new VisualElement();
@@ -104,10 +98,9 @@ namespace TGame.ToolBox
 
             if (_diyCurves == null || _diyCurves.Count == 0)
             {
-                _diyContainer.Add(new Label("暂无 DIY 曲线，在上方输入名称添加")
-                {
-                    style = { unityTextAlign = TextAnchor.MiddleCenter, color = Color.gray }
-                });
+                var emptyLabel = new Label("暂无 DIY 曲线，在上方输入名称添加");
+                emptyLabel.AddToClassList("tbx-empty");
+                _diyContainer.Add(emptyLabel);
                 return;
             }
 
@@ -129,18 +122,10 @@ namespace TGame.ToolBox
         private VisualElement BuildCurveItem(CurveEntry entry, bool editable, System.Action onDelete)
         {
             var container = new VisualElement();
-            container.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f);
-            container.style.borderTopWidth = 1;
-            container.style.borderTopColor = new Color(0.33f, 0.33f, 0.33f);
-            container.style.marginBottom = 4;
-            container.style.paddingTop = 4;
-            container.style.paddingBottom = 4;
-            container.style.paddingLeft = 6;
-            container.style.paddingRight = 6;
+            container.AddToClassList("tbx-curve-card");
 
             var headerRow = new VisualElement();
-            headerRow.style.flexDirection = FlexDirection.Row;
-            headerRow.style.marginBottom = 4;
+            headerRow.AddToClassList("tbx-curve-card-header");
             container.Add(headerRow);
 
             if (editable)
@@ -157,14 +142,13 @@ namespace TGame.ToolBox
 
                 var delBtn = new Button(onDelete);
                 delBtn.text = "✕";
-                delBtn.style.width = 24;
+                delBtn.AddToClassList("tbx-btn-icon");
                 headerRow.Add(delBtn);
             }
             else
             {
                 var label = new Label(entry.Name);
-                label.style.unityFontStyleAndWeight = FontStyle.Bold;
-                label.style.unityTextAlign = TextAnchor.MiddleLeft;
+                label.AddToClassList("tbx-value");
                 headerRow.Add(label);
             }
 
@@ -380,3 +364,5 @@ namespace TGame.ToolBox
         }
     }
 }
+
+

@@ -1,8 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -10,35 +9,81 @@ namespace TGame.ToolBox
 {
     public class ToolBoxWindow : EditorWindow
     {
-        private List<TabEntry> _tabs = new();
+        [SerializeField] private string _groupFilter;
+
+        private List<BoxRegistration> _filteredBoxes = new();
         private int _selectedIndex = -1;
 
         private TwoPaneSplitView _splitView;
         private VisualElement _contentContainer;
         private List<Button> _sidebarButtons = new();
 
-        private static readonly string[] _tabIcons = { "d_Help", "d_console.infoicon", "d_FolderOpened", "d_Animation", "d_ColorPicker.ColorPalette", "d_PreMatQuad" };
+        #region Menu Items
 
-        [MenuItem("Tools/ToolBox")]
-        private static void Open()
+        [MenuItem("Tools/ToolBox/程序")]
+        private static void OpenProgram() => OpenGroup("程序", "程序工具");
+
+        [MenuItem("Tools/ToolBox/资源")]
+        private static void OpenAssets() => OpenGroup("资源", "资源工具");
+
+        [MenuItem("Tools/ToolBox/构建")]
+        private static void OpenBuild() => OpenGroup("构建", "构建工具");
+
+        private static void OpenGroup(string group, string title)
         {
-            var window = GetWindow<ToolBoxWindow>("ToolBox");
+            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
+            window.titleContent = new GUIContent(title);
+            window._groupFilter = group;
             window.minSize = new Vector2(400, 300);
-            var pos = window.position;
-            pos.width = 800;
-            pos.height = 600;
-            window.position = pos;
+            window.position = new Rect(100, 100, 800, 600);
             window.Show();
         }
 
+        #endregion
+
+        #region Box Registration
+
+        private class BoxRegistration
+        {
+            public string Name;
+            public string Group;
+            public string Icon;
+            public Func<VisualElement> Factory;
+        }
+
+        private static readonly List<BoxRegistration> _allBoxes = new()
+        {
+            // ── 程序 ──
+            new() { Name = "欢迎使用ToolBox", Group = "程序", Icon = "d_Help",              Factory = () => new HelloBox().CreateContent() },
+            new() { Name = "常用路径",       Group = "程序", Icon = "d_FolderOpened",       Factory = () => new PathBox().CreateContent() },
+            new() { Name = "Debug",          Group = "程序", Icon = "d_console.infoicon",   Factory = () => new DebugBox().CreateContent() },
+            // ── 资源 ──
+            new() { Name = "颜色工具箱",     Group = "资源", Icon = "d_ColorPicker.ColorPalette", Factory = () => new ColorBox().CreateContent() },
+            new() { Name = "曲线工具箱",     Group = "资源", Icon = "d_Animation",                 Factory = () => new AnimationCurveBox().CreateContent() },
+            // ── 构建 ──
+            new() { Name = "构建打包",       Group = "构建", Icon = "d_PreMatQuad",          Factory = () => new BuildBox().CreateContent() },
+        };
+
+        #endregion
+
         private void OnEnable()
         {
-            RefreshTabs();
+            RefreshBoxes();
         }
 
         private void OnDisable()
         {
             SaveSplitterPosition();
+        }
+
+        private void RefreshBoxes()
+        {
+            _filteredBoxes = _allBoxes
+                .Where(b => b.Group == _groupFilter)
+                .ToList();
+
+            if (_filteredBoxes.Count > 0 && _selectedIndex < 0)
+                _selectedIndex = 0;
         }
 
         private void CreateGUI()
@@ -63,11 +108,11 @@ namespace TGame.ToolBox
 
             BuildSidebar(scrollView);
 
-            if (_tabs.Count > 0)
+            if (_filteredBoxes.Count > 0)
             {
                 if (_selectedIndex < 0)
                     _selectedIndex = 0;
-                SelectTab(_selectedIndex);
+                SelectBox(_selectedIndex);
             }
             else
             {
@@ -80,28 +125,28 @@ namespace TGame.ToolBox
             _sidebarButtons.Clear();
             scrollView.Clear();
 
-            for (int i = 0; i < _tabs.Count; i++)
+            for (int i = 0; i < _filteredBoxes.Count; i++)
             {
                 var index = i;
-                var attr = _tabs[i].Attribute;
-                var name = attr.Name;
+                var reg = _filteredBoxes[i];
 
                 var btn = new Button();
-                btn.name = $"tab-{i}";
+                btn.name = $"box-{i}";
                 btn.AddToClassList("sidebar-tab-button");
+
                 var icon = new Image();
-                icon.image = GetTabIcon(i);
+                icon.image = GetIcon(reg.Icon);
                 icon.style.width = 16;
                 icon.style.height = 16;
                 icon.style.marginRight = 6;
                 btn.Add(icon);
 
-                var label = new Label(name);
+                var label = new Label(reg.Name);
                 label.style.unityTextAlign = TextAnchor.MiddleLeft;
                 label.style.flexGrow = 1;
                 btn.Add(label);
 
-                btn.clicked += () => SelectTab(index);
+                btn.clicked += () => SelectBox(index);
                 scrollView.Add(btn);
                 _sidebarButtons.Add(btn);
             }
@@ -109,9 +154,9 @@ namespace TGame.ToolBox
             UpdateSidebarSelection();
         }
 
-        private Texture2D GetTabIcon(int index)
+        private static Texture2D GetIcon(string iconName)
         {
-            var iconName = _tabIcons[index % _tabIcons.Length];
+            if (string.IsNullOrEmpty(iconName)) return null;
             var content = EditorGUIUtility.IconContent(iconName);
             return content?.image as Texture2D;
         }
@@ -127,132 +172,43 @@ namespace TGame.ToolBox
             }
         }
 
-        private void RefreshTabs()
+        private void SelectBox(int index)
         {
-            _tabs.Clear();
-
-            var types = TypeCache.GetTypesWithAttribute<ToolBoxAttribute>();
-            foreach (var type in types)
-            {
-                var attr = type.GetCustomAttributes(typeof(ToolBoxAttribute), false)
-                    .Cast<ToolBoxAttribute>().First();
-
-                var entry = new TabEntry
-                {
-                    Type = type,
-                    Attribute = attr
-                };
-
-                CreateInstance(entry);
-                _tabs.Add(entry);
-            }
-
-            _tabs = _tabs.OrderBy(t => t.Attribute.Order).ThenBy(t => t.Attribute.Name).ToList();
-
-            if (_tabs.Count > 0 && _selectedIndex < 0)
-                _selectedIndex = 0;
-        }
-
-        private void CreateInstance(TabEntry entry)
-        {
-            if (typeof(ScriptableObject).IsAssignableFrom(entry.Type))
-            {
-                if (!string.IsNullOrEmpty(entry.Attribute.Path))
-                {
-                    var so = AssetDatabase.LoadAssetAtPath(entry.Attribute.Path, entry.Type) as ScriptableObject;
-                    if (so != null)
-                    {
-                        entry.Instance = so;
-                        entry.IsTemporary = false;
-                    }
-                    else
-                    {
-                        entry.Instance = ScriptableObject.CreateInstance(entry.Type);
-                        entry.IsTemporary = true;
-                    }
-                }
-                else
-                {
-                    entry.Instance = ScriptableObject.CreateInstance(entry.Type);
-                    entry.IsTemporary = true;
-                }
-            }
-            else
-            {
-                entry.Instance = Activator.CreateInstance(entry.Type);
-            }
-        }
-
-        private void SelectTab(int index)
-        {
-            if (index < 0 || index >= _tabs.Count) return;
+            if (index < 0 || index >= _filteredBoxes.Count) return;
 
             _selectedIndex = index;
             _contentContainer.Clear();
-            ShowContent(_tabs[_selectedIndex]);
+            ShowContent(_filteredBoxes[_selectedIndex]);
             UpdateSidebarSelection();
         }
 
- private void ShowContent(TabEntry entry)
- {
-     var wrapper = new VisualElement();
-     wrapper.style.flexGrow = 1;
+        private void ShowContent(BoxRegistration reg)
+        {
+            var wrapper = new VisualElement();
+            wrapper.style.flexGrow = 1;
 
-      // content header
-      var header = new VisualElement();
-      header.AddToClassList("tbx-content-header");
+            // content header
+            var header = new VisualElement();
+            header.AddToClassList("tbx-content-header");
 
-      var title = new Label(entry.Attribute.Name);
-      title.AddToClassList("tbx-content-header-label");
-     header.Add(title);
-     wrapper.Add(header);
+            var title = new Label(reg.Name);
+            title.AddToClassList("tbx-content-header-label");
+            header.Add(title);
+            wrapper.Add(header);
 
-            if (entry.Instance is IToolBoxContentVisualElement veContent)
-            {
-                var scrollView = new ScrollView();
-                scrollView.Add(veContent.CreateContent());
-                wrapper.Add(scrollView);
-            }
-            else if (entry.Instance is ScriptableObject)
-            {
-                var scrollView = new ScrollView();
-                var imguiContainer = new IMGUIContainer(() =>
-                {
-                    if (entry.Editor == null)
-                        entry.Editor = Editor.CreateEditor(entry.Instance as ScriptableObject);
-                    if (entry.IsTemporary)
-                    {
-                        EditorGUILayout.HelpBox("此 SO 为临时实例（未找到资产文件），修改不会保存。",
-                            MessageType.Warning);
-                    }
-                    entry.Editor.OnInspectorGUI();
-                });
-                scrollView.Add(imguiContainer);
-                wrapper.Add(scrollView);
-            }
-            else if (entry.Instance is IToolBoxContent content)
-            {
-                var scrollView = new ScrollView();
-                var imguiContainer = new IMGUIContainer(() =>
-                {
-                    var prevColor = GUI.color;
-                    GUI.color = Color.white;
-                    content.DrawContent();
-                    GUI.color = prevColor;
-                });
-                scrollView.Add(imguiContainer);
-                wrapper.Add(scrollView);
-            }
+            var scrollView = new ScrollView();
+            scrollView.Add(reg.Factory());
+            wrapper.Add(scrollView);
 
             _contentContainer.Add(wrapper);
         }
 
-private void ShowEmptyState()
-{
-    var label = new Label("没有可用的 ToolBox 标签。\n\n为类添加 [ToolBox(\"名称\")] 特性即可在此显示。");
-    label.AddToClassList("tbx-empty");
-    _contentContainer.Add(label);
-}
+        private void ShowEmptyState()
+        {
+            var label = new Label($"分组 \"{_groupFilter}\" 没有可用的工具。");
+            label.AddToClassList("tbx-empty");
+            _contentContainer.Add(label);
+        }
 
         private void SaveSplitterPosition()
         {
@@ -260,15 +216,6 @@ private void ShowEmptyState()
             var leftPane = _splitView.Children().FirstOrDefault();
             if (leftPane != null)
                 EditorPrefs.SetFloat("ToolBox.SidebarWidth", leftPane.resolvedStyle.width);
-        }
-
-        private class TabEntry
-        {
-            public Type Type;
-            public ToolBoxAttribute Attribute;
-            public object Instance;
-            public bool IsTemporary;
-            public Editor Editor;
         }
     }
 }

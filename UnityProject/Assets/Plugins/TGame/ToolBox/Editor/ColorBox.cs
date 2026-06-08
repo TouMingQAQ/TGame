@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TGame.ToolBox;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,7 +22,6 @@ namespace TGame.ToolBox
         }
     }
 
-    [ToolBox("颜色工具箱", Order = 3)]
     public class ColorBox : IToolBoxContentVisualElement
     {
         private const string LibPath = "Assets/Resources/ColorLibrary.asset";

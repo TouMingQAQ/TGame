@@ -7,7 +7,6 @@ using TGame;
 
 namespace TGame.ToolBox
 {
-    [ToolBox("Debug")]
     public class DebugBox : IToolBoxContentVisualElement
     {
         private TDebugSettings _settings;
@@ -17,20 +16,16 @@ namespace TGame.ToolBox
         public VisualElement CreateContent()
         {
             var root = new VisualElement();
-            root.style.paddingLeft = 12;
-            root.style.paddingRight = 12;
-            root.style.paddingTop = 12;
-            root.style.paddingBottom = 12;
 
             // ── Header ──
             var header = new Label("TDebug 控制面板");
-            header.style.fontSize = 18;
-            header.style.unityFontStyleAndWeight = FontStyle.Bold;
-            header.style.marginBottom = 12;
+            header.AddToClassList("tbx-section-title");
             root.Add(header);
 
             // ── 配置 SO ──
-            root.Add(new Label("配置 SO") { style = { fontSize = 14, unityFontStyleAndWeight = FontStyle.Bold, marginBottom = 2 } });
+            var configLabel = new Label("配置 SO");
+            configLabel.AddToClassList("tbx-subtitle");
+            root.Add(configLabel);
 
             _settingsField = new ObjectField("Settings Asset")
             {
@@ -41,40 +36,57 @@ namespace TGame.ToolBox
             root.Add(_settingsField);
 
             var applyBtn = new Button(ApplySettings) { text = "应用到运行时" };
+            applyBtn.AddToClassList("tbx-btn-secondary");
             applyBtn.style.marginTop = 4;
             root.Add(applyBtn);
 
-            root.Add(new VisualElement { style = { height = 6 } });
+            // ── 状态信息 card ──
+            var statusCard = new VisualElement();
+            statusCard.AddToClassList("tbx-card");
+            root.Add(statusCard);
 
-            // ── 状态信息 ──
             _statusLabel = new Label(GetStatusText());
-            _statusLabel.style.color = new Color(0.7f, 0.7f, 0.7f);
+            _statusLabel.AddToClassList("tbx-label");
             _statusLabel.style.whiteSpace = WhiteSpace.Normal;
-            _statusLabel.style.marginBottom = 8;
-            root.Add(_statusLabel);
+            statusCard.Add(_statusLabel);
 
-            // ── 分隔线 ──
-            root.Add(MakeSeparator());
+            var sep1 = new VisualElement();
+            sep1.AddToClassList("tbx-separator");
+            root.Add(sep1);
 
             // ── 运行时控制 ──
-            root.Add(new Label("运行时控制") { style = { fontSize = 14, unityFontStyleAndWeight = FontStyle.Bold, marginBottom = 6, marginTop = 6 } });
+            var rtLabel = new Label("运行时控制");
+            rtLabel.AddToClassList("tbx-subtitle");
+            root.Add(rtLabel);
+
+            var rtCard = new VisualElement();
+            rtCard.AddToClassList("tbx-card-tight");
+            root.Add(rtCard);
 
             var enableToggle = new Toggle("启用日志") { value = TDebug.IsEnabled };
             enableToggle.RegisterValueChangedCallback(evt => { TDebug.SetEnable(evt.newValue); RefreshStatus(); });
-            root.Add(enableToggle);
+            rtCard.Add(enableToggle);
 
             var minLevelField = new IntegerField("最低 Level") { value = TDebug.GetMinLevel() };
             minLevelField.RegisterValueChangedCallback(evt => { TDebug.SetMinLevel(evt.newValue); RefreshStatus(); });
-            root.Add(minLevelField);
+            rtCard.Add(minLevelField);
 
-            root.Add(MakeSeparator());
+            var sep2 = new VisualElement();
+            sep2.AddToClassList("tbx-separator");
+            root.Add(sep2);
 
             // ── 上下文控制 ──
-            root.Add(new Label("上下文") { style = { fontSize = 14, unityFontStyleAndWeight = FontStyle.Bold, marginBottom = 6 } });
+            var ctxLabel = new Label("上下文控制");
+            ctxLabel.AddToClassList("tbx-subtitle");
+            root.Add(ctxLabel);
+
+            var ctxCard = new VisualElement();
+            ctxCard.AddToClassList("tbx-card-tight");
+            root.Add(ctxCard);
 
             var contextTagField = new TextField("Tag") { value = TDebug.ContextTag ?? "" };
             contextTagField.RegisterValueChangedCallback(evt => TDebug.SetTag(evt.newValue));
-            root.Add(contextTagField);
+            ctxCard.Add(contextTagField);
 
             var clearTagBtn = new Button(() =>
             {
@@ -83,12 +95,13 @@ namespace TGame.ToolBox
                 RefreshStatus();
             })
             { text = "清空 Tag" };
+            clearTagBtn.AddToClassList("tbx-btn-secondary");
             clearTagBtn.style.marginTop = 2;
-            root.Add(clearTagBtn);
+            ctxCard.Add(clearTagBtn);
 
             var levelField = new IntegerField("Level") { value = TDebug.ContextLevel >= 0 ? TDebug.ContextLevel : 0 };
             levelField.RegisterValueChangedCallback(evt => TDebug.SetLevel(evt.newValue));
-            root.Add(levelField);
+            ctxCard.Add(levelField);
 
             var resetLevelBtn = new Button(() =>
             {
@@ -97,21 +110,31 @@ namespace TGame.ToolBox
                 RefreshStatus();
             })
             { text = "重置 Level" };
+            resetLevelBtn.AddToClassList("tbx-btn-secondary");
             resetLevelBtn.style.marginTop = 2;
-            root.Add(resetLevelBtn);
+            ctxCard.Add(resetLevelBtn);
 
-            root.Add(MakeSeparator());
+            var sep3 = new VisualElement();
+            sep3.AddToClassList("tbx-separator");
+            root.Add(sep3);
 
             // ── 文件日志 ──
-            root.Add(new Label("文件日志") { style = { fontSize = 14, unityFontStyleAndWeight = FontStyle.Bold, marginBottom = 6 } });
+            var fileLabel = new Label("文件日志");
+            fileLabel.AddToClassList("tbx-subtitle");
+            root.Add(fileLabel);
+
+            var fileCard = new VisualElement();
+            fileCard.AddToClassList("tbx-card-tight");
+            root.Add(fileCard);
 
             var fileLogToggle = new Toggle("写入文件") { value = TDebug.FileLoggingEnabled };
             fileLogToggle.RegisterValueChangedCallback(evt => { TDebug.FileLoggingEnabled = evt.newValue; RefreshStatus(); });
-            root.Add(fileLogToggle);
+            fileCard.Add(fileLogToggle);
 
             var openLogBtn = new Button(OpenLogFile) { text = "打开日志文件夹" };
+            openLogBtn.AddToClassList("tbx-btn-secondary");
             openLogBtn.style.marginTop = 4;
-            root.Add(openLogBtn);
+            fileCard.Add(openLogBtn);
 
             return root;
         }
@@ -174,22 +197,6 @@ namespace TGame.ToolBox
             AssetDatabase.CreateAsset(settings, "Assets/Settings/TDebugSettings.asset");
             AssetDatabase.SaveAssets();
             return settings;
-        }
-
-        private static VisualElement MakeSeparator()
-        {
-            return new VisualElement
-            {
-                style =
-                {
-                    height = 1,
-                    backgroundColor = new Color(0.3f, 0.3f, 0.3f),
-                    marginTop = 6,
-                    marginBottom = 6,
-                    marginLeft = 0,
-                    marginRight = 0
-                }
-            };
         }
     }
 }

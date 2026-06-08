@@ -5,7 +5,6 @@ using UnityEngine.UIElements;
 
 namespace TGame.ToolBox
 {
-    [ToolBox("常用路径", Order = 0)]
     public class PathBox : IToolBoxContentVisualElement
     {
         private List<PathEntry> _paths;

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 using UnityEditor;
@@ -7,7 +7,6 @@ using UnityEngine.UIElements;
 
 namespace TGame.ToolBox
 {
-    [ToolBox("欢迎使用ToolBox")]
     public class HelloBox : IToolBoxContentVisualElement
     {
         private TextAsset _readme;
@@ -27,7 +26,6 @@ namespace TGame.ToolBox
 
             var root = new VisualElement();
             root.style.flexGrow = 1;
-            root.style.backgroundColor = BgColor;
             root.style.paddingLeft = 12;
             root.style.paddingRight = 12;
             root.style.paddingTop = 10;
@@ -147,13 +145,7 @@ namespace TGame.ToolBox
         private static VisualElement MakeCodeBlock(List<string> codeLines)
         {
             var container = new VisualElement();
-            container.style.backgroundColor = CodeBg;
-            container.style.marginTop = 4;
-            container.style.marginBottom = 4;
-            container.style.paddingTop = 8;
-            container.style.paddingBottom = 8;
-            container.style.paddingLeft = 10;
-            container.style.paddingRight = 10;
+            container.AddToClassList("tbx-code-block");
 
             var sb = new StringBuilder();
             foreach (var line in codeLines)
@@ -170,18 +162,9 @@ namespace TGame.ToolBox
 
         private static VisualElement MakeSeparator()
         {
-            return new VisualElement
-            {
-                style =
-                {
-                    height = 1,
-                    backgroundColor = SeparatorColor,
-                    marginTop = 4,
-                    marginBottom = 4,
-                    marginLeft = 0,
-                    marginRight = 0,
-                }
-            };
+            var sep = new VisualElement();
+            sep.AddToClassList("tbx-separator");
+            return sep;
         }
 
         #region Markdown Parser
@@ -277,3 +260,4 @@ namespace TGame.ToolBox
         }
     }
 }
+
