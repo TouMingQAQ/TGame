@@ -37,6 +37,13 @@ namespace TGame.SceneNavigator
         private HelpBox _noSceneHelp;
         private VisualElement _helpBoxContainer;
 
+        // ── 初始化启动 ──
+        private const string InitScenePrefKey = "SceneNavigator.InitScenePath";
+        private SceneAsset _initSceneAsset;
+        private ObjectField _initSceneField;
+        private Button _initBootButton;
+        private HelpBox _initBootHelpBox;
+
         public VisualElement CreateContent()
         {
             _root = new VisualElement();
@@ -65,6 +72,9 @@ namespace TGame.SceneNavigator
             _runButton = null;
             _noSceneHelp = null;
             _helpBoxContainer = null;
+            _initSceneField = null;
+            _initBootButton = null;
+            _initBootHelpBox = null;
 
             EnsureProfile();
             if (_profile == null)
@@ -84,6 +94,9 @@ namespace TGame.SceneNavigator
             BuildSearchAndSelect();
             _root.Add(new VisualElement { style = { height = 4 } });
             BuildRunButton();
+
+            _root.Add(BuildSeparator());
+            BuildInitBootSection();
         }
 
         private void BuildSearchAndSelect()
@@ -212,6 +225,110 @@ namespace TGame.SceneNavigator
                 : System.IO.Path.GetFileNameWithoutExtension(entry.scenePath);
         }
 
+        // ──────────────────────────────────────────
+        //  初始化启动
+        // ──────────────────────────────────────────
+
+        private void BuildInitBootSection()
+        {
+            var sectionTitle = new Label("初始化启动");
+            sectionTitle.AddToClassList("tbx-section-title");
+            _root.Add(sectionTitle);
+
+            // 加载已保存的初始场景路径
+            var savedPath = EditorPrefs.GetString(InitScenePrefKey, "");
+            if (!string.IsNullOrEmpty(savedPath))
+                _initSceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(savedPath);
+
+            // 场景选择行
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+
+            var label = new Label("初始场景");
+            label.style.width = 60;
+            row.Add(label);
+
+            _initSceneField = new ObjectField();
+            _initSceneField.objectType = typeof(SceneAsset);
+            _initSceneField.value = _initSceneAsset;
+            _initSceneField.style.flexGrow = 1;
+            _initSceneField.RegisterValueChangedCallback(OnInitSceneChanged);
+            row.Add(_initSceneField);
+
+            _root.Add(row);
+            _root.Add(new VisualElement { style = { height = 4 } });
+
+            // 按钮
+            _initBootButton = new Button(RunInitScene);
+            _initBootButton.text = "▶ 初始化并启动";
+            _initBootButton.style.height = 36;
+            _root.Add(_initBootButton);
+
+            // 提示
+            _initBootHelpBox = new HelpBox("将以初始场景进入播放模式，初始化完成后自动跳回当前场景。", HelpBoxMessageType.Info);
+            _root.Add(_initBootHelpBox);
+        }
+
+        private void OnInitSceneChanged(ChangeEvent<Object> evt)
+        {
+            _initSceneAsset = evt.newValue as SceneAsset;
+            if (_initSceneAsset != null)
+            {
+                var path = AssetDatabase.GetAssetPath(_initSceneAsset);
+                EditorPrefs.SetString(InitScenePrefKey, path);
+            }
+            else
+            {
+                EditorPrefs.DeleteKey(InitScenePrefKey);
+            }
+        }
+
+        private void RunInitScene()
+        {
+            if (_initSceneAsset == null)
+            {
+                Debug.LogWarning("[SceneNavigator] 请先选择初始场景。");
+                return;
+            }
+
+            var initScenePath = AssetDatabase.GetAssetPath(_initSceneAsset);
+            if (string.IsNullOrEmpty(initScenePath))
+            {
+                Debug.LogError("[SceneNavigator] 初始场景路径无效。");
+                return;
+            }
+
+            var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(initScenePath);
+            if (sceneAsset == null)
+            {
+                Debug.LogError($"[SceneNavigator] 场景文件不存在: {initScenePath}");
+                return;
+            }
+
+            // 保存当前场景路径，用于退出播放后恢复
+            _prePlayScenePath = SceneManager.GetActiveScene().path;
+
+            // 通过 PlayerPrefs 将目标场景路径传递给运行时 GameBootstrapper
+            PlayerPrefs.SetString("TGame_InitBoot_TargetScene", _prePlayScenePath);
+            PlayerPrefs.Save();
+
+            EditorSceneManager.playModeStartScene = sceneAsset;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+
+            EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
+        }
+
+        private static VisualElement BuildSeparator()
+        {
+            var sep = new VisualElement();
+            sep.AddToClassList("tbx-separator");
+            sep.style.marginTop = 8;
+            sep.style.marginBottom = 8;
+            return sep;
+        }
+
         // --- unchanged business logic ---
 
         private void EnsureProfile()
@@ -289,6 +406,10 @@ namespace TGame.SceneNavigator
             if (state == PlayModeStateChange.EnteredEditMode)
             {
                 EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+
+                // 清理初始化引导 PlayerPrefs 标记（如有残留）
+                PlayerPrefs.DeleteKey("TGame_InitBoot_TargetScene");
+                PlayerPrefs.Save();
 
                 var savedPath = _prePlayScenePath;
                 _prePlayScenePath = null;
