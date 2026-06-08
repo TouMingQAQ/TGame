@@ -1,112 +1,534 @@
-﻿#sidebar {
-    background-color: rgb(30, 30, 30);
-    min-width: 140px;
-    max-width: 350px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-    border-right: 1px solid rgb(20, 20, 20);
+﻿/* =============================================
+   ToolBox Theme - Design System
+   ============================================= */
+
+:root {
+    /* Background */
+    --tbx-bg-base:       rgb(40, 40, 42);
+    --tbx-bg-sidebar:    rgb(28, 28, 30);
+    --tbx-bg-raised:     rgb(48, 48, 52);
+    --tbx-bg-card:       rgb(38, 38, 40);
+    --tbx-bg-input:      rgb(32, 32, 34);
+    --tbx-bg-code:       rgb(24, 24, 28);
+    --tbx-bg-overlay:    rgba(0, 0, 0, 0.75);
+
+    /* Accent */
+    --tbx-accent:         rgb(70, 125, 210);
+    --tbx-accent-hover:   rgb(85, 140, 225);
+    --tbx-accent-subtle:  rgba(70, 125, 210, 0.15);
+    --tbx-accent-muted:   rgba(70, 125, 210, 0.25);
+
+    /* Text */
+    --tbx-text-primary:   rgb(215, 215, 220);
+    --tbx-text-secondary: rgb(145, 145, 150);
+    --tbx-text-muted:     rgb(105, 105, 110);
+    --tbx-text-heading:   rgb(235, 235, 238);
+    --tbx-text-accent:    rgb(140, 190, 255);
+
+    /* Border */
+    --tbx-border:         rgb(52, 52, 58);
+    --tbx-border-focus:   rgb(70, 125, 210);
+
+    /* Status */
+    --tbx-success:        rgb(80, 190, 120);
+    --tbx-warning:        rgb(220, 180, 80);
+    --tbx-error:          rgb(220, 80, 80);
+    --tbx-info:           rgb(100, 180, 220);
+
+    /* Spacing grid */
+    --tbx-sp-1: 2px;
+    --tbx-sp-2: 4px;
+    --tbx-sp-3: 8px;
+    --tbx-sp-4: 12px;
+    --tbx-sp-5: 16px;
+    --tbx-sp-6: 20px;
+    --tbx-sp-8: 32px;
+
+    /* Radius */
+    --tbx-radius-sm: 2px;
+    --tbx-radius:    4px;
+    --tbx-radius-lg: 6px;
+}
+
+/* =============================================
+   Sidebar
+   ============================================= */
+
+#sidebar {
+    background-color: var(--tbx-bg-sidebar);
+    min-width: 160px;
+    max-width: 320px;
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    border-right-width: 1px;
+    border-right-color: var(--tbx-border);
+    flex-shrink: 0;
 }
 
 .sidebar-tab-button {
     font-size: 12px;
     -unity-text-align: middle-left;
-    height: 32px;
-    padding-left: 12px;
-    padding-right: 8px;
+    height: 34px;
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-3);
+    margin-left: var(--tbx-sp-3);
+    margin-right: var(--tbx-sp-3);
+    margin-bottom: 1px;
     background-color: transparent;
-    border-color: transparent;
-    color: rgb(180, 180, 180);
+    border-width: 0;
+    color: var(--tbx-text-secondary);
     -unity-font-style: normal;
+    border-radius: var(--tbx-radius);
 }
 
 .sidebar-tab-button:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-    color: rgb(220, 220, 220);
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--tbx-text-primary);
+}
+
+.sidebar-tab-button:active {
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .sidebar-tab-button--selected {
-    background-color: rgb(45, 90, 200);
-    color: white;
+    background-color: var(--tbx-accent);
+    color: rgb(255, 255, 255);
     -unity-font-style: bold;
 }
 
 .sidebar-tab-button--selected:hover {
-    background-color: rgb(55, 105, 220);
+    background-color: var(--tbx-accent-hover);
 }
+
+/* =============================================
+   Content Area
+   ============================================= */
 
 #content-area {
     flex-grow: 1;
-    background-color: rgb(45, 45, 45);
+    background-color: var(--tbx-bg-base);
 }
 
-.tbx-section-title {
-    font-size: 16px;
+.tbx-content-wrapper {
+    flex-grow: 1;
+}
+
+.tbx-content-header {
+    background-color: var(--tbx-bg-raised);
+    padding-left: var(--tbx-sp-5);
+    padding-right: var(--tbx-sp-5);
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--tbx-border);
+    flex-shrink: 0;
+}
+
+.tbx-content-header-label {
+    font-size: 14px;
     -unity-font-style: bold;
-    color: rgb(200, 200, 200);
-    margin-bottom: 8px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid rgb(60, 60, 60);
+    color: var(--tbx-text-primary);
+}
+
+/* =============================================
+   Typography
+   ============================================= */
+
+.tbx-section-title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--tbx-text-heading);
+    margin-bottom: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-2);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--tbx-border);
 }
 
 .tbx-subtitle {
     font-size: 13px;
     -unity-font-style: bold;
-    color: rgb(170, 170, 170);
-    margin-bottom: 4px;
-}
-
-.tbx-separator {
-    height: 1px;
-    background-color: rgb(55, 55, 55);
-    margin-top: 6px;
-    margin-bottom: 6px;
-}
-
-.tbx-empty {
-    -unity-text-align: middle-center;
-    color: rgb(100, 100, 100);
-    padding: 10px;
+    color: var(--tbx-text-primary);
+    margin-bottom: var(--tbx-sp-2);
 }
 
 .tbx-label {
     font-size: 11px;
-    color: rgb(140, 140, 140);
+    color: var(--tbx-text-secondary);
+    flex-shrink: 0;
 }
 
 .tbx-value {
     font-size: 12px;
     -unity-font-style: bold;
-    color: rgb(220, 220, 220);
+    color: var(--tbx-text-primary);
 }
 
-.tbx-field-label {
-    width: 100px;
-    font-size: 11px;
-    color: rgb(140, 140, 140);
+.tbx-empty {
+    -unity-text-align: middle-center;
+    color: var(--tbx-text-muted);
+    padding-top: var(--tbx-sp-4);
+    padding-bottom: var(--tbx-sp-4);
 }
 
-.tbx-field-label-wide {
-    width: 200px;
-    font-size: 11px;
-    color: rgb(140, 140, 140);
+.tbx-help-text {
+    font-size: 10px;
+    color: var(--tbx-text-muted);
+    margin-top: var(--tbx-sp-1);
 }
+
+/* =============================================
+   Separator
+   ============================================= */
+
+.tbx-separator {
+    height: 1px;
+    background-color: var(--tbx-border);
+    margin-top: var(--tbx-sp-3);
+    margin-bottom: var(--tbx-sp-3);
+    flex-shrink: 0;
+}
+
+.tbx-separator-thick {
+    height: 2px;
+    background-color: var(--tbx-border);
+    margin-top: var(--tbx-sp-4);
+    margin-bottom: var(--tbx-sp-4);
+    flex-shrink: 0;
+}
+
+/* =============================================
+   Card
+   ============================================= */
 
 .tbx-card {
-    background-color: rgb(40, 40, 40);
-    border-top-width: 1px;
-    border-top-color: rgb(55, 55, 55);
-    margin-bottom: 4px;
-    padding: 4px 6px;
+    background-color: var(--tbx-bg-card);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    margin-bottom: var(--tbx-sp-3);
+    padding: var(--tbx-sp-4);
 }
 
+.tbx-card-tight {
+    background-color: var(--tbx-bg-card);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    margin-bottom: var(--tbx-sp-2);
+    padding: var(--tbx-sp-3);
+}
+
+.tbx-card-interactive {
+    background-color: var(--tbx-bg-card);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    margin-bottom: var(--tbx-sp-2);
+    padding: var(--tbx-sp-3);
+}
+
+.tbx-card-interactive:hover {
+    background-color: rgb(44, 44, 48);
+}
+
+/* =============================================
+   Form rows
+   ============================================= */
+
+.tbx-form-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--tbx-sp-2);
+}
+
+.tbx-form-label {
+    width: 100px;
+    font-size: 11px;
+    color: var(--tbx-text-secondary);
+    flex-shrink: 0;
+}
+
+.tbx-form-label-wide {
+    width: 180px;
+    font-size: 11px;
+    color: var(--tbx-text-secondary);
+    flex-shrink: 0;
+}
+
+.tbx-form-field {
+    flex-grow: 1;
+}
+
+/* =============================================
+   Toggle row
+   ============================================= */
+
+.tbx-toggle-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--tbx-sp-1);
+}
+
+.tbx-toggle-row > Toggle {
+    flex-grow: 1;
+}
+
+/* =============================================
+   Buttons
+   ============================================= */
+
+.tbx-btn-primary {
+    height: 28px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    background-color: var(--tbx-accent);
+    color: white;
+    border-width: 0;
+    border-radius: var(--tbx-radius);
+    padding-left: var(--tbx-sp-5);
+    padding-right: var(--tbx-sp-5);
+}
+
+.tbx-btn-primary:hover {
+    background-color: var(--tbx-accent-hover);
+}
+
+.tbx-btn-secondary {
+    height: 26px;
+    font-size: 11px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--tbx-text-primary);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    border-radius: var(--tbx-radius);
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
+}
+
+.tbx-btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.tbx-btn-icon {
+    width: 26px;
+    height: 26px;
+    font-size: 14px;
+    background-color: transparent;
+    color: var(--tbx-text-secondary);
+    border-width: 0;
+    border-radius: var(--tbx-radius);
+    padding: 0;
+}
+
+.tbx-btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--tbx-text-primary);
+}
+
+.tbx-btn-browse {
+    width: 56px;
+    height: 22px;
+    font-size: 10px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--tbx-text-secondary);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    border-radius: var(--tbx-radius);
+    margin-left: var(--tbx-sp-2);
+}
+
+.tbx-btn-browse:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--tbx-text-primary);
+}
+
+/* =============================================
+   Color Cards
+   ============================================= */
+
 .tbx-color-card {
-    width: 122px;
-    margin-right: 6px;
-    margin-bottom: 6px;
-    background-color: rgb(40, 40, 40);
+    width: 124px;
+    margin-right: var(--tbx-sp-3);
+    margin-bottom: var(--tbx-sp-3);
+    background-color: var(--tbx-bg-card);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    overflow: hidden;
+}
+
+.tbx-color-card:hover {
+    border-color: var(--tbx-border-focus);
 }
 
 .tbx-color-swatch {
-    height: 50px;
-    margin-bottom: 4px;
+    height: 52px;
+    flex-shrink: 0;
+}
+
+.tbx-color-name {
+    font-size: 10px;
+    -unity-text-align: middle-center;
+    color: var(--tbx-text-secondary);
+    padding: var(--tbx-sp-1) var(--tbx-sp-2);
+}
+
+.tbx-color-hex {
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    padding: 0 var(--tbx-sp-2) var(--tbx-sp-2) var(--tbx-sp-2);
+}
+
+/* =============================================
+   Curve Card
+   ============================================= */
+
+.tbx-curve-card {
+    background-color: var(--tbx-bg-card);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+    margin-bottom: var(--tbx-sp-3);
+    padding: var(--tbx-sp-3) var(--tbx-sp-4);
+}
+
+.tbx-curve-card-header {
+    flex-direction: row;
+    margin-bottom: var(--tbx-sp-2);
+    align-items: center;
+}
+
+/* =============================================
+   Path row
+   ============================================= */
+
+.tbx-path-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--tbx-sp-3);
+}
+
+.tbx-path-label {
+    width: 200px;
+    font-size: 11px;
+    color: var(--tbx-text-secondary);
+    flex-shrink: 0;
+}
+
+.tbx-path-field {
+    flex-grow: 1;
+    margin-right: var(--tbx-sp-2);
+}
+
+/* =============================================
+   Status bar
+   ============================================= */
+
+.tbx-status-bar {
+    margin-top: var(--tbx-sp-3);
+    padding: var(--tbx-sp-3) var(--tbx-sp-4);
+    border-radius: var(--tbx-radius);
+    background-color: var(--tbx-bg-card);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+}
+
+/* =============================================
+   ScrollView refinements
+   ============================================= */
+
+ScrollView {
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-4);
+}
+
+/* Content area scroll views - individual boxes already have inline padding */
+#content-area ScrollView {
+    padding: 0;
+}
+
+/* =============================================
+   Code block
+   ============================================= */
+
+.tbx-code-block {
+    background-color: var(--tbx-bg-code);
+    margin-top: var(--tbx-sp-2);
+    margin-bottom: var(--tbx-sp-2);
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
+    border-radius: var(--tbx-radius);
+    border-width: 1px;
+    border-color: var(--tbx-border);
+}
+
+/* =============================================
+   Dropdown / TextField refinements
+   ============================================= */
+
+DropdownField {
+    margin-bottom: var(--tbx-sp-1);
+}
+
+TextField {
+    margin-bottom: var(--tbx-sp-1);
+}
+
+/* =============================================
+   Copy feedback overlay
+   ============================================= */
+
+.tbx-copy-overlay {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: var(--tbx-bg-overlay);
+    color: white;
+    -unity-text-align: middle-center;
+    font-size: 12px;
+    border-radius: var(--tbx-radius);
+}
+
+/* =============================================
+   Sidebar scroll view (remove default padding)
+   ============================================= */
+
+#sidebar ScrollView {
+    padding: 0;
+}
+
+/* =============================================
+   Empty state hints
+   ============================================= */
+
+#empty-hint {
+    -unity-text-align: middle-center;
+    color: var(--tbx-text-muted);
+    padding-top: var(--tbx-sp-4);
+    padding-bottom: var(--tbx-sp-4);
+}
+
+/* =============================================
+   AnimationCurveBox add-row
+   ============================================= */
+
+.tbx-add-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--tbx-sp-3);
+}
+
+.tbx-add-row > TextField {
+    flex-grow: 1;
+}
+
+.tbx-add-row > Button {
+    flex-shrink: 0;
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,9 +44,7 @@ namespace TGame.ToolBox
             root.style.paddingTop = 4;
 
             var title = new Label("颜色工具箱");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.fontSize = 14;
-            title.style.marginBottom = 4;
+            title.AddToClassList("tbx-section-title");
             root.Add(title);
 
             if (_allColors == null)
@@ -57,11 +55,11 @@ namespace TGame.ToolBox
             var searchField = new TextField();
             searchField.style.marginBottom = 6;
             searchField.RegisterValueChangedCallback(OnSearch);
+            searchField.AddToClassList("tbx-form-field");
             root.Add(searchField);
 
             var instructions = new Label("点击色块复制 HEX 代码");
-            instructions.style.fontSize = 11;
-            instructions.style.color = new Color(0.5f, 0.5f, 0.5f);
+            instructions.AddToClassList("tbx-help-text");
             instructions.style.marginBottom = 6;
             root.Add(instructions);
 
@@ -95,10 +93,7 @@ namespace TGame.ToolBox
             _grid.Clear();
             if (_filtered.Count == 0)
             {
-                _grid.Add(new Label("无匹配颜色")
-                {
-                    style = { unityTextAlign = TextAnchor.MiddleCenter, color = new Color(0.5f, 0.5f, 0.5f) }
-                });
+                _grid.Add(new Label("无匹配颜色") { name = "empty-hint" });
                 return;
             }
             foreach (var entry in _filtered)
@@ -146,7 +141,7 @@ namespace TGame.ToolBox
                 RefreshDIYGrid();
             });
             addBtn.text = "添加";
-            addBtn.style.width = 60;
+            addBtn.AddToClassList("tbx-btn-secondary");
             addRow.Add(addBtn);
 
             _diyGrid = new VisualElement();
@@ -164,10 +159,7 @@ namespace TGame.ToolBox
 
             if (_library == null || _library.Entries.Count == 0)
             {
-                _diyGrid.Add(new Label("暂无自定义颜色，在上方添加")
-                {
-                    style = { unityTextAlign = TextAnchor.MiddleCenter, color = new Color(0.5f, 0.5f, 0.5f) }
-                });
+                _diyGrid.Add(new Label("暂无自定义颜色，在上方添加") { name = "empty-hint" });
                 return;
             }
 
@@ -193,7 +185,6 @@ namespace TGame.ToolBox
         private void BuildClassicSection(VisualElement root)
         {
             _grid = new VisualElement();
-            _grid.style.flexGrow = 1;
             _grid.style.flexWrap = Wrap.Wrap;
             _grid.style.flexDirection = FlexDirection.Row;
             _grid.style.alignItems = Align.FlexStart;
@@ -205,62 +196,23 @@ namespace TGame.ToolBox
         private VisualElement BuildColorCard(ColorEntry entry, bool editable, int index)
         {
             var card = new VisualElement();
-            card.style.width = 120;
-            card.style.marginRight = 6;
-            card.style.marginBottom = 6;
-            card.style.borderTopWidth = 1;
-            card.style.borderTopColor = new Color(0.33f, 0.33f, 0.33f);
-            card.style.backgroundColor = new Color(0.22f, 0.22f, 0.22f);
-
-            var swatchContainer = new VisualElement();
-            swatchContainer.style.position = Position.Relative;
-            swatchContainer.style.height = 50;
-            swatchContainer.style.marginBottom = 4;
+            card.AddToClassList("tbx-color-card");
 
             var swatch = new VisualElement();
-            swatch.style.position = Position.Absolute;
-            swatch.style.left = 0;
-            swatch.style.right = 0;
-            swatch.style.top = 0;
-            swatch.style.bottom = 0;
+            swatch.AddToClassList("tbx-color-swatch");
             swatch.style.backgroundColor = entry.Color;
-            swatchContainer.Add(swatch);
+            card.Add(swatch);
 
-            if (editable)
-            {
-                var delBtn = new Button(() => DeleteDIYColor(index));
-                delBtn.text = "✕";
-                delBtn.style.position = Position.Absolute;
-                delBtn.style.right = 2;
-                delBtn.style.top = 2;
-                delBtn.style.width = 20;
-                delBtn.style.height = 20;
-                delBtn.style.fontSize = 10;
-                delBtn.style.backgroundColor = new Color(0, 0, 0, 0.5f);
-                swatchContainer.Add(delBtn);
-            }
+           var nameLabel = new Label(entry.Name);
+           nameLabel.AddToClassList("tbx-color-name");
+           card.Add(nameLabel);
 
-            card.Add(swatchContainer);
+           var hexLabel = new Label($"#{entry.Hex}");
+           hexLabel.AddToClassList("tbx-color-hex");
+           hexLabel.style.color = entry.Color;
+           card.Add(hexLabel);
 
-            var nameLabel = new Label(entry.Name);
-            nameLabel.style.fontSize = 11;
-            nameLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            nameLabel.style.marginBottom = 2;
-            nameLabel.style.paddingLeft = 4;
-            nameLabel.style.paddingRight = 4;
-            card.Add(nameLabel);
-
-            var hexLabel = new Label($"#{entry.Hex}");
-            hexLabel.style.fontSize = 13;
-            hexLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            hexLabel.style.unityTextAlign = TextAnchor.MiddleCenter;
-            hexLabel.style.color = entry.Color;
-            hexLabel.style.paddingLeft = 4;
-            hexLabel.style.paddingRight = 4;
-            hexLabel.style.paddingBottom = 4;
-            card.Add(hexLabel);
-
-            card.RegisterCallback<ClickEvent>(_ =>
+           card.RegisterCallback<ClickEvent>(_ =>
             {
                 EditorGUIUtility.systemCopyBuffer = $"#{entry.Hex}";
                 ShowCopyFeedback(card, $"已复制 #{entry.Hex}");
@@ -272,15 +224,7 @@ namespace TGame.ToolBox
         private void ShowCopyFeedback(VisualElement target, string message)
         {
             var feedback = new Label(message);
-            feedback.style.position = Position.Absolute;
-            feedback.style.left = 0;
-            feedback.style.right = 0;
-            feedback.style.top = 0;
-            feedback.style.bottom = 0;
-            feedback.style.backgroundColor = new Color(0, 0, 0, 0.7f);
-            feedback.style.color = new Color(1.0f, 1.0f, 1.0f);
-            feedback.style.unityTextAlign = TextAnchor.MiddleCenter;
-            feedback.style.fontSize = 12;
+            feedback.AddToClassList("tbx-copy-overlay");
             target.Add(feedback);
 
             target.schedule.Execute(() =>
@@ -477,3 +421,7 @@ namespace TGame.ToolBox
         }
     }
 }
+
+
+
+

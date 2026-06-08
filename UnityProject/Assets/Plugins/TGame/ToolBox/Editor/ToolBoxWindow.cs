@@ -89,15 +89,11 @@ namespace TGame.ToolBox
                 var btn = new Button();
                 btn.name = $"tab-{i}";
                 btn.AddToClassList("sidebar-tab-button");
-                btn.style.flexDirection = FlexDirection.Row;
-                btn.style.alignItems = Align.Center;
-
                 var icon = new Image();
                 icon.image = GetTabIcon(i);
                 icon.style.width = 16;
                 icon.style.height = 16;
                 icon.style.marginRight = 6;
-                icon.style.flexShrink = 0;
                 btn.Add(icon);
 
                 var label = new Label(name);
@@ -197,31 +193,25 @@ namespace TGame.ToolBox
             UpdateSidebarSelection();
         }
 
-        private void ShowContent(TabEntry entry)
-        {
-            var wrapper = new VisualElement();
-            wrapper.style.flexGrow = 1;
+ private void ShowContent(TabEntry entry)
+ {
+     var wrapper = new VisualElement();
+     wrapper.style.flexGrow = 1;
 
-            // content header
-            var header = new VisualElement();
-            header.style.backgroundColor = new Color(0.13f, 0.13f, 0.13f);
-            header.style.paddingLeft = 12;
-            header.style.paddingRight = 12;
-            header.style.paddingTop = 6;
-            header.style.paddingBottom = 6;
-            header.style.borderBottomWidth = 1;
-            header.style.borderBottomColor = new Color(0.2f, 0.2f, 0.2f);
+      // content header
+      var header = new VisualElement();
+      header.AddToClassList("tbx-content-header");
 
-            var title = new Label(entry.Attribute.Name);
-            title.style.fontSize = 14;
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            title.style.color = new Color(0.8f, 0.8f, 0.8f);
-            header.Add(title);
-            wrapper.Add(header);
+      var title = new Label(entry.Attribute.Name);
+      title.AddToClassList("tbx-content-header-label");
+     header.Add(title);
+     wrapper.Add(header);
 
             if (entry.Instance is IToolBoxContentVisualElement veContent)
             {
-                wrapper.Add(veContent.CreateContent());
+                var scrollView = new ScrollView();
+                scrollView.Add(veContent.CreateContent());
+                wrapper.Add(scrollView);
             }
             else if (entry.Instance is ScriptableObject)
             {
@@ -257,15 +247,12 @@ namespace TGame.ToolBox
             _contentContainer.Add(wrapper);
         }
 
-        private void ShowEmptyState()
-        {
-            var label = new Label("没有可用的 ToolBox 标签。\n\n为类添加 [ToolBox(\"名称\")] 特性即可在此显示。");
-            label.style.whiteSpace = WhiteSpace.Normal;
-            label.style.marginLeft = 10;
-            label.style.marginTop = 10;
-            label.style.color = Color.gray;
-            _contentContainer.Add(label);
-        }
+private void ShowEmptyState()
+{
+    var label = new Label("没有可用的 ToolBox 标签。\n\n为类添加 [ToolBox(\"名称\")] 特性即可在此显示。");
+    label.AddToClassList("tbx-empty");
+    _contentContainer.Add(label);
+}
 
         private void SaveSplitterPosition()
         {
