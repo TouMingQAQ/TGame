@@ -24,6 +24,14 @@ namespace TGame.ToolBox
 
     public class ColorBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "颜色工具箱",
+            Group = "资源",
+            Icon = "d_ColorPicker.ColorPalette",
+            Factory = () => new ColorBox().CreateContent()
+        };
+
         private const string LibPath = "Assets/Resources/ColorLibrary.asset";
 
         private List<ColorEntry> _allColors;

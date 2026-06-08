@@ -9,6 +9,14 @@ namespace TGame.ToolBox
 {
     public class DebugBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "Debug",
+            Group = "程序",
+            Icon = "d_console.infoicon",
+            Factory = () => new DebugBox().CreateContent()
+        };
+
         private TDebugSettings _settings;
         private ObjectField _settingsField;
         private Label _statusLabel;

@@ -12,6 +12,14 @@ namespace TGame.ToolBox
 {
     public class BuildBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "构建打包",
+            Group = "构建",
+            Icon = "d_PreMatQuad",
+            Factory = () => new BuildBox().CreateContent()
+        };
+
         private const string ConfigPath = "Assets/Resources/BuildConfig.asset";
         private const string PrefLastPlatform = "TGame.BuildBox.LastPlatform";
         private const string PrefOutputPath = "TGame.BuildBox.OutputPath";

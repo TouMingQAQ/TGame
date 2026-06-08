@@ -9,6 +9,14 @@ namespace TGame.ToolBox
 {
     public class HelloBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "欢迎使用ToolBox",
+            Group = "程序",
+            Icon = "d_Help",
+            Factory = () => new HelloBox().CreateContent()
+        };
+
         private TextAsset _readme;
         private List<MdBlock> _blocks;
 

@@ -22,6 +22,14 @@ namespace TGame.ToolBox
 
     public class AnimationCurveBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "曲线工具箱",
+            Group = "资源",
+            Icon = "d_Animation",
+            Factory = () => new AnimationCurveBox().CreateContent()
+        };
+
         private const string LibPath = "Assets/Resources/CurveLibrary.asset";
 
         private CurveLibrary _library;

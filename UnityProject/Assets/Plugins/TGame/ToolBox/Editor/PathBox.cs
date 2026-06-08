@@ -7,6 +7,14 @@ namespace TGame.ToolBox
 {
     public class PathBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "常用路径",
+            Group = "程序",
+            Icon = "d_FolderOpened",
+            Factory = () => new PathBox().CreateContent()
+        };
+
         private List<PathEntry> _paths;
         private List<TextField> _pathFields = new();
 

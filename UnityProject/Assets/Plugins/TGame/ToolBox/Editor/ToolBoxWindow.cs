@@ -43,25 +43,14 @@ namespace TGame.ToolBox
 
         #region Box Registration
 
-        private class BoxRegistration
-        {
-            public string Name;
-            public string Group;
-            public string Icon;
-            public Func<VisualElement> Factory;
-        }
-
         private static readonly List<BoxRegistration> _allBoxes = new()
         {
-            // ── 程序 ──
-            new() { Name = "欢迎使用ToolBox", Group = "程序", Icon = "d_Help",              Factory = () => new HelloBox().CreateContent() },
-            new() { Name = "常用路径",       Group = "程序", Icon = "d_FolderOpened",       Factory = () => new PathBox().CreateContent() },
-            new() { Name = "Debug",          Group = "程序", Icon = "d_console.infoicon",   Factory = () => new DebugBox().CreateContent() },
-            // ── 资源 ──
-            new() { Name = "颜色工具箱",     Group = "资源", Icon = "d_ColorPicker.ColorPalette", Factory = () => new ColorBox().CreateContent() },
-            new() { Name = "曲线工具箱",     Group = "资源", Icon = "d_Animation",                 Factory = () => new AnimationCurveBox().CreateContent() },
-            // ── 构建 ──
-            new() { Name = "构建打包",       Group = "构建", Icon = "d_PreMatQuad",          Factory = () => new BuildBox().CreateContent() },
+            HelloBox.Registration,
+            PathBox.Registration,
+            DebugBox.Registration,
+            ColorBox.Registration,
+            AnimationCurveBox.Registration,
+            BuildBox.Registration,
         };
 
         #endregion
