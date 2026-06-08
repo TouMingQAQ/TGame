@@ -5,9 +5,9 @@ namespace TGame.ToolBox
 {
     public class BoxRegistration
     {
-        public string Name { get; init; }
-        public string Group { get; init; }
-        public string Icon { get; init; }
-        public Func<VisualElement> Factory { get; init; }
+        public string Name { get; set; }
+        public string Group { get; set; }
+        public string Icon { get; set; }
+        public Func<VisualElement> Factory { get; set; }
     }
 }
