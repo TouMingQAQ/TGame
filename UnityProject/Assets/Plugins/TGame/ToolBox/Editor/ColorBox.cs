@@ -28,7 +28,7 @@ namespace TGame.ToolBox
         {
             Name = "颜色工具箱",
             Group = "资源",
-            Icon = "ColorPicker",
+            Icon = "d_ColorPicker",
             Factory = () => new ColorBox().CreateContent()
         };
 

@@ -137,7 +137,15 @@ namespace TGame.ToolBox
         {
             if (string.IsNullOrEmpty(iconName)) return null;
             var content = EditorGUIUtility.IconContent(iconName);
-            return content?.image as Texture2D;
+            if (content?.image != null)
+                return content.image as Texture2D;
+            // Fallback: try without "d_" prefix for dark-skin icons that may not exist
+            if (iconName.StartsWith("d_"))
+            {
+                content = EditorGUIUtility.IconContent(iconName[2..]);
+                return content?.image as Texture2D;
+            }
+            return null;
         }
 
         private void UpdateSidebarSelection()
