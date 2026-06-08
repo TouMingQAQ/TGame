@@ -351,22 +351,32 @@ namespace TGame.SceneNavigator
             }
 
             var path = AssetDatabase.GetAssetPath(_initSceneAsset);
-            var hasBootstrapper = SceneHasBootstrapper(path);
-            _initSceneValid = hasBootstrapper;
+            var initHasBootstrapper = SceneHasBootstrapper(path);
 
-            _initBootButton?.SetEnabled(hasBootstrapper);
+            // 检查当前编辑场景是否也挂了 GameBootstrapper，会导致循环加载
+            var currentScenePath = SceneManager.GetActiveScene().path;
+            var currentHasBootstrapper = !string.IsNullOrEmpty(currentScenePath)
+                && SceneHasBootstrapper(currentScenePath);
+
+            _initSceneValid = initHasBootstrapper && !currentHasBootstrapper;
+            _initBootButton?.SetEnabled(_initSceneValid);
 
             if (_initBootHelpBox == null) return;
 
-            if (hasBootstrapper)
+            if (!initHasBootstrapper)
             {
-                _initBootHelpBox.messageType = HelpBoxMessageType.Info;
-                _initBootHelpBox.text = "检测到 GameBootstrapper，初始化完成后自动跳回当前场景。";
+                _initBootHelpBox.messageType = HelpBoxMessageType.Warning;
+                _initBootHelpBox.text = "初始场景中未检测到 GameBootstrapper 组件，将不会执行初始化跳转。";
+            }
+            else if (currentHasBootstrapper)
+            {
+                _initBootHelpBox.messageType = HelpBoxMessageType.Warning;
+                _initBootHelpBox.text = $"当前场景也包含 GameBootstrapper，加载后会导致循环，请切换场景后重试。";
             }
             else
             {
-                _initBootHelpBox.messageType = HelpBoxMessageType.Warning;
-                _initBootHelpBox.text = "场景中未检测到 GameBootstrapper 组件，将不会执行初始化跳转。";
+                _initBootHelpBox.messageType = HelpBoxMessageType.Info;
+                _initBootHelpBox.text = "检测到 GameBootstrapper，初始化完成后自动跳回当前场景。";
             }
         }
 
