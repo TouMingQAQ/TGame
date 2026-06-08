@@ -12,6 +12,13 @@ namespace TGame.SceneNavigator
     [ToolBox("快捷启动", Order = 0)]
     public class SceneNavigatorBox : IToolBoxContentVisualElement
     {
+        public static BoxRegistration Registration => new()
+        {
+            Name = "快捷启动",
+            Group = "程序",
+            Icon = "SceneAsset Icon",
+            Factory = () => new SceneNavigatorBox().CreateContent()
+        };
         private SceneNavigatorProfile _profile;
         private string _searchText = "";
         private SceneEntry[] _filtered = { };
