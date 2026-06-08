@@ -372,15 +372,19 @@ namespace TGame.SceneNavigator
 
         private static bool SceneHasBootstrapper(string scenePath)
         {
-            var allAssets = AssetDatabase.LoadAllAssetsAtPath(scenePath);
-            foreach (var asset in allAssets)
+            // 临时以 Additive 模式打开场景，检测后立即关闭
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+            var found = false;
+            foreach (var rootGO in scene.GetRootGameObjects())
             {
-                // LoadAllAssetsAtPath 返回场景中的根 GameObject 及其完整层级
-                if (asset is GameObject go &&
-                    go.GetComponentInChildren<GameBootstrapper>(true) != null)
-                    return true;
+                if (rootGO.GetComponentInChildren<GameBootstrapper>(true) != null)
+                {
+                    found = true;
+                    break;
+                }
             }
-            return false;
+            EditorSceneManager.CloseScene(scene, true);
+            return found;
         }
 
         // --- unchanged business logic ---
