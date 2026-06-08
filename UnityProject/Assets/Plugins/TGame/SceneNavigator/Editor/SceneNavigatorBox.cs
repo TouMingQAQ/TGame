@@ -43,6 +43,7 @@ namespace TGame.SceneNavigator
         private ObjectField _initSceneField;
         private Button _initBootButton;
         private HelpBox _initBootHelpBox;
+        private bool _initSceneValid;
 
         public VisualElement CreateContent()
         {
@@ -75,6 +76,7 @@ namespace TGame.SceneNavigator
             _initSceneField = null;
             _initBootButton = null;
             _initBootHelpBox = null;
+            _initSceneValid = false;
 
             EnsureProfile();
             if (_profile == null)
@@ -266,8 +268,10 @@ namespace TGame.SceneNavigator
             _root.Add(_initBootButton);
 
             // 提示
-            _initBootHelpBox = new HelpBox("将以初始场景进入播放模式，初始化完成后自动跳回当前场景。", HelpBoxMessageType.Info);
+            _initBootHelpBox = new HelpBox("请选择初始场景。", HelpBoxMessageType.Info);
             _root.Add(_initBootHelpBox);
+
+            ValidateInitScene();
         }
 
         private void OnInitSceneChanged(ChangeEvent<Object> evt)
@@ -282,6 +286,8 @@ namespace TGame.SceneNavigator
             {
                 EditorPrefs.DeleteKey(InitScenePrefKey);
             }
+
+            ValidateInitScene();
         }
 
         private void RunInitScene()
@@ -327,6 +333,55 @@ namespace TGame.SceneNavigator
             sep.style.marginTop = 8;
             sep.style.marginBottom = 8;
             return sep;
+        }
+
+        private void ValidateInitScene()
+        {
+            _initSceneValid = false;
+
+            if (_initSceneAsset == null)
+            {
+                _initBootButton?.SetEnabled(false);
+                if (_initBootHelpBox != null)
+                {
+                    _initBootHelpBox.messageType = HelpBoxMessageType.Info;
+                    _initBootHelpBox.text = "请选择初始场景。";
+                }
+                return;
+            }
+
+            var path = AssetDatabase.GetAssetPath(_initSceneAsset);
+            var hasBootstrapper = SceneHasBootstrapper(path);
+            _initSceneValid = hasBootstrapper;
+
+            _initBootButton?.SetEnabled(hasBootstrapper);
+
+            if (_initBootHelpBox == null) return;
+
+            if (hasBootstrapper)
+            {
+                _initBootHelpBox.messageType = HelpBoxMessageType.Info;
+                _initBootHelpBox.text = "已将当前场景路径写入 PlayerPrefs，初始化完成后自动跳回。";
+            }
+            else
+            {
+                _initBootHelpBox.messageType = HelpBoxMessageType.Warning;
+                _initBootHelpBox.text = "场景中未检测到 GameBootstrapper 组件，将不会执行初始化跳转。";
+            }
+        }
+
+        private static bool SceneHasBootstrapper(string scenePath)
+        {
+            var allAssets = AssetDatabase.LoadAllAssetsAtPath(scenePath);
+            foreach (var asset in allAssets)
+            {
+                if (asset is TCore.Runtime.GameBootstrapper)
+                    return true;
+
+                if (asset is GameObject go && go.GetComponent<TCore.Runtime.GameBootstrapper>() != null)
+                    return true;
+            }
+            return false;
         }
 
         // --- unchanged business logic ---
