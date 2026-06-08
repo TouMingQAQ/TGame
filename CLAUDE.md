@@ -39,15 +39,78 @@
 
 ## 架构
 
-这是一个全新的 Unity 项目，暂无自定义游戏代码。初始结构:
+### TGame 插件体系
 
-- [Assets/Scenes/](UnityProject/Assets/Scenes/) — 场景文件
-- [Assets/Settings/](UnityProject/Assets/Settings/) — URP 管线资产（分别包含 `PC_RPAsset` 和 `Mobile_Renderer` 配置）
-- [Assets/TutorialInfo/](UnityProject/Assets/TutorialInfo/) — 模板自带的 README 脚本（正式开发后可删除）
+自定义游戏框架代码均位于 `Assets/Plugins/TGame/` 下，按功能划分为以下子系统：
 
-添加代码时遵循 Unity 标准约定:
+| 子系统 | 位置 | 说明 |
+| --- | --- | --- |
+| **TCore** | `TCore/Runtime/` | 核心框架：三层体系（Game → Manager → System/Module），事件总线、定时器、对象池 |
+| **TUI** | `TUI/Runtime/` | UI 管理系统：UIManager + BaseUIPanel，支持 DOTween 动画生命周期 |
+| **SceneNavigator** | `SceneNavigator/Runtime/` | 场景导航系统：SceneEntry 入口 + ScenePathAttribute 路径标记 |
+| **TGame.Console** | `TGame.Console/Runtime/` | 运行时控制台：命令注册/解析/执行系统 |
+| **ToolBox** | `ToolBox/Editor/` | Editor 工具箱窗口：侧边栏 + 内容区 UI Toolkit 面板 |
+| **Mobile** | `Mobile/SafeArea/` | 移动端 SafeArea 适配 |
+| **Debug** | `TCore/Runtime/Debug/` | 调试日志系统：TDebug + 文件写入 + 配置 |
+| **Common** | `Common/` | 跨模块共享的工具代码 |
 
-- 脚本放在 `Assets/Scripts/`（需自行创建）
-- 预制体放在 `Assets/Prefabs/`
-- 运行时代码使用 `Assembly-CSharp`，Editor 专用代码使用 `Assembly-CSharp-Editor`；如需更精细的控制，创建 Assembly Definition 资产（`.asmdef`）
-- URP 设置在 `Assets/Settings/` 中——在此调整渲染器特性和画质层级
+每个子系统有自己的 Assembly Definition (`.asmdef`)，独立编译。
+
+### TCore 框架（三层体系）
+
+```text
+TGame (MonoBehaviour 单例, DontDestroyOnLoad)
+ └─ BaseManager (MonoBehaviour, 可多个)
+     ├─ BaseSystem (纯 C# 对象, 0..N)
+     │   └─ BaseModule (功能模块, 0..N)
+     └─ BaseModule (功能模块, 0..N)
+```
+
+| 层级 | 职责 | 关键操作 |
+| --- | --- | --- |
+| **TGame** | 根单例，Manager 注册表 | AddManager / GetManager |
+| **BaseManager** | System + Module 管理，Unity 生命周期驱动 | AddSystem / GetSystem / GetModule / Call |
+| **BaseSystem** | 子系统逻辑，拥有自己的 Module 集合 | 同 Manager 的 System/Module API |
+| **BaseModule** | 原子功能单元，可启用/禁用 | Init / Destroy / Tick |
+
+已实现模块：**EventModule**（类型安全事件总线）、**TimerModule**（命名定时器）、**ObjectPoolModule\<T\>**（泛型对象池）、**GameObjectPoolModule\<T\>**（MonoBehaviour 对象池）。
+
+### ToolBox Editor 工具箱
+
+基于 UI Toolkit 的 Editor 窗口，采用侧边栏-内容区布局：
+
+- **分组定义**：代码内静态分组（程序/资源/构建），每个组包含多个 Box
+- **Box 注册**：每个 Box 通过 `BoxRegistration` 静态属性自注册（Name + Icon + Factory）
+- **内容恢复**：`_windowGroup` 序列化字段在脚本重编译后自动恢复 Box 列表
+- **USS 样式**：通过 `ToolBoxWindow.uss` 自定义外观
+
+可用 Box：HelloBox、PathBox、DebugBox、ColorBox、AnimationCurveBox、BuildBox（集成构建管线选择器）、ConsoleBox、SceneNavigatorBox。
+
+### SceneNavigator 场景导航
+
+- `SceneEntry` — 场景入口点标记（MonoBehaviour），记录场景路径
+- `ScenePathAttribute` — 在代码中标记场景路径，Editor 通过 `ScenePathDrawer` 渲染
+- `SceneNavigatorBox` — ToolBox 中的场景导航面板
+
+### TGame.Console 控制台
+
+- 运行时控制台 (`ConsoleControl`)，支持命令注册和执行
+- `CommandAttribute` — 标记方法为控制台命令
+- `CommandUtility` — 命令解析工具
+- Editor 集成 (`ConsoleEditor` / `ConsoleBox`)
+
+### TUI UI 系统
+
+- `UIManager` — UI 层级管理（通过 `UILayer` 枚举区分层级）
+- `BaseUIPanel` — UI 面板基类，提供 DOTween Sequence 动画支持和四个生命周期钩子
+- `IUIPanel` — UI 面板接口
+- `UIAnimationMaker` — UI 动画工具
+
+### 目录规范
+
+- 运行时代码：`Assets/Plugins/TGame/<Module>/Runtime/`
+- Editor 专用代码：`Assets/Plugins/TGame/<Module>/Editor/`
+- 预制体：`Assets/Plugins/TGame/<Module>/Runtime/Prefab/`
+- URP 设置：`Assets/Settings/`（PC_RPAsset / Mobile_Renderer 配置）
+- 第三方依赖包（NuGet/UniTask）：`Assets/NuGet/`
+- 入口场景：`Assets/Scenes/SampleScene.unity`
