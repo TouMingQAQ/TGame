@@ -375,10 +375,9 @@ namespace TGame.SceneNavigator
             var allAssets = AssetDatabase.LoadAllAssetsAtPath(scenePath);
             foreach (var asset in allAssets)
             {
-                if (asset is TCore.Runtime.GameBootstrapper)
-                    return true;
-
-                if (asset is GameObject go && go.GetComponent<TCore.Runtime.GameBootstrapper>() != null)
+                // LoadAllAssetsAtPath 返回场景中的根 GameObject 及其完整层级
+                if (asset is GameObject go &&
+                    go.GetComponentInChildren<GameBootstrapper>(true) != null)
                     return true;
             }
             return false;
