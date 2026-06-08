@@ -64,6 +64,7 @@
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Debug\TDebugSettings.cs" />
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Debug\TDebugConfig.cs" />
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Game.cs" />
+    <Compile Include="Assets\Plugins\TGame\TCore\Runtime\GameBootstrapper.cs" />
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Debug\TDebugFileWriter.cs" />
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Module\ObjectPoolModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TCore\Runtime\Module\EventModule.cs" />

@@ -9,22 +9,20 @@ namespace TGame.TUI
     /// CanvasGroup 用于控制面板整体透明度、交互和射线检测。
     /// Show/Hide 通过 DOTween Sequence 播放动画，子类重写 BuildAnimation 自定义动画效果。
     /// </summary>
-    [RequireComponent(typeof(Canvas))]
     [RequireComponent(typeof(CanvasGroup))]
+    [RequireComponent(typeof(RectTransform))]
     public abstract class BaseUIPanel : MonoBehaviour, IUIPanel
     {
         private enum AnimState { None, Showing, Hiding }
 
         [Header("Animation")]
-        [SerializeField] protected float _animationDuration = 0.3f;
-        [SerializeField] protected AnimationCurve _animationCurve;
         [SerializeField] protected bool _ignoreTimeScale = true;
 
-        [SerializeField] protected Canvas _canvas;
         [SerializeField] protected CanvasGroup _canvasGroup;
-
-        public Canvas Canvas => _canvas;
+        [SerializeField] protected RectTransform root;
+        
         public CanvasGroup CanvasGroup => _canvasGroup;
+        public RectTransform Root => root;
         public bool IsVisible => gameObject.activeSelf;
 
         private Sequence _sequence;
@@ -32,18 +30,13 @@ namespace TGame.TUI
 
         private void Reset()
         {
-            TryGetComponent(out _canvas);
             TryGetComponent(out _canvasGroup);
-            _animationCurve = CreateDefaultCurve();
+            TryGetComponent(out root);
         }
 
         protected virtual void Awake()
         {
-            TryGetComponent(out _canvas);
-            TryGetComponent(out _canvasGroup);
             _canvasGroup.alpha = 0f;
-            if (_animationCurve == null || _animationCurve.length == 0)
-                _animationCurve = CreateDefaultCurve();
 
             _sequence = BuildAnimation();
             _sequence.SetAutoKill(false);
@@ -64,9 +57,7 @@ namespace TGame.TUI
         protected virtual Sequence BuildAnimation()
         {
             var seq = DOTween.Sequence();
-            seq.Append(
-                DOTween.To(() => _canvasGroup.alpha, x => _canvasGroup.alpha = x, 1f, _animationDuration)
-                    .SetEase(_animationCurve));
+            seq.Append(UIAnimationMaker.FadeIn(CanvasGroup));
             seq.SetLoops(1);
             return seq;
         }
@@ -138,14 +129,6 @@ namespace TGame.TUI
 
         /// <summary>Hide 动画完成后调用，此时 GameObject 已 Deactivate</summary>
         protected virtual void AfterHide() { }
-
-        private static AnimationCurve CreateDefaultCurve()
-        {
-            var curve = new AnimationCurve();
-            curve.AddKey(new Keyframe(0f, 0f, 0f, 2f));
-            curve.AddKey(new Keyframe(1f, 1f, 0f, 0f));
-            return curve;
-        }
 
         protected virtual void OnDestroy()
         {

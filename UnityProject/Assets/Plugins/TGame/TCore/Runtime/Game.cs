@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace TGame.TCore.Runtime
 {
+    [DefaultExecutionOrder(-9000)]
     public partial class Game : MonoBehaviour
     {
         public static Game Instance;

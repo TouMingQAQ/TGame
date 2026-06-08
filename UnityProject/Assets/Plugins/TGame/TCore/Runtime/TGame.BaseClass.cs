@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace TGame.TCore.Runtime
 {
+    [DefaultExecutionOrder(-8000)]
     public partial class BaseManager : MonoBehaviour
     {
         protected Game game;

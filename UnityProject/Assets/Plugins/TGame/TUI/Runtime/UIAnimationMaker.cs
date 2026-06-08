@@ -23,8 +23,7 @@ namespace TGame.TUI
         public static Tween FadeIn(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.alpha = 0f;
-            return DOTween.To(() => target.alpha, x => target.alpha = x, 1f, duration)
-                .SetEase(curve != null && curve.length > 0 ? curve : DefaultCurve());
+            return target.DOFade(1, duration);
         }
 
         /// <summary>
@@ -33,8 +32,7 @@ namespace TGame.TUI
         public static Tween FadeOut(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.alpha = 1f;
-            return DOTween.To(() => target.alpha, x => target.alpha = x, 0f, duration)
-                .SetEase(curve != null && curve.length > 0 ? curve : DefaultCurve());
+            return target.DOFade(0, duration);
         }
 
         /// <summary>
