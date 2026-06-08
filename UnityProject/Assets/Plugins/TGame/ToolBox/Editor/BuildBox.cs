@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using UnityEditor;
+using UnityEditor.Build.Profile;
 using UnityEditor.Build.Reporting;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -21,7 +23,6 @@ namespace TGame.ToolBox
         };
 
         private const string ConfigPath = "Assets/Resources/BuildConfig.asset";
-        private const string PrefLastPlatform = "TGame.BuildBox.LastPlatform";
         private const string PrefOutputPath = "TGame.BuildBox.OutputPath";
         private const string PrefABOutputPath = "TGame.BuildBox.ABOutputPath";
 
@@ -39,20 +40,12 @@ namespace TGame.ToolBox
         private const string PrefFoldoutAB      = "TGame.BuildBox.FoldoutAB";
         private const string PrefFoldoutPlayer  = "TGame.BuildBox.FoldoutPlayer";
 
-        // --- platform list ---
-        private static readonly (string name, BuildTarget target)[] Platforms =
-        {
-            ("Windows", BuildTarget.StandaloneWindows64),
-            ("macOS",   BuildTarget.StandaloneOSX),
-            ("Linux",   BuildTarget.StandaloneLinux64),
-            ("Android", BuildTarget.Android),
-            ("iOS",     BuildTarget.iOS),
-            ("WebGL",   BuildTarget.WebGL),
-        };
-
-        // --- state ---
+        // --- profile state ---
         private BuildConfig _config;
-        private int _platformIndex;
+        private List<BuildProfile> _profiles = new();
+        private BuildProfile _selectedProfile;
+
+        // --- pipeline state ---
         private List<(string name, Type type)> _playerPipelines = new();
         private List<(string name, Type type)> _abPipelines = new();
 
@@ -60,7 +53,8 @@ namespace TGame.ToolBox
         private Label _versionProduct, _versionCompany, _versionBundle, _versionUnity;
         private Label _versionAndroid, _versionIos;
         private VisualElement _versionOtherPlatforms;
-        private DropdownField _platformDropdown;
+        private DropdownField _profileDropdown;
+        private Label _platformLabel;
         private TextField _outputPathField;
         private Toggle _toggleDev, _toggleProfiler, _toggleDeep, _toggleScriptsOnly, _toggleClean;
         private TextField _abOutputPathField;
@@ -69,11 +63,12 @@ namespace TGame.ToolBox
         private DropdownField _playerPipelineDropdown;
         private HelpBox _statusHelp;
         private VisualElement _playerFoldoutContent;
+        private VisualElement _profileCreatePanel;
 
         public VisualElement CreateContent()
         {
             LoadConfig();
-            _platformIndex = EditorPrefs.GetInt(PrefLastPlatform, GetPlatformIndex(EditorUserBuildSettings.activeBuildTarget));
+            LoadProfiles();
             DiscoverPipelines();
             RefreshPlatformBuildNumberEntries();
 
@@ -182,7 +177,10 @@ namespace TGame.ToolBox
             container.style.marginLeft = 12;
             foldout.Add(container);
 
-            // Platform dropdown
+            // ---- Profile selector ----
+            BuildProfileSelector(container);
+
+            // ---- Platform display (read-only) ----
             var platformRow = new VisualElement();
             platformRow.style.flexDirection = FlexDirection.Row;
             platformRow.style.alignItems = Align.Center;
@@ -195,16 +193,12 @@ namespace TGame.ToolBox
             platformLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
             platformRow.Add(platformLabel);
 
-            _platformDropdown = new DropdownField(Platforms.Select(p => p.name).ToList(), _platformIndex);
-            _platformDropdown.style.flexGrow = 1;
-            _platformDropdown.RegisterValueChangedCallback(evt =>
-            {
-                _platformIndex = _platformDropdown.index;
-                EditorPrefs.SetInt(PrefLastPlatform, _platformIndex);
-            });
-            platformRow.Add(_platformDropdown);
+            _platformLabel = new Label("(未选择)");
+            _platformLabel.style.flexGrow = 1;
+            _platformLabel.style.fontSize = 11;
+            platformRow.Add(_platformLabel);
 
-            // Output path
+            // ---- Output path ----
             var pathRow = new VisualElement();
             pathRow.style.flexDirection = FlexDirection.Row;
             pathRow.style.alignItems = Align.Center;
@@ -219,7 +213,10 @@ namespace TGame.ToolBox
 
             _outputPathField = new TextField();
             _outputPathField.value = _config.outputPath;
-            _outputPathField.RegisterValueChangedCallback(evt => EditorPrefs.SetString(PrefOutputPath, evt.newValue));
+            _outputPathField.RegisterValueChangedCallback(evt =>
+            {
+                EditorPrefs.SetString(PrefOutputPath, evt.newValue);
+            });
             _outputPathField.style.flexGrow = 1;
             pathRow.Add(_outputPathField);
 
@@ -227,13 +224,15 @@ namespace TGame.ToolBox
             {
                 var path = EditorUtility.OpenFolderPanel("选择输出路径", _outputPathField.value, "");
                 if (!string.IsNullOrEmpty(path))
+                {
                     _outputPathField.value = MakeRelativePath(path);
+                }
             });
             browseBtn.text = "浏览...";
             browseBtn.style.width = 60;
             pathRow.Add(browseBtn);
 
-            // Build option toggles
+            // ---- Build option toggles ----
             _toggleDev = AddToggle(container, "Development Build", _config.developmentBuild);
             _toggleDev.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefDevBuild, evt.newValue));
             _toggleProfiler = AddToggle(container, "Autoconnect Profiler", _config.autoconnectProfiler);
@@ -244,6 +243,245 @@ namespace TGame.ToolBox
             _toggleScriptsOnly.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefScriptsOnly, evt.newValue));
             _toggleClean = AddToggle(container, "Clean Build", _config.cleanBuild);
             _toggleClean.RegisterValueChangedCallback(evt => EditorPrefs.SetBool(PrefCleanBuild, evt.newValue));
+        }
+
+        /// <summary> 构建 Profile 下拉选择器 + 管理按钮 </summary>
+        private void BuildProfileSelector(VisualElement parent)
+        {
+            // ---- 选择行 ----
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 4;
+            parent.Add(row);
+
+            var profileLabel = new Label("构建档案");
+            profileLabel.style.width = 100;
+            profileLabel.style.fontSize = 11;
+            profileLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            row.Add(profileLabel);
+
+            RefreshProfileList();
+
+            _profileDropdown = new DropdownField(_profiles.Select(p => p.name).ToList(), 0);
+            _profileDropdown.style.flexGrow = 1;
+            _profileDropdown.RegisterValueChangedCallback(OnProfileSelected);
+            row.Add(_profileDropdown);
+
+            // ---- 管理按钮 ----
+            var btnRow = new VisualElement();
+            btnRow.style.flexDirection = FlexDirection.Row;
+            btnRow.style.marginLeft = 100;
+            btnRow.style.marginBottom = 6;
+            parent.Add(btnRow);
+
+            var createBtn = new Button(() => ToggleCreatePanel(true)) { text = "新建" };
+            createBtn.style.width = 60;
+            btnRow.Add(createBtn);
+
+            var renameBtn = new Button(RenameSelectedProfile) { text = "重命名" };
+            renameBtn.style.width = 60;
+            btnRow.Add(renameBtn);
+
+            var deleteBtn = new Button(DeleteSelectedProfile) { text = "删除" };
+            deleteBtn.style.width = 60;
+            deleteBtn.style.unityFontStyleAndWeight = FontStyle.Bold;
+            btnRow.Add(deleteBtn);
+
+            // ---- 新建 Profile 面板 (默认隐藏) ----
+            _profileCreatePanel = new VisualElement();
+            _profileCreatePanel.style.display = DisplayStyle.None;
+            _profileCreatePanel.style.marginLeft = 100;
+            _profileCreatePanel.style.marginBottom = 6;
+            _profileCreatePanel.style.backgroundColor = new Color(0.2f, 0.2f, 0.22f);
+            _profileCreatePanel.style.paddingLeft = 6;
+            _profileCreatePanel.style.paddingRight = 6;
+            _profileCreatePanel.style.paddingTop = 6;
+            _profileCreatePanel.style.paddingBottom = 6;
+            parent.Add(_profileCreatePanel);
+
+            var createTitle = new Label("新建 BuildProfile");
+            createTitle.style.fontSize = 12;
+            createTitle.style.unityFontStyleAndWeight = FontStyle.Bold;
+            createTitle.style.marginBottom = 4;
+            _profileCreatePanel.Add(createTitle);
+
+            var createNameField = new TextField("名称");
+            createNameField.value = "NewProfile";
+            _profileCreatePanel.Add(createNameField);
+
+            var createPlatformDropdown = new DropdownField("平台", BuildProfileManager.PlatformNames.ToList(), 0);
+            _profileCreatePanel.Add(createPlatformDropdown);
+
+            var createBtnRow = new VisualElement();
+            createBtnRow.style.flexDirection = FlexDirection.Row;
+            createBtnRow.style.marginTop = 4;
+            _profileCreatePanel.Add(createBtnRow);
+
+            var confirmCreateBtn = new Button(() =>
+            {
+                var name = createNameField.value;
+
+                if (_renameMode)
+                {
+                    // ---- 重命名模式 ----
+                    if (_selectedProfile != null && !string.IsNullOrEmpty(name) && name != _selectedProfile.name)
+                    {
+                        BuildProfileManager.RenameProfile(_selectedProfile, name);
+                        RefreshProfileList();
+                        ShowStatus($"已重命名为: {name}", HelpBoxMessageType.Info);
+                    }
+                    _renameMode = false;
+                }
+                else
+                {
+                    // ---- 创建模式 ----
+                    var platform = BuildProfileManager.PlatformNames[createPlatformDropdown.index];
+                    var profile = BuildProfileManager.CreateProfile(name);
+                    if (profile != null)
+                    {
+                        LoadProfiles();
+                        RefreshProfileList();
+                        SelectProfile(profile);
+                    }
+                }
+
+                ToggleCreatePanel(false);
+                createNameField.value = "NewProfile";
+                createPlatformDropdown.index = 0;
+                createPlatformDropdown.style.display = DisplayStyle.Flex;
+            })
+            { text = "确认" };
+            confirmCreateBtn.style.width = 80;
+            createBtnRow.Add(confirmCreateBtn);
+
+            var cancelCreateBtn = new Button(() => ToggleCreatePanel(false)) { text = "取消" };
+            cancelCreateBtn.style.width = 60;
+            cancelCreateBtn.style.marginLeft = 4;
+            createBtnRow.Add(cancelCreateBtn);
+        }
+
+        private void ToggleCreatePanel(bool show)
+        {
+            _profileCreatePanel.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void OnProfileSelected(ChangeEvent<string> evt)
+        {
+            var idx = _profileDropdown.index;
+            if (idx >= 0 && idx < _profiles.Count)
+                SelectProfile(_profiles[idx]);
+        }
+
+        private void SelectProfile(BuildProfile profile)
+        {
+            _selectedProfile = profile;
+
+            if (profile != null)
+            {
+                _platformLabel.text = "平台由 BuildProfile 组件决定";
+
+                // 持久化 GUID
+                var guid = BuildProfileManager.GetProfileGUID(profile);
+                _config.lastProfileGUID = guid;
+                EditorUtility.SetDirty(_config);
+                AssetDatabase.SaveAssetIfDirty(_config);
+            }
+            else
+            {
+                _platformLabel.text = "(未选择)";
+            }
+        }
+
+        private void RefreshProfileList()
+        {
+            var selectedName = _selectedProfile?.name;
+            _profiles = BuildProfileManager.GetAllProfiles();
+
+            if (_profileDropdown != null)
+            {
+                _profileDropdown.choices = _profiles.Select(p => p.name).ToList();
+                if (!string.IsNullOrEmpty(selectedName))
+                {
+                    var restoreIdx = _profiles.FindIndex(p => p.name == selectedName);
+                    if (restoreIdx >= 0)
+                        _profileDropdown.index = restoreIdx;
+                }
+            }
+
+            // 恢复上次选中的 Profile
+            if (_selectedProfile == null && !string.IsNullOrEmpty(_config.lastProfileGUID))
+            {
+                var lastProfile = BuildProfileManager.FindByGUID(_config.lastProfileGUID);
+                if (lastProfile != null)
+                    SelectProfile(lastProfile);
+            }
+
+            // 默认选中第一个
+            if (_selectedProfile == null && _profiles.Count > 0 && _profileDropdown != null)
+            {
+                _profileDropdown.index = 0;
+                SelectProfile(_profiles[0]);
+            }
+        }
+
+        private void LoadProfiles()
+        {
+            _profiles = BuildProfileManager.GetAllProfiles();
+
+            // 恢复上次选中的 Profile
+            if (!string.IsNullOrEmpty(_config.lastProfileGUID))
+            {
+                _selectedProfile = BuildProfileManager.FindByGUID(_config.lastProfileGUID);
+            }
+        }
+
+        private bool _renameMode; // 标记当前是创建模式还是重命名模式
+
+        private void RenameSelectedProfile()
+        {
+            if (_selectedProfile == null)
+            {
+                ShowStatus("请先选择一个 Profile", HelpBoxMessageType.Warning);
+                return;
+            }
+
+            // 将面板切换为重命名模式
+            _renameMode = true;
+            var nameField = _profileCreatePanel.Q<TextField>();
+            if (nameField != null)
+                nameField.value = _selectedProfile.name;
+
+            // 隐藏平台选择（重命名不需要改平台）
+            var platformField = _profileCreatePanel.Q<DropdownField>();
+            if (platformField != null)
+                platformField.style.display = DisplayStyle.None;
+
+            ToggleCreatePanel(true);
+        }
+
+        private void DeleteSelectedProfile()
+        {
+            if (_selectedProfile == null)
+            {
+                ShowStatus("请先选择一个 Profile", HelpBoxMessageType.Warning);
+                return;
+            }
+
+            var profileName = _selectedProfile.name;
+            if (!EditorUtility.DisplayDialog("确认删除", $"确定要删除 Profile \"{profileName}\" 吗？\n此操作不可恢复。", "删除", "取消"))
+                return;
+
+            BuildProfileManager.DeleteProfile(_selectedProfile);
+            _selectedProfile = null;
+            _config.lastProfileGUID = "";
+            EditorUtility.SetDirty(_config);
+            AssetDatabase.SaveAssetIfDirty(_config);
+
+            LoadProfiles();
+            RefreshProfileList();
+
+            ShowStatus($"已删除 Profile: {profileName}", HelpBoxMessageType.Info);
         }
 
         private static Toggle AddToggle(VisualElement parent, string label, bool defaultValue)
@@ -460,6 +698,13 @@ namespace TGame.ToolBox
             buildBtn.style.marginBottom = 4;
             _playerFoldoutContent.Add(buildBtn);
 
+            // Copy CLI command button
+            var copyCliBtn = new Button(CopyCLICommand);
+            copyCliBtn.text = "复制 CLI 指令";
+            copyCliBtn.style.width = 200;
+            copyCliBtn.style.marginBottom = 4;
+            _playerFoldoutContent.Add(copyCliBtn);
+
             // Open output button
             var openBtn = new Button(OpenOutputFolder);
             openBtn.text = "打开输出目录";
@@ -553,7 +798,7 @@ namespace TGame.ToolBox
         private void RefreshPlatformBuildNumberEntries()
         {
             // Ensure all platforms have entries
-            foreach (var (name, _) in Platforms)
+            foreach (var name in BuildProfileManager.PlatformNames)
             {
                 if (name == "Android" || name == "iOS") continue;
                 if (!_config.platformBuildNumbers.Any(p => p.platformName == name))
@@ -566,15 +811,6 @@ namespace TGame.ToolBox
                 }
             }
             EditorUtility.SetDirty(_config);
-        }
-
-        private static int GetPlatformIndex(BuildTarget target)
-        {
-            for (int i = 0; i < Platforms.Length; i++)
-            {
-                if (Platforms[i].target == target) return i;
-            }
-            return 0;
         }
 
         // ============================================================
@@ -629,34 +865,59 @@ namespace TGame.ToolBox
 
         private void AutoIncrementBuildNumber()
         {
-            var target = Platforms[_platformIndex].target;
+            if (_selectedProfile == null)
+            {
+                Debug.LogWarning("[BuildBox] 未选择 Profile，跳过版本号自增");
+                return;
+            }
+
+            AutoIncrementBuildNumberForPlatform(EditorUserBuildSettings.activeBuildTarget, _config);
+        }
+
+        /// <summary> 根据平台自增版本号（供 BuildCLI 复用） </summary>
+        public static void AutoIncrementBuildNumberForPlatform(BuildTarget target, BuildConfig config)
+        {
+            if (config == null)
+            {
+                Debug.LogWarning("[BuildBox] BuildConfig 为 null，跳过版本号自增");
+                return;
+            }
 
             if (target == BuildTarget.Android)
             {
                 PlayerSettings.Android.bundleVersionCode++;
+                Debug.Log($"[BuildBox] Android bundleVersionCode -> {PlayerSettings.Android.bundleVersionCode}");
             }
             else if (target == BuildTarget.iOS)
             {
-                int n = 0;
-                if (!int.TryParse(PlayerSettings.iOS.buildNumber, out n))
-                {
-                    Debug.LogWarning($"[BuildBox] iOS buildNumber 解析失败: \"{PlayerSettings.iOS.buildNumber}\"，重置为0");
-                    n = 0;
-                }
-                PlayerSettings.iOS.buildNumber = (n + 1).ToString();
+                if (int.TryParse(PlayerSettings.iOS.buildNumber, out var n))
+                    PlayerSettings.iOS.buildNumber = (n + 1).ToString();
+                else
+                    PlayerSettings.iOS.buildNumber = "1";
+                Debug.Log($"[BuildBox] iOS buildNumber -> {PlayerSettings.iOS.buildNumber}");
             }
             else
             {
-                var key = Platforms[_platformIndex].name;
-                var entry = _config.platformBuildNumbers.FirstOrDefault(p => p.platformName == key);
+                var platformName = target switch
+                {
+                    BuildTarget.StandaloneWindows64 => "Windows",
+                    BuildTarget.StandaloneWindows  => "Windows",
+                    BuildTarget.StandaloneOSX      => "macOS",
+                    BuildTarget.StandaloneLinux64  => "Linux",
+                    BuildTarget.WebGL              => "WebGL",
+                    _ => target.ToString()
+                };
+
+                var entry = config.platformBuildNumbers.FirstOrDefault(p => p.platformName == platformName);
                 if (entry == null)
                 {
-                    entry = new PlatformBuildNumber { platformName = key, buildNumber = 0 };
-                    _config.platformBuildNumbers.Add(entry);
+                    entry = new PlatformBuildNumber { platformName = platformName, buildNumber = 0 };
+                    config.platformBuildNumbers.Add(entry);
                 }
                 entry.buildNumber++;
-                EditorUtility.SetDirty(_config);
-                AssetDatabase.SaveAssetIfDirty(_config);
+                EditorUtility.SetDirty(config);
+                AssetDatabase.SaveAssetIfDirty(config);
+                Debug.Log($"[BuildBox] {platformName} buildNumber -> {entry.buildNumber}");
             }
         }
 
@@ -695,8 +956,8 @@ namespace TGame.ToolBox
 
             try
             {
-                var manifest = BuildPipeline.BuildAssetBundles(path, options, Platforms[_platformIndex].target);
-                ShowStatus($"AB 构建完成: {path} （平台：{Platforms[_platformIndex].name}）", HelpBoxMessageType.Info);
+                var manifest = BuildPipeline.BuildAssetBundles(path, options, GetCurrentBuildTarget());
+                ShowStatus($"AB 构建完成: {path} （平台：{GetCurrentPlatformName()}）", HelpBoxMessageType.Info);
             }
             catch (Exception e)
             {
@@ -730,7 +991,7 @@ namespace TGame.ToolBox
                 var ctx = new ABBuildPipelineContext
                 {
                     outputPath = _config.abOutputPath,
-                    buildTarget = Platforms[_platformIndex].target,
+                    buildTarget = GetCurrentBuildTarget(),
                     fullRebuild = _config.abFullRebuild,
                 };
 
@@ -746,6 +1007,28 @@ namespace TGame.ToolBox
                 Debug.LogError($"[BuildBox] 自定义 AB 流水线异常 {e}");
             }
         }
+
+        private BuildTarget GetCurrentBuildTarget()
+        {
+            return EditorUserBuildSettings.activeBuildTarget;
+        }
+
+        private string GetCurrentPlatformName()
+        {
+            var target = EditorUserBuildSettings.activeBuildTarget;
+            return target switch
+            {
+                BuildTarget.StandaloneWindows64 => "Windows",
+                BuildTarget.StandaloneWindows  => "Windows",
+                BuildTarget.StandaloneOSX      => "macOS",
+                BuildTarget.StandaloneLinux64  => "Linux",
+                BuildTarget.Android            => "Android",
+                BuildTarget.iOS                => "iOS",
+                BuildTarget.WebGL              => "WebGL",
+                _ => target.ToString()
+            };
+        }
+
 
         // ============================================================
         // Player Build
@@ -782,57 +1065,63 @@ namespace TGame.ToolBox
 
         private void BuildPlayerDefault(string[] scenes)
         {
-            var target = Platforms[_platformIndex].target;
-            var targetName = Platforms[_platformIndex].name;
-            var productName = PlayerSettings.productName;
+            var profile = _selectedProfile;
+            if (profile == null)
+            {
+                ShowStatus("构建失败: 未选择 Profile", HelpBoxMessageType.Error);
+                return;
+            }
 
-            var locationPath = GetBuildOutputPath(target, targetName, productName);
-            var dir = Path.GetDirectoryName(locationPath);
+            // 将场景写入 Profile
+            profile.scenes = scenes.Select(s => new EditorBuildSettingsScene(s, true)).ToArray();
+            profile.overrideGlobalScenes = true;
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssetIfDirty(profile);
+
+            var outputPath = _outputPathField.value;
+
+            // 确保输出目录存在
+            var dir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            if (string.IsNullOrEmpty(locationPath))
+            if (string.IsNullOrEmpty(outputPath))
             {
                 ShowStatus("构建失败: 输出路径为空", HelpBoxMessageType.Error);
                 return;
             }
 
+            // 构建选项
             var options = BuildOptions.None;
             if (_config.developmentBuild)    options |= BuildOptions.Development;
             if (_config.autoconnectProfiler) options |= BuildOptions.ConnectWithProfiler;
             if (_config.deepProfiling)       options |= BuildOptions.EnableDeepProfilingSupport;
             if (_config.buildScriptsOnly)    options |= BuildOptions.BuildScriptsOnly;
+
+            // CleanBuild: 在构建前手动删除输出目录（BuildOptions.CleanBuild 在 Unity 6 中已不存在）
             if (_config.cleanBuild)
             {
-#if !UNITY_6000_0_OR_NEWER
-                options |= BuildOptions.CleanBuild;
-#else
-                string outputPath = locationPath;
                 if (File.Exists(outputPath))
                     File.Delete(outputPath);
                 else if (Directory.Exists(outputPath))
                     Directory.Delete(outputPath, true);
-#endif
             }
-
-            var buildOptions = new BuildPlayerOptions
-            {
-                scenes = scenes,
-                locationPathName = locationPath,
-                targetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                target = target,
-                options = options,
-            };
 
             try
             {
-                var report = BuildPipeline.BuildPlayer(buildOptions);
+                var buildProfileOptions = new BuildPlayerWithProfileOptions
+                {
+                    buildProfile = profile,
+                    locationPathName = outputPath,
+                    options = options,
+                };
+                var report = BuildPipeline.BuildPlayer(buildProfileOptions);
                 var summary = report.summary;
 
                 switch (summary.result)
                 {
                     case BuildResult.Succeeded:
-                        ShowStatus($"构建成功: {locationPath}", HelpBoxMessageType.Info);
+                        ShowStatus($"构建成功: {outputPath}", HelpBoxMessageType.Info);
                         break;
                     case BuildResult.Failed:
                         ShowStatus($"构建失败: {summary.totalErrors} 个错误", HelpBoxMessageType.Error);
@@ -871,15 +1160,16 @@ namespace TGame.ToolBox
                     return;
                 }
 
-                var target = Platforms[_platformIndex].target;
-                var targetName = Platforms[_platformIndex].name;
+                var profile = _selectedProfile;
+                var target = EditorUserBuildSettings.activeBuildTarget;
+                var targetGroup = BuildPipeline.GetBuildTargetGroup(target);
                 var productName = PlayerSettings.productName;
 
                 var ctx = new BuildPipelineContext
                 {
                     buildTarget = target,
-                    buildTargetGroup = BuildPipeline.GetBuildTargetGroup(target),
-                    outputPath = GetBuildOutputPath(target, targetName, productName),
+                    buildTargetGroup = targetGroup,
+                    outputPath = _outputPathField.value,
                     productName = productName,
                     developmentBuild = _config.developmentBuild,
                     autoconnectProfiler = _config.autoconnectProfiler,
@@ -887,6 +1177,7 @@ namespace TGame.ToolBox
                     buildScriptsOnly = _config.buildScriptsOnly,
                     cleanBuild = _config.cleanBuild,
                     scenes = scenes,
+                    profile = profile,
                 };
 
                 var success = pipeline.Execute(ctx);
@@ -902,31 +1193,45 @@ namespace TGame.ToolBox
             }
         }
 
-        private string GetBuildOutputPath(BuildTarget target, string targetName, string productName)
+
+        private void CopyCLICommand()
         {
-            var basePath = _config.outputPath;
-            var ext = target switch
+            if (_selectedProfile == null)
             {
-                BuildTarget.StandaloneWindows64 => ".exe",
-                BuildTarget.StandaloneWindows => ".exe",
-                BuildTarget.StandaloneLinux64 => ".x86_64",
-                _ => ""
-            };
+                ShowStatus("请先选择一个 Profile", HelpBoxMessageType.Warning);
+                return;
+            }
 
-            if (target == BuildTarget.Android && !basePath.EndsWith(".apk") && !basePath.EndsWith(".aab"))
-                return $"{basePath}/{targetName}/{productName}.apk";
+            var profileGuid = BuildProfileManager.GetProfileGUID(_selectedProfile);
+            if (string.IsNullOrEmpty(profileGuid))
+            {
+                ShowStatus("无法获取 Profile GUID", HelpBoxMessageType.Error);
+                return;
+            }
 
-            if (target == BuildTarget.iOS)
-                return $"{basePath}/{targetName}/{productName}";
+            var sb = new StringBuilder();
+            sb.Append("Unity.exe -batchmode -quit ");
+            sb.Append("-executeMethod TGame.ToolBox.BuildCLI.Build ");
+            sb.Append($"-profile \"{profileGuid}\"");
 
-            return string.IsNullOrEmpty(ext)
-                ? $"{basePath}/{targetName}/{productName}"
-                : $"{basePath}/{targetName}/{productName}{ext}";
+            // 覆盖输出路径（与默认不同时才添加）
+            if (_outputPathField.value != _config.outputPath)
+                sb.Append($" -outputPath \"{_outputPathField.value}\"");
+
+            // 追踪 BuildOptions
+            var options = new List<string>();
+            if (_toggleDev.value)       options.Add("Development");
+            if (_toggleProfiler.value)  options.Add("Profiler");
+            if (_toggleDeep.value)      options.Add("DeepProfiling");
+            if (_toggleScriptsOnly.value) options.Add("ScriptsOnly");
+            if (_toggleClean.value)     options.Add("CleanBuild");
+            if (options.Count > 0)
+                sb.Append($" -buildOptions \"{string.Join(",", options)}\"");
+
+            EditorGUIUtility.systemCopyBuffer = sb.ToString();
+            ShowStatus("CLI 指令已复制到剪贴板", HelpBoxMessageType.Info);
+            Debug.Log($"[BuildBox] CLI 命令:\n{sb}");
         }
-
-        // ============================================================
-        // Open Output Folder
-        // ============================================================
 
 
         // ============================================================
@@ -948,27 +1253,25 @@ namespace TGame.ToolBox
 
         private void OpenOutputFolder()
         {
-            var target = Platforms[_platformIndex].target;
-            var targetName = Platforms[_platformIndex].name;
-            var productName = PlayerSettings.productName;
-            var path = GetBuildOutputPath(target, targetName, productName);
-            var dir = Path.GetDirectoryName(path);
-
-            if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+            var outputPath = _outputPathField.value;
+            if (!string.IsNullOrEmpty(outputPath))
             {
-                EditorUtility.RevealInFinder(dir);
+                var dir = Path.GetDirectoryName(outputPath);
+                if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+                {
+                    EditorUtility.RevealInFinder(dir);
+                    return;
+                }
+            }
+
+            // Fallback: 打开基础输出目录
+            if (Directory.Exists(_config.outputPath))
+            {
+                EditorUtility.RevealInFinder(_config.outputPath);
             }
             else
             {
-                // Try base output path
-                if (Directory.Exists(_config.outputPath))
-                {
-                    EditorUtility.RevealInFinder(_config.outputPath);
-                }
-                else
-                {
-                    ShowStatus("输出目录不存在，请先构建", HelpBoxMessageType.Warning);
-                }
+                ShowStatus("输出目录不存在，请先构建", HelpBoxMessageType.Warning);
             }
         }
     }

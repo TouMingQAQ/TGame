@@ -37,5 +37,8 @@ namespace TGame.ToolBox
 
         // --- Standalone/other build numbers ---
         public List<PlatformBuildNumber> platformBuildNumbers = new();
+
+        // --- BuildProfile 会话持久化（Editor 重启后恢复上次选中的 Profile） ---
+        public string lastProfileGUID;
     }
 }

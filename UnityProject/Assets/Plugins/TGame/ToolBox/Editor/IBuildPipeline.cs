@@ -1,5 +1,6 @@
 using System;
 using UnityEditor;
+using UnityEditor.Build.Profile;
 
 namespace TGame.ToolBox
 {
@@ -19,6 +20,9 @@ namespace TGame.ToolBox
         public bool buildScriptsOnly;
         public bool cleanBuild;
         public string[] scenes;
+
+        /// <summary> Unity 6 BuildProfile（可为 null，向下兼容）</summary>
+        public BuildProfile profile;
     }
 
     public interface IBuildPipeline
