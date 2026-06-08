@@ -42,7 +42,7 @@ namespace TGame.TUI
         /// <summary>
         /// 注册面板类型，绑定预制体和层级
         /// </summary>
-        public void RegisterPanel<T>(GameObject prefab, UILayer layer) where T : BaseUIPanel
+        public void RegisterPanel<T>(T prefab, UILayer layer = UILayer.Normal) where T : BaseUIPanel
         {
             var type = typeof(T);
             if (_configs.ContainsKey(type))
@@ -50,7 +50,7 @@ namespace TGame.TUI
                 Debug.LogWarning($"[UIManager] Panel {type.Name} already registered");
                 return;
             }
-            _configs[type] = new UIPanelConfig { Prefab = prefab, Layer = layer };
+            _configs[type] = new UIPanelConfig { Prefab = prefab.gameObject, Layer = layer };
         }
 
         /// <summary>

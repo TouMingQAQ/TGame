@@ -326,6 +326,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd484fdbd641dcf40816640694bcdaf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TUI::TGame.TUI.TUISample
+  panelPrefab: {fileID: 7450084870809270021, guid: 54a4fa07c2fa51141ab789d8d794c721, type: 3}
 --- !u!114 &326341227
 MonoBehaviour:
   m_ObjectHideFlags: 0
