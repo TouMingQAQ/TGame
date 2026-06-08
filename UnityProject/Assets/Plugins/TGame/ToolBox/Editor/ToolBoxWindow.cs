@@ -9,61 +9,70 @@ namespace TGame.ToolBox
 {
     public class ToolBoxWindow : EditorWindow
     {
-        internal List<BoxRegistration> _filteredBoxes = new();
+        [SerializeField] private string _windowGroup;
+
+        private List<BoxRegistration> _filteredBoxes = new();
         private int _selectedIndex = -1;
 
         private TwoPaneSplitView _splitView;
         private VisualElement _contentContainer;
         private List<Button> _sidebarButtons = new();
 
-        #region Menu Items
+        #region Group Definitions
 
-        [MenuItem("Tools/ToolBox/程序")]
-        private static void OpenProgram()
+        private static readonly Dictionary<string, (string title, List<BoxRegistration> boxes)> _groups = new()
         {
-            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
-            window.titleContent = new GUIContent("程序工具");
-            window._filteredBoxes = new List<BoxRegistration>
+            ["程序"] = ("程序工具", new List<BoxRegistration>
             {
                 HelloBox.Registration,
                 PathBox.Registration,
                 DebugBox.Registration,
-            };
-            window.minSize = new Vector2(400, 300);
-            window.position = new Rect(100, 100, 800, 600);
-            window.Show();
-        }
-
-        [MenuItem("Tools/ToolBox/资源")]
-        private static void OpenAssets()
-        {
-            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
-            window.titleContent = new GUIContent("资源工具");
-            window._filteredBoxes = new List<BoxRegistration>
+            }),
+            ["资源"] = ("资源工具", new List<BoxRegistration>
             {
                 ColorBox.Registration,
                 AnimationCurveBox.Registration,
-            };
-            window.minSize = new Vector2(400, 300);
-            window.position = new Rect(100, 100, 800, 600);
-            window.Show();
-        }
-
-        [MenuItem("Tools/ToolBox/构建")]
-        private static void OpenBuild()
-        {
-            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
-            window.titleContent = new GUIContent("构建工具");
-            window._filteredBoxes = new List<BoxRegistration>
+            }),
+            ["构建"] = ("构建工具", new List<BoxRegistration>
             {
                 BuildBox.Registration,
-            };
+            }),
+        };
+
+        #endregion
+
+        #region Menu Items
+
+        [MenuItem("Tools/ToolBox/程序")]
+        private static void OpenProgram() => OpenGroup("程序");
+
+        [MenuItem("Tools/ToolBox/资源")]
+        private static void OpenAssets() => OpenGroup("资源");
+
+        [MenuItem("Tools/ToolBox/构建")]
+        private static void OpenBuild() => OpenGroup("构建");
+
+        private static void OpenGroup(string group)
+        {
+            if (!_groups.TryGetValue(group, out var def)) return;
+
+            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
+            window.titleContent = new GUIContent(def.title);
+            window._windowGroup = group;
+            window._filteredBoxes = def.boxes;
             window.minSize = new Vector2(400, 300);
             window.position = new Rect(100, 100, 800, 600);
             window.Show();
         }
 
         #endregion
+
+        private void OnEnable()
+        {
+            // Restore boxes after domain reload (script recompilation)
+            if (!string.IsNullOrEmpty(_windowGroup) && _groups.TryGetValue(_windowGroup, out var def))
+                _filteredBoxes = def.boxes;
+        }
 
         private void OnDisable()
         {
@@ -139,7 +148,6 @@ namespace TGame.ToolBox
             var content = EditorGUIUtility.IconContent(iconName);
             if (content?.image != null)
                 return content.image as Texture2D;
-            // Fallback: try without "d_" prefix for dark-skin icons that may not exist
             if (iconName.StartsWith("d_"))
             {
                 content = EditorGUIUtility.IconContent(iconName[2..]);
