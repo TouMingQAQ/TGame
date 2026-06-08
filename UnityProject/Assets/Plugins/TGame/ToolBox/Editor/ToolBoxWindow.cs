@@ -9,9 +9,7 @@ namespace TGame.ToolBox
 {
     public class ToolBoxWindow : EditorWindow
     {
-        [SerializeField] private string _groupFilter;
-
-        private List<BoxRegistration> _filteredBoxes = new();
+        internal List<BoxRegistration> _filteredBoxes = new();
         private int _selectedIndex = -1;
 
         private TwoPaneSplitView _splitView;
@@ -21,19 +19,45 @@ namespace TGame.ToolBox
         #region Menu Items
 
         [MenuItem("Tools/ToolBox/程序")]
-        private static void OpenProgram() => OpenGroup("程序", "程序工具");
-
-        [MenuItem("Tools/ToolBox/资源")]
-        private static void OpenAssets() => OpenGroup("资源", "资源工具");
-
-        [MenuItem("Tools/ToolBox/构建")]
-        private static void OpenBuild() => OpenGroup("构建", "构建工具");
-
-        private static void OpenGroup(string group, string title)
+        private static void OpenProgram()
         {
             var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
-            window.titleContent = new GUIContent(title);
-            window._groupFilter = group;
+            window.titleContent = new GUIContent("程序工具");
+            window._filteredBoxes = new List<BoxRegistration>
+            {
+                HelloBox.Registration,
+                PathBox.Registration,
+                DebugBox.Registration,
+            };
+            window.minSize = new Vector2(400, 300);
+            window.position = new Rect(100, 100, 800, 600);
+            window.Show();
+        }
+
+        [MenuItem("Tools/ToolBox/资源")]
+        private static void OpenAssets()
+        {
+            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
+            window.titleContent = new GUIContent("资源工具");
+            window._filteredBoxes = new List<BoxRegistration>
+            {
+                ColorBox.Registration,
+                AnimationCurveBox.Registration,
+            };
+            window.minSize = new Vector2(400, 300);
+            window.position = new Rect(100, 100, 800, 600);
+            window.Show();
+        }
+
+        [MenuItem("Tools/ToolBox/构建")]
+        private static void OpenBuild()
+        {
+            var window = ScriptableObject.CreateInstance<ToolBoxWindow>();
+            window.titleContent = new GUIContent("构建工具");
+            window._filteredBoxes = new List<BoxRegistration>
+            {
+                BuildBox.Registration,
+            };
             window.minSize = new Vector2(400, 300);
             window.position = new Rect(100, 100, 800, 600);
             window.Show();
@@ -41,38 +65,9 @@ namespace TGame.ToolBox
 
         #endregion
 
-        #region Box Registration
-
-        private static readonly List<BoxRegistration> _allBoxes = new()
-        {
-            HelloBox.Registration,
-            PathBox.Registration,
-            DebugBox.Registration,
-            ColorBox.Registration,
-            AnimationCurveBox.Registration,
-            BuildBox.Registration,
-        };
-
-        #endregion
-
-        private void OnEnable()
-        {
-            RefreshBoxes();
-        }
-
         private void OnDisable()
         {
             SaveSplitterPosition();
-        }
-
-        private void RefreshBoxes()
-        {
-            _filteredBoxes = _allBoxes
-                .Where(b => b.Group == _groupFilter)
-                .ToList();
-
-            if (_filteredBoxes.Count > 0 && _selectedIndex < 0)
-                _selectedIndex = 0;
         }
 
         private void CreateGUI()
@@ -99,13 +94,8 @@ namespace TGame.ToolBox
 
             if (_filteredBoxes.Count > 0)
             {
-                if (_selectedIndex < 0)
-                    _selectedIndex = 0;
+                _selectedIndex = 0;
                 SelectBox(_selectedIndex);
-            }
-            else
-            {
-                ShowEmptyState();
             }
         }
 
@@ -176,7 +166,6 @@ namespace TGame.ToolBox
             var wrapper = new VisualElement();
             wrapper.style.flexGrow = 1;
 
-            // content header
             var header = new VisualElement();
             header.AddToClassList("tbx-content-header");
 
@@ -190,13 +179,6 @@ namespace TGame.ToolBox
             wrapper.Add(scrollView);
 
             _contentContainer.Add(wrapper);
-        }
-
-        private void ShowEmptyState()
-        {
-            var label = new Label($"分组 \"{_groupFilter}\" 没有可用的工具。");
-            label.AddToClassList("tbx-empty");
-            _contentContainer.Add(label);
         }
 
         private void SaveSplitterPosition()
