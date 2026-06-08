@@ -7,22 +7,19 @@ namespace TGame.TUI
     public class TUISample : MonoBehaviour
     {
         [SerializeField]
-        private HelloPanel panelPrefab;
-
+        private HelloPanel _helloPanel;
+        [SerializeField]
+        private SamplePanel _samplePanel;
+        [SerializeField]
+        private AnimationCurveTestPanel _animationCurveTestPanel;
         private void Awake()
         {
             var uimgr = Game.Instance.GetManager<UIManager>();
-            uimgr.RegisterPanel(panelPrefab);
-        }
+            uimgr.RegisterPanel(_helloPanel);
+            uimgr.RegisterPanel(_samplePanel);
+            uimgr.RegisterPanel(_animationCurveTestPanel);
+            uimgr.ShowPanel<SamplePanel>();
 
-        private void OnEnable()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<HelloPanel>();
-        }
-
-        private void OnDisable()
-        {
-            Game.Instance.GetManager<UIManager>().HidePanel<HelloPanel>();
         }
     }
 }

@@ -75,8 +75,8 @@ namespace TGame.TUI
             _animState = AnimState.None;
 
             gameObject.SetActive(true);
-            _canvasGroup.interactable = false;
-            _canvasGroup.blocksRaycasts = false;
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true;
 
             _animState = AnimState.Showing;
             _sequence.PlayForward();
@@ -96,8 +96,8 @@ namespace TGame.TUI
             _sequence.Pause();
             _animState = AnimState.None;
 
-            _canvasGroup.interactable = false;
-            _canvasGroup.blocksRaycasts = false;
+            _canvasGroup.interactable = true;
+            _canvasGroup.blocksRaycasts = true;
 
             _animState = AnimState.Hiding;
             _sequence.SmoothRewind();
@@ -114,6 +114,8 @@ namespace TGame.TUI
         private void OnHideComplete()
         {
             _animState = AnimState.None;
+            _canvasGroup.interactable = false;
+            _canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
             AfterHide();
         }
