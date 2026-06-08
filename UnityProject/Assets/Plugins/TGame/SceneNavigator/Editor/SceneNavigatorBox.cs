@@ -339,6 +339,18 @@ namespace TGame.SceneNavigator
         {
             _initSceneValid = false;
 
+            // 播放模式下 EditorSceneManager.OpenScene 不可用，跳过检测
+            if (EditorApplication.isPlaying)
+            {
+                _initBootButton?.SetEnabled(false);
+                if (_initBootHelpBox != null)
+                {
+                    _initBootHelpBox.messageType = HelpBoxMessageType.Info;
+                    _initBootHelpBox.text = "播放模式下不可用。";
+                }
+                return;
+            }
+
             if (_initSceneAsset == null)
             {
                 _initBootButton?.SetEnabled(false);
@@ -382,6 +394,9 @@ namespace TGame.SceneNavigator
 
         private static bool SceneHasBootstrapper(string scenePath)
         {
+            if (EditorApplication.isPlaying)
+                return false;
+
             // 临时以 Additive 模式打开场景，检测后立即关闭
             var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
             var found = false;
