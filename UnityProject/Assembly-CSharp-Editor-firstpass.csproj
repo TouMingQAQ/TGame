@@ -61,9 +61,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\IBuildPipeline.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Editor\ConsoleBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BuildConfig.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Editor\ConsoleBox.cs" />
     <Compile Include="Assets\Plugins\TGame\SceneNavigator\Editor\ScenePathDrawer.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Editor\ConsoleEditor.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BoxRegistration.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxWindow.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\AnimationCurveBox.cs" />
@@ -74,14 +75,13 @@
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BuildProfileManager.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ColorBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\HelloBox\HelloBox.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Editor\ConsoleEditor.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BuildBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\PathBox.cs" />
     <Compile Include="Assets\Plugins\TGame\SceneNavigator\Editor\SceneNavigatorBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BuildCLI.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ColorLibrary.cs" />
     <None Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxWindow.uss" />
-    <None Include="Assets\Plugins\TGame\TGame.Console\Editor\ConsoleBox.uss" />
+    <None Include="Assets\Plugins\TGame\Console\Editor\ConsoleBox.uss" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -1003,6 +1003,9 @@
     <Reference Include="Unity.RenderPipelines.Core.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.2D.Sprite.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.2D.Sprite.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.TextMeshPro">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.TextMeshPro.dll</HintPath>
     </Reference>
@@ -1162,6 +1165,9 @@
     <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.2D.Sprite.AIIntegration.Editor">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.2D.Sprite.AIIntegration.Editor.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
@@ -1196,6 +1202,10 @@
       <Project>{dca23936-8eb1-c5f6-8149-61e03f34451c}</Project>
       <Name>SceneNavigator.Runtime</Name>
     </ProjectReference>
+    <ProjectReference Include="TGame.Console.csproj">
+      <Project>{abb38e15-2a78-29ee-c0cd-e6250d940c14}</Project>
+      <Name>TGame.Console</Name>
+    </ProjectReference>
     <ProjectReference Include="DOTween.Modules.csproj">
       <Project>{5f7fc198-0e7f-f342-8636-8c8aeba0c87d}</Project>
       <Name>DOTween.Modules</Name>
@@ -1207,10 +1217,6 @@
     <ProjectReference Include="UniTask.Addressables.csproj">
       <Project>{22b6cca9-1294-f848-6564-897448c71005}</Project>
       <Name>UniTask.Addressables</Name>
-    </ProjectReference>
-    <ProjectReference Include="TGame.Console.csproj">
-      <Project>{abb38e15-2a78-29ee-c0cd-e6250d940c14}</Project>
-      <Name>TGame.Console</Name>
     </ProjectReference>
     <ProjectReference Include="UniTask.Linq.csproj">
       <Project>{6c7ba970-2140-f542-76f7-1e69c1cd3cac}</Project>

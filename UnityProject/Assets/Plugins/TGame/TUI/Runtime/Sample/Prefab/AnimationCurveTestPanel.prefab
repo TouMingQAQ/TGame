@@ -210,7 +210,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  button: {fileID: 1859721842269186062}
+  button: {fileID: 742776371856619982}
   root: {fileID: 3712706569088186941}
 --- !u!1 &763776477437198876
 GameObject:
@@ -1605,7 +1605,7 @@ GameObject:
   - component: {fileID: 3712706569088186941}
   - component: {fileID: 7435060218128802396}
   - component: {fileID: 3695162814666411015}
-  - component: {fileID: 1859721842269186062}
+  - component: {fileID: 742776371856619982}
   m_Layer: 5
   m_Name: Button
   m_TagString: Untagged
@@ -1671,7 +1671,7 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1859721842269186062
+--- !u!114 &742776371856619982
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}

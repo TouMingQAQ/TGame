@@ -60,14 +60,14 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\Command\CommandUtility.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\Command\CommandList.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\ConsoleServer.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\ConsoleControl.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\Command\DefaultValueTip.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\Command\CommandAttribute.cs" />
-    <Compile Include="Assets\Plugins\TGame\TGame.Console\Runtime\Command\DefaultValue.cs" />
-    <None Include="Assets\Plugins\TGame\TGame.Console\Runtime\TGame.Console.asmdef" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\Command\DefaultValue.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\ConsoleControl.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\Command\CommandAttribute.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\Command\CommandList.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\Command\CommandUtility.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\Command\DefaultValueTip.cs" />
+    <Compile Include="Assets\Plugins\TGame\Console\Runtime\ConsoleServer.cs" />
+    <None Include="Assets\Plugins\TGame\Console\Runtime\TGame.Console.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
