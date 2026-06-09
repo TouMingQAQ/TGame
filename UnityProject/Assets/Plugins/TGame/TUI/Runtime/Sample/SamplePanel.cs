@@ -16,5 +16,10 @@ namespace TGame.TUI
         {
             Game.Instance.GetManager<UIManager>().ShowPanel<AnimationCurveTestPanel>();
         }
+
+        public void OpenNumberPanel()
+        {
+            Game.Instance.GetManager<UIManager>().ShowPanel<NumberPanel>();
+        }
     }
 }
