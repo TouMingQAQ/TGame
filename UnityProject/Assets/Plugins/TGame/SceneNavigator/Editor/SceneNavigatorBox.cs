@@ -397,8 +397,15 @@ namespace TGame.SceneNavigator
             if (EditorApplication.isPlaying)
                 return false;
 
-            // 临时以 Additive 模式打开场景，检测后立即关闭
-            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+            // 若场景已加载（包括当前 active 场景），复用已有引用，避免 OpenScene+CloseScene
+            // 关掉最后一个场景会触发 "Unloading the last loaded scene ... is not supported" 错误。
+            var existing = EditorSceneManager.GetSceneByPath(scenePath);
+            bool wasAlreadyLoaded = existing.IsValid() && existing.isLoaded;
+
+            var scene = wasAlreadyLoaded
+                ? existing
+                : EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
+
             var found = false;
             foreach (var rootGO in scene.GetRootGameObjects())
             {
@@ -408,7 +415,11 @@ namespace TGame.SceneNavigator
                     break;
                 }
             }
-            EditorSceneManager.CloseScene(scene, true);
+
+            // 仅当我们临时打开了它、且不是唯一场景时才关闭
+            if (!wasAlreadyLoaded && EditorSceneManager.sceneCount > 1)
+                EditorSceneManager.CloseScene(scene, true);
+
             return found;
         }
 
