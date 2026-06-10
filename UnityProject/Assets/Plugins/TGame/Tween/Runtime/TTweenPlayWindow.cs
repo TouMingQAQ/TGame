@@ -333,7 +333,7 @@ namespace TGame.Tween
             _serializedObject.Update();
             if (_entriesProp == null) return;
 
-            if (_nodeList == null || _nodeList.serializedProperty == null || !_nodeList.serializedProperty.isValid)
+            if (_nodeList == null || _nodeList.serializedProperty == null)
             {
                 _nodeList = new UnityEditorInternal.ReorderableList(_serializedObject, _entriesProp, true, true, false, false);
                 _nodeList.drawHeaderCallback = r => EditorGUI.LabelField(r, "Node Entries (drag to reorder)", EditorStyles.boldLabel);

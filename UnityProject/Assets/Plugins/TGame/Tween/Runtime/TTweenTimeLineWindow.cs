@@ -309,7 +309,7 @@ namespace TGame.Tween
             _serializedObject.Update();
             if (_entriesProp == null) return;
 
-            if (_entryList == null || _entryList.serializedProperty == null || !_entryList.serializedProperty.isValid)
+            if (_entryList == null || _entryList.serializedProperty == null)
             {
                 _entryList = new UnityEditorInternal.ReorderableList(_serializedObject, _entriesProp, true, true, false, false);
                 _entryList.drawHeaderCallback = r => EditorGUI.LabelField(r, "TimeLine Entries (drag to reorder)", EditorStyles.boldLabel);
