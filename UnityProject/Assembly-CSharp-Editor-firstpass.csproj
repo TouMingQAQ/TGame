@@ -1084,11 +1084,11 @@
     <Reference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.VisualScripting.Flow">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.VisualScripting.Flow">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.VisualScripting.Flow.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.TextMeshPro.Editor.dll</HintPath>
@@ -1162,11 +1162,11 @@
     <Reference Include="Unity.ShaderGraph.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.ShaderGraph.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.2D.Sprite.AIIntegration.Editor">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.2D.Sprite.AIIntegration.Editor.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Editor.Shared">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.RenderPipelines.Core.Editor.Shared.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
@@ -1217,6 +1217,10 @@
     <ProjectReference Include="UniTask.Addressables.csproj">
       <Project>{22b6cca9-1294-f848-6564-897448c71005}</Project>
       <Name>UniTask.Addressables</Name>
+    </ProjectReference>
+    <ProjectReference Include="TGame.Tween.csproj">
+      <Project>{bd51b925-d68e-e833-e6fc-58985af082f1}</Project>
+      <Name>TGame.Tween</Name>
     </ProjectReference>
     <ProjectReference Include="UniTask.Linq.csproj">
       <Project>{6c7ba970-2140-f542-76f7-1e69c1cd3cac}</Project>

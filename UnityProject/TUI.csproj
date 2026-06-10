@@ -62,6 +62,7 @@
   <ItemGroup>
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\AnimationCurve\AnimationCurveTestPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\View\BaseView.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TweenPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILayer.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\HelloPanel.cs" />
@@ -995,6 +996,10 @@
     <ProjectReference Include="DOTween.Modules.csproj">
       <Project>{5f7fc198-0e7f-f342-8636-8c8aeba0c87d}</Project>
       <Name>DOTween.Modules</Name>
+    </ProjectReference>
+    <ProjectReference Include="TGame.Tween.csproj">
+      <Project>{bd51b925-d68e-e833-e6fc-58985af082f1}</Project>
+      <Name>TGame.Tween</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -16,6 +16,8 @@ namespace TGame.TUI
         private NumberPanel _numberPanel;
         [SerializeField]
         private TButtonPanel _buttonPanel;
+        [SerializeField]
+        private TweenPanel _tweenPanel;
         private void Awake()
         {
             var uimgr = Game.Instance.GetManager<UIManager>();
@@ -24,6 +26,7 @@ namespace TGame.TUI
             uimgr.RegisterPanel(_animationCurveTestPanel);
             uimgr.RegisterPanel(_numberPanel);
             uimgr.RegisterPanel(_buttonPanel);
+            uimgr.RegisterPanel(_tweenPanel);
             uimgr.ShowPanel<SamplePanel>();
 
         }

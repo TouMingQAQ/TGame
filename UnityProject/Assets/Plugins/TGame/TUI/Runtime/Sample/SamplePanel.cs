@@ -25,5 +25,9 @@ namespace TGame.TUI
         {
             Game.Instance.GetManager<UIManager>().ShowPanel<TButtonPanel>();
         }
+        public void OpenTweenPanel()
+        {
+            Game.Instance.GetManager<UIManager>().ShowPanel<TweenPanel>();
+        }
     }
 }
