@@ -100,7 +100,7 @@ namespace TGame.Tween
             _canvasContainer.RegisterCallback<WheelEvent>(OnCanvasWheel);
             root.Add(_canvasContainer);
 
-            _entriesContainer = new IMGUIContainer(DrawEntriesList) { style = { flexGrow = 1, minHeight = 80, marginLeft = 4, marginRight = 4 } };
+            _entriesContainer = new IMGUIContainer(DrawEntriesList) { style = { flexGrow = 1, minHeight = 80, marginLeft = 4, marginRight = 4 }, focusable = true };
             root.Add(_entriesContainer);
 
             var bottomBar = new VisualElement { style = { flexDirection = FlexDirection.Row, paddingLeft = 4, paddingRight = 4, paddingBottom = 4 } };
@@ -309,8 +309,9 @@ namespace TGame.Tween
             _serializedObject.Update();
             if (_entriesProp == null) return;
 
-            if (_entryList == null || _entryList.serializedProperty == null)
+            if (_entryList == null || _entriesProp == null || _entryList.count != _entriesProp.arraySize)
             {
+                _entriesProp = _serializedObject.FindProperty("_entries");
                 _entryList = new UnityEditorInternal.ReorderableList(_serializedObject, _entriesProp, true, true, false, false);
                 _entryList.drawHeaderCallback = r => EditorGUI.LabelField(r, "TimeLine Entries (drag to reorder)", EditorStyles.boldLabel);
                 _entryList.drawElementCallback = (r, i, _, _) =>

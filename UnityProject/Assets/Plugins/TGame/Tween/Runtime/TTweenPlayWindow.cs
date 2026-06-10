@@ -108,10 +108,11 @@ namespace TGame.Tween
             _canvasContainer.RegisterCallback<WheelEvent>(OnCanvasWheel);
             root.Add(_canvasContainer);
 
-            // ——— 节点列表 ———
+            // ——— 节点列表（可拖拽排序） ———
             _entriesContainer = new IMGUIContainer(DrawEntriesList)
             {
-                style = { flexGrow = 1, minHeight = 80, marginLeft = 4, marginRight = 4 }
+                style = { flexGrow = 1, minHeight = 80, marginLeft = 4, marginRight = 4 },
+                focusable = true
             };
             root.Add(_entriesContainer);
 
@@ -333,8 +334,9 @@ namespace TGame.Tween
             _serializedObject.Update();
             if (_entriesProp == null) return;
 
-            if (_nodeList == null || _nodeList.serializedProperty == null)
+            if (_nodeList == null || _entriesProp == null || _nodeList.count != _entriesProp.arraySize)
             {
+                _entriesProp = _serializedObject.FindProperty("_nodeEntries");
                 _nodeList = new UnityEditorInternal.ReorderableList(_serializedObject, _entriesProp, true, true, false, false);
                 _nodeList.drawHeaderCallback = r => EditorGUI.LabelField(r, "Node Entries (drag to reorder)", EditorStyles.boldLabel);
                 _nodeList.drawElementCallback = (r, i, _, _) =>
@@ -346,22 +348,16 @@ namespace TGame.Tween
                     Color c = NodeColors[i % NodeColors.Length];
 
                     float x = r.x; float w = r.width;
-                    // 色标
                     EditorGUI.DrawRect(new Rect(x, r.y + 1, 10, r.height - 2), c);
                     x += 14; w -= 14;
-                    // 序号
                     EditorGUI.LabelField(new Rect(x, r.y, 24, r.height), $"#{i}");
                     x += 26; w -= 26;
-                    // 名称
                     string name = np.objectReferenceValue != null ? np.objectReferenceValue.name : "(none)";
                     EditorGUI.LabelField(new Rect(x, r.y, 100, r.height), name);
                     x += 104; w -= 104;
-                    // startTime
                     EditorGUI.PropertyField(new Rect(x, r.y, 55, r.height), tp, GUIContent.none);
                     x += 59; w -= 59;
-                    // 对象引用
                     EditorGUI.PropertyField(new Rect(x, r.y, w - 26, r.height), np, GUIContent.none);
-                    // 删除
                     if (GUI.Button(new Rect(r.xMax - 22, r.y, 22, r.height), "×"))
                     {
                         _entriesProp.DeleteArrayElementAtIndex(i);
