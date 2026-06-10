@@ -132,6 +132,27 @@ namespace TGame.Tween
 
         // ——— 编辑器辅助 ———
 
+        /// <summary>
+        /// 计算当前 Play 的动画总时长（所有 entry 中最大 startTime + duration）。
+        /// 用于 Editor 可视化时间轴的比例计算。
+        /// </summary>
+        internal float CalculateTotalDuration()
+        {
+            float maxTime = 0f;
+            foreach (var e in _nodeEntries)
+            {
+                float dur = e.node != null ? e.node.Duration : DefaultEntryDuration;
+                float end = e.startTime + dur;
+                if (end > maxTime) maxTime = end;
+            }
+            return maxTime > 0f ? maxTime : 1f;
+        }
+
+        /// <summary>
+        /// 当 entry.node 为 null 时使用的默认时长，用于可视化编辑器。
+        /// </summary>
+        internal const float DefaultEntryDuration = 0.3f;
+
         [ContextMenu("Collect Children")]
         public void CollectChildren()
         {

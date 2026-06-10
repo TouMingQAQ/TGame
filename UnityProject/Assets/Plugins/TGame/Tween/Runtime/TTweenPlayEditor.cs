@@ -31,11 +31,11 @@ namespace TGame.Tween
                         Debug.Log("TTweenPlay: Enter Play Mode to preview animation.");
                     }
                 }
-                if (GUILayout.Button("▶ ReStart"))
+                if (GUILayout.Button("▶ Restart"))
                 {
                     if (Application.isPlaying)
                     {
-                        play.Resume();
+                        play.Play(); // Restart = 从头重新播放
                     }
                     else
                     {
