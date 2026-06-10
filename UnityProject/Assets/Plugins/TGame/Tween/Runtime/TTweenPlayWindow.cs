@@ -5,10 +5,6 @@ using UnityEngine.UIElements;
 
 namespace TGame.Tween
 {
-    /// <summary>
-    /// TTweenPlay 的可视化节点时间轴编辑器窗口（UI Toolkit）。
-    /// 从 Inspector 中 "Open Play Editor" 按钮打开。
-    /// </summary>
     public class TTweenPlayWindow : EditorWindow
     {
         [System.NonSerialized] private TTweenPlay _play;
@@ -18,38 +14,40 @@ namespace TGame.Tween
         // ——— UI 元素 ———
         private IMGUIContainer _canvasContainer;
         private IMGUIContainer _entriesContainer;
-        private Button _playBtn;
-        private Button _stopBtn;
+        private Label _zoomLabel;
         private Label _statusLabel;
+        private Slider _zoomSlider;
+
+        // ——— 视口状态 ———
+        private float _zoom = 1f;
+        private float _scrollTime = 0f;
+        private bool _isPanning = false;
+        private Vector2 _panStartMouse;
+        private float _panStartScroll;
 
         // ——— 拖拽状态 ———
         private int _dragIndex = -1;
         private float _dragInitialTime;
         private Vector2 _dragInitialMouse;
 
-        // ——— 色板 ———
         private static readonly Color[] NodeColors = new[]
         {
-            new Color(0.85f, 0.37f, 0.37f),
-            new Color(0.33f, 0.71f, 0.86f),
-            new Color(0.62f, 0.84f, 0.36f),
-            new Color(0.96f, 0.65f, 0.14f),
-            new Color(0.76f, 0.49f, 0.86f),
-            new Color(0.96f, 0.76f, 0.24f),
-            new Color(0.44f, 0.78f, 0.72f),
-            new Color(0.91f, 0.45f, 0.58f),
+            new Color(0.85f, 0.37f, 0.37f), new Color(0.33f, 0.71f, 0.86f),
+            new Color(0.62f, 0.84f, 0.36f), new Color(0.96f, 0.65f, 0.14f),
+            new Color(0.76f, 0.49f, 0.86f), new Color(0.96f, 0.76f, 0.24f),
+            new Color(0.44f, 0.78f, 0.72f), new Color(0.91f, 0.45f, 0.58f),
         };
 
         // ——— 公开方法 ———
 
         public static void Open(TTweenPlay play)
         {
-            var window = GetWindow<TTweenPlayWindow>("TTweenPlay Editor");
-            window._play = play;
-            window._serializedObject = new SerializedObject(play);
-            window._entriesProp = window._serializedObject?.FindProperty("_nodeEntries");
-            window.minSize = new Vector2(500, 400);
-            window.Show();
+            var w = GetWindow<TTweenPlayWindow>("TTweenPlay Editor");
+            w._play = play;
+            w._serializedObject = new SerializedObject(play);
+            w._entriesProp = w._serializedObject?.FindProperty("_nodeEntries");
+            w.minSize = new Vector2(500, 400);
+            w.Show();
         }
 
         // ——— UI Toolkit ———
@@ -70,52 +68,44 @@ namespace TGame.Tween
             // ——— Toolbar ———
             var toolbar = new VisualElement
             {
-                style =
-                {
-                    flexDirection = FlexDirection.Row,
-                    alignItems = Align.Center,
-                    paddingLeft = 4,
-                    paddingRight = 4,
-                    paddingTop = 2,
-                    paddingBottom = 2,
+                style = { flexDirection = FlexDirection.Row, alignItems = Align.Center,
+                    paddingLeft = 4, paddingRight = 4, paddingTop = 2, paddingBottom = 2,
                     backgroundColor = new StyleColor(new Color(0.22f, 0.22f, 0.22f)),
-                    borderBottomWidth = 1,
-                    borderBottomColor = new Color(0.3f, 0.3f, 0.3f)
-                }
+                    borderBottomWidth = 1, borderBottomColor = new Color(0.3f, 0.3f, 0.3f) }
             };
 
-            _playBtn = new Button(() =>
-            {
-                if (_play == null) return;
-                if (Application.isPlaying)
-                    _play.Play();
-                else
-                    Debug.Log("TTweenPlay: Enter Play Mode to preview.");
-            })
-            { text = "▶ Play", tooltip = "Play the timeline (Play Mode only)", style = { width = 70 } };
-            toolbar.Add(_playBtn);
+            toolbar.Add(new Button(() => { if (Application.isPlaying) _play?.Play(); else Debug.Log("TTweenPlay: Enter Play Mode."); })
+            { text = "▶ Play", style = { width = 70 } });
 
-            _stopBtn = new Button(() => { _play?.Kill(); })
-            { text = "■ Stop", tooltip = "Stop and kill all tweens", style = { width = 70 } };
-            toolbar.Add(_stopBtn);
+            toolbar.Add(new Button(() => _play?.Kill()) { text = "■ Stop", style = { width = 70 } });
+
+            toolbar.Add(new VisualElement { style = { width = 16 } });
+
+            toolbar.Add(new Label("Zoom:") { style = { unityFontStyleAndWeight = FontStyle.Bold, marginRight = 2 } });
+            _zoomSlider = new Slider(0.2f, 5f) { value = 1f, style = { width = 80 } };
+            _zoomSlider.RegisterValueChangedCallback(e => { _zoom = e.newValue; _scrollTime = Mathf.Min(_scrollTime, Mathf.Max(0, GetMaxScroll())); _canvasContainer?.MarkDirtyRepaint(); });
+            toolbar.Add(_zoomSlider);
+            _zoomLabel = new Label("1.0x") { style = { width = 36, fontSize = 9 } };
+            toolbar.Add(_zoomLabel);
+
+            toolbar.Add(new Button(() => { _zoom = 1f; _zoomSlider.value = 1f; _scrollTime = 0; _canvasContainer?.MarkDirtyRepaint(); })
+            { text = "Fit", style = { fontSize = 9, paddingLeft = 6, paddingRight = 6 } });
 
             root.Add(toolbar);
 
             // ——— Status ———
-            _statusLabel = new Label("No play selected")
-            {
-                style = { unityFontStyleAndWeight = FontStyle.Bold, paddingLeft = 8, paddingTop = 2, paddingBottom = 2 }
-            };
+            _statusLabel = new Label { style = { unityFontStyleAndWeight = FontStyle.Bold, paddingLeft = 8, paddingTop = 2, paddingBottom = 2 } };
             root.Add(_statusLabel);
 
             // ——— 时间轴画布 ———
             _canvasContainer = new IMGUIContainer(DrawTimelineCanvas)
             {
-                style = { height = 120, minHeight = 100, flexGrow = 0, marginLeft = 4, marginRight = 4, marginTop = 4 }
+                style = { height = 130, minHeight = 100, flexGrow = 0, marginLeft = 4, marginRight = 4, marginTop = 4 }
             };
             _canvasContainer.RegisterCallback<MouseDownEvent>(OnCanvasMouseDown);
             _canvasContainer.RegisterCallback<MouseMoveEvent>(OnCanvasMouseMove);
             _canvasContainer.RegisterCallback<MouseUpEvent>(OnCanvasMouseUp);
+            _canvasContainer.RegisterCallback<WheelEvent>(OnCanvasWheel);
             root.Add(_canvasContainer);
 
             // ——— 节点列表 ———
@@ -126,35 +116,9 @@ namespace TGame.Tween
             root.Add(_entriesContainer);
 
             // ——— 底部按钮 ———
-            var bottomBar = new VisualElement
-            {
-                style = { flexDirection = FlexDirection.Row, paddingLeft = 4, paddingRight = 4, paddingBottom = 4 }
-            };
-
-            var addBtn = new Button(() =>
-            {
-                if (_play == null) return;
-                Undo.RecordObject(_play, "Add Node Entry");
-                _play.NodeEntries.Add(new TTweenPlay.NodeEntry());
-                EditorUtility.SetDirty(_play);
-                _serializedObject?.Update();
-                Repaint();
-            })
-            { text = "+ Add Node" };
-            bottomBar.Add(addBtn);
-
-            var collectBtn = new Button(() =>
-            {
-                if (_play == null) return;
-                Undo.RecordObject(_play, "Collect Children");
-                _play.CollectChildren();
-                EditorUtility.SetDirty(_play);
-                _serializedObject?.Update();
-                Repaint();
-            })
-            { text = "Collect Children" };
-            bottomBar.Add(collectBtn);
-
+            var bottomBar = new VisualElement { style = { flexDirection = FlexDirection.Row, paddingLeft = 4, paddingRight = 4, paddingBottom = 4 } };
+            bottomBar.Add(new Button(() => { if (_play == null) return; Undo.RecordObject(_play, "Add Node Entry"); _play.NodeEntries.Add(new TTweenPlay.NodeEntry()); EditorUtility.SetDirty(_play); _serializedObject?.Update(); Repaint(); }) { text = "+ Add Node" });
+            bottomBar.Add(new Button(() => { if (_play == null) return; Undo.RecordObject(_play, "Collect Children"); _play.CollectChildren(); EditorUtility.SetDirty(_play); _serializedObject?.Update(); Repaint(); }) { text = "Collect Children" });
             root.Add(bottomBar);
 
             RefreshFromPlay();
@@ -162,19 +126,12 @@ namespace TGame.Tween
 
         private void Update()
         {
-            if (_play != null)
-                _canvasContainer?.MarkDirtyRepaint();
+            if (_play != null) _canvasContainer?.MarkDirtyRepaint();
         }
-
-        // ——— 刷新 ———
 
         private void RefreshFromPlay()
         {
-            if (_play == null)
-            {
-                _statusLabel.text = "No play selected";
-                return;
-            }
+            if (_play == null) { _statusLabel.text = "No play selected"; return; }
             _statusLabel.text = $"Editing: {_play.gameObject.name}  |  Nodes: {_play.NodeEntries.Count}";
             _serializedObject?.Update();
         }
@@ -183,105 +140,90 @@ namespace TGame.Tween
 
         private void DrawTimelineCanvas()
         {
-            if (_play == null || _serializedObject == null)
-            {
-                EditorGUILayout.HelpBox("No play selected.", MessageType.Info);
-                return;
-            }
-
+            if (_play == null || _serializedObject == null) { EditorGUILayout.HelpBox("No play selected.", MessageType.Info); return; }
             _serializedObject.Update();
-
             var rect = _canvasContainer.contentRect;
             if (rect.width < 20 || rect.height < 20) return;
 
-            const float leftPad = 50f;
-            const float rightPad = 16f;
-            const float topPad = 24f;
-            const float bottomPad = 10f;
-            const float rowHeight = 18f;
-            const float rowGap = 2f;
+            const float leftPad = 50f, rightPad = 16f, topPad = 24f, bottomPad = 16f;
+            const float rowHeight = 18f, rowGap = 2f;
 
             float totalTime = CalculateTotalDuration();
             if (totalTime <= 0f) totalTime = 1f;
+            float visibleTime = totalTime / _zoom;
+            _scrollTime = Mathf.Clamp(_scrollTime, 0f, Mathf.Max(0f, totalTime - visibleTime));
 
-            var timelineRect = new Rect(
-                rect.x + leftPad, rect.y + topPad,
-                rect.width - leftPad - rightPad, rect.height - topPad - bottomPad
-            );
-
+            var tlRect = new Rect(rect.x + leftPad, rect.y + topPad, rect.width - leftPad - rightPad, rect.height - topPad - bottomPad);
             // 背景
-            EditorGUI.DrawRect(timelineRect, new Color(0.16f, 0.16f, 0.16f, 1f));
-            EditorGUI.DrawRect(new Rect(timelineRect.x - 1, timelineRect.y - 1, timelineRect.width + 2, 1), new Color(0.3f, 0.3f, 0.3f));
-            EditorGUI.DrawRect(new Rect(timelineRect.x - 1, timelineRect.yMax, timelineRect.width + 2, 1), new Color(0.3f, 0.3f, 0.3f));
-            EditorGUI.DrawRect(new Rect(timelineRect.x - 1, timelineRect.y, 1, timelineRect.height), new Color(0.3f, 0.3f, 0.3f));
-            EditorGUI.DrawRect(new Rect(timelineRect.xMax, timelineRect.y, 1, timelineRect.height), new Color(0.3f, 0.3f, 0.3f));
+            EditorGUI.DrawRect(tlRect, new Color(0.16f, 0.16f, 0.16f, 1f));
+            EditorGUI.DrawRect(new Rect(tlRect.x - 1, tlRect.y - 1, tlRect.width + 2, 1), new Color(0.3f, 0.3f, 0.3f));
+            EditorGUI.DrawRect(new Rect(tlRect.x - 1, tlRect.yMax, tlRect.width + 2, 1), new Color(0.3f, 0.3f, 0.3f));
+            EditorGUI.DrawRect(new Rect(tlRect.x - 1, tlRect.y, 1, tlRect.height), new Color(0.3f, 0.3f, 0.3f));
+            EditorGUI.DrawRect(new Rect(tlRect.xMax, tlRect.y, 1, tlRect.height), new Color(0.3f, 0.3f, 0.3f));
 
-            // 时间刻度
-            float timeStep = GetTimeStep(totalTime);
-            var timeLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+            // 时间刻度 + 网格线
+            float timeStep = GetTimeStep(visibleTime);
+            var tsStyle = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.UpperCenter, fontSize = 9, normal = { textColor = new Color(0.7f, 0.7f, 0.7f) } };
+            for (float t = 0; t <= visibleTime + 0.001f; t += timeStep)
             {
-                alignment = TextAnchor.UpperCenter, fontSize = 9,
-                normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
-            };
-            for (float t = 0; t <= totalTime + 0.001f; t += timeStep)
-            {
-                float x = timelineRect.x + (t / totalTime) * timelineRect.width;
-                EditorGUI.DrawRect(new Rect(x, timelineRect.y, 1, timelineRect.height), new Color(0.25f, 0.25f, 0.25f));
-                GUI.Label(new Rect(x - 20, rect.y + 2, 40, 18), $"{t:F1}s", timeLabelStyle);
+                float absT = _scrollTime + t;
+                if (absT > totalTime + 0.001f) break;
+                float x = tlRect.x + (t / visibleTime) * tlRect.width;
+                EditorGUI.DrawRect(new Rect(x, tlRect.y, 1, tlRect.height), new Color(0.25f, 0.25f, 0.25f));
+                GUI.Label(new Rect(x - 20, rect.y + 2, 40, 18), $"{absT:F1}s", tsStyle);
             }
 
+            // 显示总时长标签（右上）
+            var totalLabelStyle = new GUIStyle(EditorStyles.miniLabel) { alignment = TextAnchor.UpperRight, fontSize = 9, normal = { textColor = new Color(0.6f, 0.6f, 0.6f) } };
+            GUI.Label(new Rect(tlRect.xMax - 80, rect.y + 2, 80, 14), $"Total: {totalTime:F2}s", totalLabelStyle);
+
             // 节点块
+            _zoomLabel.text = $"{_zoom:F1}x";
             int count = _entriesProp?.arraySize ?? 0;
-            float usableHeight = timelineRect.height - 4;
+            float usableHeight = tlRect.height - 4;
             int maxRows = Mathf.Max(1, (int)(usableHeight / (rowHeight + rowGap)));
 
             for (int i = 0; i < count; i++)
             {
-                var entryProp = _entriesProp.GetArrayElementAtIndex(i);
-                var nodeProp = entryProp.FindPropertyRelative("node");
-                var timeProp = entryProp.FindPropertyRelative("startTime");
+                var ep = _entriesProp.GetArrayElementAtIndex(i);
+                var np = ep.FindPropertyRelative("node");
+                var tp = ep.FindPropertyRelative("startTime");
+                float st = tp.floatValue;
 
-                float startTime = timeProp.floatValue;
+                // 不在可见范围内 → 跳过（场景外裁剪）
+                if (st < _scrollTime - 0.05f || st > _scrollTime + visibleTime) continue;
+
                 Color color = NodeColors[i % NodeColors.Length];
-
-                float x = timelineRect.x + (startTime / totalTime) * timelineRect.width;
+                float localT = st - _scrollTime;
+                float x = tlRect.x + (localT / visibleTime) * tlRect.width;
                 int row = i % maxRows;
-                float y = timelineRect.y + 4 + row * (rowHeight + rowGap);
-                float blockWidth = Mathf.Max(16, (0.4f / totalTime) * timelineRect.width);
-                var blockRect = new Rect(x, y, blockWidth, rowHeight);
+                float y = tlRect.y + 4 + row * (rowHeight + rowGap);
+                float bw = Mathf.Max(16, (0.3f / visibleTime) * tlRect.width);
+                var br = new Rect(x, y, bw, rowHeight);
 
                 bool isDragging = i == _dragIndex;
-                bool isHover = blockRect.Contains(Event.current.mousePosition);
+                bool isHover = br.Contains(Event.current.mousePosition);
 
-                if (isDragging)
-                    EditorGUI.DrawRect(blockRect, Color.white);
-                else if (isHover)
-                    EditorGUI.DrawRect(blockRect, Color.Lerp(color, Color.white, 0.3f));
-                else
-                    EditorGUI.DrawRect(blockRect, color);
+                EditorGUI.DrawRect(br, isDragging ? Color.white : isHover ? Color.Lerp(color, Color.white, 0.3f) : color);
+                if (isDragging || isHover) EditorGUI.DrawRect(new Rect(br.x - 2, br.y, 2, br.height), Color.white);
 
-                if (isDragging || isHover)
-                    EditorGUI.DrawRect(new Rect(blockRect.x - 2, blockRect.y, 2, blockRect.height), Color.white);
-
-                string label = nodeProp.objectReferenceValue != null
-                    ? nodeProp.objectReferenceValue.name
-                    : $"Node {i}";
-                var blockLabelStyle = new GUIStyle(EditorStyles.miniBoldLabel)
-                {
-                    alignment = TextAnchor.MiddleCenter, fontSize = 9,
-                    normal = { textColor = Color.white }, clipping = TextClipping.Clip
-                };
-                GUI.Label(blockRect, label, blockLabelStyle);
+                string label = np.objectReferenceValue != null ? np.objectReferenceValue.name : $"Node {i}";
+                var lStyle = new GUIStyle(EditorStyles.miniBoldLabel) { alignment = TextAnchor.MiddleCenter, fontSize = 9, normal = { textColor = Color.white }, clipping = TextClipping.Clip };
+                GUI.Label(br, label, lStyle);
             }
 
-            // 总时长
-            var totalLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+            // 滚动条
+            float maxScroll = Mathf.Max(0f, totalTime - visibleTime);
+            if (maxScroll > 0.01f)
             {
-                alignment = TextAnchor.LowerRight, fontSize = 9,
-                normal = { textColor = new Color(0.6f, 0.6f, 0.6f) }
-            };
-            GUI.Label(new Rect(timelineRect.xMax - 80, timelineRect.yMax - 16, 80, 14),
-                $"▲ {totalTime:F2}s", totalLabelStyle);
+                float scrollBarY = tlRect.yMax + 2;
+                float scrollBarW = tlRect.width;
+                var scrollBarRect = new Rect(tlRect.x, scrollBarY, scrollBarW, 6);
+                EditorGUI.DrawRect(scrollBarRect, new Color(0.12f, 0.12f, 0.12f));
+                float thumbW = Mathf.Max(20, scrollBarW * (visibleTime / totalTime));
+                float thumbX = tlRect.x + (_scrollTime / maxScroll) * (scrollBarW - thumbW);
+                EditorGUI.DrawRect(new Rect(thumbX, scrollBarY, thumbW, 6), new Color(0.5f, 0.5f, 0.5f));
+            }
 
             _serializedObject.ApplyModifiedProperties();
         }
@@ -290,72 +232,102 @@ namespace TGame.Tween
 
         private void OnCanvasMouseDown(MouseDownEvent evt)
         {
-            if (_play == null || _entriesProp == null || evt.button != 0) return;
-
+            if (_play == null || _entriesProp == null) return;
             var rect = _canvasContainer.contentRect;
-            (var tlRect, float totalTime) = GetLayout(rect);
-            if (totalTime <= 0) return;
+            (var tlRect, float visibleTime) = GetLayout(rect);
+            if (visibleTime <= 0) return;
 
-            _serializedObject.Update();
-            for (int i = 0; i < _entriesProp.arraySize; i++)
+            if (evt.button == 0)
             {
-                var entryProp = _entriesProp.GetArrayElementAtIndex(i);
-                float t = entryProp.FindPropertyRelative("startTime").floatValue;
-                float bw = Mathf.Max(16, (0.4f / totalTime) * tlRect.width);
-                float x = tlRect.x + (t / totalTime) * tlRect.width;
-                float uh = tlRect.height - 4;
-                int mr = Mathf.Max(1, (int)(uh / 20));
-                int r = i % mr;
-                float y = tlRect.y + 4 + r * 20;
-                var br = new Rect(x - 4, y - 2, bw + 8, 22);
-                if (br.Contains(evt.mousePosition))
+                _serializedObject.Update();
+                for (int i = 0; i < _entriesProp.arraySize; i++)
                 {
-                    _dragIndex = i;
-                    _dragInitialTime = t;
-                    _dragInitialMouse = evt.mousePosition;
-                    evt.StopPropagation();
-                    break;
+                    var ep = _entriesProp.GetArrayElementAtIndex(i);
+                    float st = ep.FindPropertyRelative("startTime").floatValue;
+                    if (st < _scrollTime || st > _scrollTime + visibleTime) continue;
+                    float bw = Mathf.Max(16, (0.3f / visibleTime) * tlRect.width);
+                    float localT = st - _scrollTime;
+                    float x = tlRect.x + (localT / visibleTime) * tlRect.width;
+                    float uh = tlRect.height - 4;
+                    int mr = Mathf.Max(1, (int)(uh / 20));
+                    int row = i % mr;
+                    float y = tlRect.y + 4 + row * 20;
+                    var br = new Rect(x - 4, y - 2, bw + 8, 22);
+                    if (br.Contains(evt.mousePosition))
+                    {
+                        _dragIndex = i; _dragInitialTime = st; _dragInitialMouse = evt.mousePosition;
+                        evt.StopPropagation(); return;
+                    }
                 }
+                // 空白处点击 → 开始平移
+                _isPanning = true; _panStartMouse = evt.mousePosition; _panStartScroll = _scrollTime;
+                evt.StopPropagation();
+            }
+            else if (evt.button == 1)
+            {
+                _zoom = 1f; _zoomSlider.value = 1f; _scrollTime = 0; _canvasContainer?.MarkDirtyRepaint(); evt.StopPropagation();
             }
         }
 
         private void OnCanvasMouseMove(MouseMoveEvent evt)
         {
-            if (_dragIndex < 0 || _play == null || _entriesProp == null) return;
-            var rect = _canvasContainer.contentRect;
-            (var tlRect, float totalTime) = GetLayout(rect);
-            if (totalTime <= 0) return;
-            _serializedObject.Update();
-            if (_dragIndex < _entriesProp.arraySize)
+            if (_dragIndex >= 0 && _play != null && _entriesProp != null)
             {
-                var p = _entriesProp.GetArrayElementAtIndex(_dragIndex).FindPropertyRelative("startTime");
-                float dx = evt.mousePosition.x - _dragInitialMouse.x;
-                float dt = (dx / tlRect.width) * totalTime;
-                p.floatValue = Mathf.Max(0, Mathf.Round((_dragInitialTime + dt) / 0.05f) * 0.05f);
-                _serializedObject.ApplyModifiedProperties();
+                var rect = _canvasContainer.contentRect;
+                (var tlRect, float visibleTime) = GetLayout(rect);
+                if (visibleTime > 0 && _dragIndex < _entriesProp.arraySize)
+                {
+                    var p = _entriesProp.GetArrayElementAtIndex(_dragIndex).FindPropertyRelative("startTime");
+                    float dx = evt.mousePosition.x - _dragInitialMouse.x;
+                    float dt = (dx / tlRect.width) * visibleTime;
+                    p.floatValue = Mathf.Max(0, Mathf.Round((_dragInitialTime + dt) / 0.05f) * 0.05f);
+                    _serializedObject.ApplyModifiedProperties();
+                }
+                evt.StopPropagation();
+                return;
             }
-            evt.StopPropagation();
+            if (_isPanning)
+            {
+                float totalTime = CalculateTotalDuration();
+                float visibleTime = totalTime / _zoom;
+                float dx = (_panStartMouse.x - evt.mousePosition.x);
+                var rect = _canvasContainer.contentRect;
+                (var tlRect, _) = GetLayout(rect);
+                float dt = (dx / tlRect.width) * visibleTime;
+                _scrollTime = Mathf.Clamp(_panStartScroll + dt, 0, Mathf.Max(0, totalTime - visibleTime));
+                evt.StopPropagation();
+            }
         }
 
         private void OnCanvasMouseUp(MouseUpEvent evt)
         {
-            if (_dragIndex >= 0)
-            {
-                _dragIndex = -1;
-                evt.StopPropagation();
-                if (_play != null) EditorUtility.SetDirty(_play);
-            }
+            if (_dragIndex >= 0) { _dragIndex = -1; if (_play != null) EditorUtility.SetDirty(_play); evt.StopPropagation(); }
+            _isPanning = false;
+        }
+
+        private void OnCanvasWheel(WheelEvent evt)
+        {
+            if (_play == null) return;
+            float totalTime = CalculateTotalDuration();
+            float oldVisible = totalTime / _zoom;
+            float cursorTime = _scrollTime + (evt.mousePosition.x - 50) / (_canvasContainer.contentRect.width - 66) * oldVisible;
+            cursorTime = Mathf.Clamp(cursorTime, 0, totalTime);
+
+            _zoom *= evt.delta.y > 0 ? 0.85f : 1.176f;
+            _zoom = Mathf.Clamp(_zoom, 0.2f, 5f);
+            _zoomSlider.SetValueWithoutNotify(_zoom);
+
+            float newVisible = totalTime / _zoom;
+            _scrollTime = Mathf.Clamp(cursorTime - (evt.mousePosition.x - 50) / (_canvasContainer.contentRect.width - 66) * newVisible, 0, Mathf.Max(0, totalTime - newVisible));
+            _canvasContainer.MarkDirtyRepaint();
+            evt.StopPropagation();
         }
 
         // ——— 节点列表 ———
 
         private void DrawEntriesList()
         {
-            if (_play == null || _serializedObject == null)
-            {
-                EditorGUILayout.HelpBox("No play selected.", MessageType.Info);
-                return;
-            }
+            if (_play == null || _serializedObject == null) { EditorGUILayout.HelpBox("No play selected.", MessageType.Info); return; }
             _serializedObject.Update();
             EditorGUILayout.LabelField("Node Entries", EditorStyles.boldLabel);
             if (_entriesProp == null) return;
@@ -366,21 +338,14 @@ namespace TGame.Tween
                 var np = ep.FindPropertyRelative("node");
                 var tp = ep.FindPropertyRelative("startTime");
                 Color c = NodeColors[i % NodeColors.Length];
-
                 EditorGUILayout.BeginHorizontal(GUI.skin.box);
                 var cr = EditorGUILayout.GetControlRect(GUILayout.Width(12), GUILayout.Height(18));
                 EditorGUI.DrawRect(new Rect(cr.x, cr.y, 12, 18), c);
                 EditorGUILayout.LabelField($"#{i}", GUILayout.Width(24));
-                string name = np.objectReferenceValue != null ? np.objectReferenceValue.name : "(none)";
-                EditorGUILayout.LabelField(name, GUILayout.Width(120));
+                EditorGUILayout.LabelField(np.objectReferenceValue != null ? np.objectReferenceValue.name : "(none)", GUILayout.Width(120));
                 EditorGUILayout.PropertyField(tp, GUIContent.none, GUILayout.Width(60));
                 EditorGUILayout.PropertyField(np, GUIContent.none, GUILayout.MinWidth(100));
-                if (GUILayout.Button("×", GUILayout.Width(22)))
-                {
-                    _entriesProp.DeleteArrayElementAtIndex(i);
-                    _serializedObject.ApplyModifiedProperties();
-                    break;
-                }
+                if (GUILayout.Button("×", GUILayout.Width(22))) { _entriesProp.DeleteArrayElementAtIndex(i); _serializedObject.ApplyModifiedProperties(); break; }
                 EditorGUILayout.EndHorizontal();
             }
             _serializedObject.ApplyModifiedProperties();
@@ -401,13 +366,18 @@ namespace TGame.Tween
             return maxTime > 0f ? maxTime : 1f;
         }
 
-        private (Rect, float) GetLayout(Rect containerRect)
+        private float GetMaxScroll()
         {
-            const float lp = 50f, rp = 16f, tp = 24f, bp = 10f;
-            float t = CalculateTotalDuration();
-            if (t <= 0f) t = 1f;
-            return (new Rect(containerRect.x + lp, containerRect.y + tp,
-                containerRect.width - lp - rp, containerRect.height - tp - bp), t);
+            return Mathf.Max(0, CalculateTotalDuration() - CalculateTotalDuration() / _zoom);
+        }
+
+        private (Rect tlRect, float visibleTime) GetLayout(Rect containerRect)
+        {
+            const float lp = 50f, rp = 16f, tp = 24f, bp = 16f;
+            float totalTime = CalculateTotalDuration();
+            if (totalTime <= 0f) totalTime = 1f;
+            float visibleTime = totalTime / _zoom;
+            return (new Rect(containerRect.x + lp, containerRect.y + tp, containerRect.width - lp - rp, containerRect.height - tp - bp), visibleTime);
         }
 
         private static float GetTimeStep(float totalTime)
