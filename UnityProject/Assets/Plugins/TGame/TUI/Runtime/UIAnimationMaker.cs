@@ -20,7 +20,7 @@ namespace TGame.TUI
         /// <summary>
         /// 透明度渐入：alpha 0→1
         /// </summary>
-        public static Tween FadeIn(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween FadeIn(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.alpha = 0f;
             return target.DOFade(1, duration);
@@ -29,7 +29,7 @@ namespace TGame.TUI
         /// <summary>
         /// 透明度渐出：alpha 1→0
         /// </summary>
-        public static Tween FadeOut(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween FadeOut(CanvasGroup target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.alpha = 1f;
             return target.DOFade(0, duration);
@@ -38,7 +38,7 @@ namespace TGame.TUI
         /// <summary>
         /// 缩放弹出：scale 0→1
         /// </summary>
-        public static Tween ScaleIn(Transform target, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween ScaleIn(Transform target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.localScale = Vector3.zero;
             return target.DOScale(1f, duration)
@@ -48,7 +48,7 @@ namespace TGame.TUI
         /// <summary>
         /// 缩放消失：scale 1→0
         /// </summary>
-        public static Tween ScaleOut(Transform target, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween ScaleOut(Transform target, float duration = 0.3f, AnimationCurve curve = null)
         {
             target.localScale = Vector3.one;
             return target.DOScale(0f, duration)
@@ -58,7 +58,7 @@ namespace TGame.TUI
         /// <summary>
         /// 弹性弹出：scale 0.5→1 Overshoot
         /// </summary>
-        public static Tween PopIn(Transform target, float duration = 0.4f)
+        public static DG.Tweening.Tween PopIn(Transform target, float duration = 0.4f)
         {
             target.localScale = Vector3.one * 0.5f;
             return target.DOScale(1f, duration).SetEase(Ease.OutBack);
@@ -67,7 +67,7 @@ namespace TGame.TUI
         /// <summary>
         /// 从上方滑入：anchoredPosition 从 offset 滑到 (0, 0)
         /// </summary>
-        public static Tween SlideInFromTop(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween SlideInFromTop(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
         {
             var original = target.anchoredPosition;
             target.anchoredPosition = original + new Vector2(0f, distance);
@@ -78,7 +78,7 @@ namespace TGame.TUI
         /// <summary>
         /// 从下方滑入
         /// </summary>
-        public static Tween SlideInFromBottom(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween SlideInFromBottom(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
         {
             var original = target.anchoredPosition;
             target.anchoredPosition = original + new Vector2(0f, -distance);
@@ -89,7 +89,7 @@ namespace TGame.TUI
         /// <summary>
         /// 从左侧滑入
         /// </summary>
-        public static Tween SlideInFromLeft(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween SlideInFromLeft(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
         {
             var original = target.anchoredPosition;
             target.anchoredPosition = original + new Vector2(-distance, 0f);
@@ -100,7 +100,7 @@ namespace TGame.TUI
         /// <summary>
         /// 从右侧滑入
         /// </summary>
-        public static Tween SlideInFromRight(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
+        public static DG.Tweening.Tween SlideInFromRight(RectTransform target, float distance = 80f, float duration = 0.3f, AnimationCurve curve = null)
         {
             var original = target.anchoredPosition;
             target.anchoredPosition = original + new Vector2(distance, 0f);

@@ -36,8 +36,6 @@ namespace TGame.TUI
 
         protected virtual void Awake()
         {
-            _canvasGroup.alpha = 0f;
-
             _sequence = BuildAnimation();
             _sequence.SetAutoKill(false);
             _sequence.Pause();

@@ -13,6 +13,8 @@
 ## 规则
 
 - 读写代码文件（.cs、.json、.md 等）时，始终使用 UTF-8 编码（不带 BOM）
+- **新增或修改代码时，必须检查 .asmdef 引用是否完整**：每新建一个 .asmdef 或向已有模块添加外部依赖（如 DOTween、UniTask）时，需确认其 `references` 字段包含了所需的 asmdef GUID。可参考已有模块（如 TUI.asmdef、TGame.asmdef）确认引用的 GUID 集合。缺少引用会导致编译错误。
+- 在 `namespace TGame.Tween` 等命名空间内使用 `DG.Tweening.Tween` 时，**必须使用完全限定名** `DG.Tweening.Tween`，避免与命名空间 `TGame.Tween` 产生解析歧义。
 - AI 生成的文档统一存放于 [Document/AIDoc/](Document/AIDoc/) 目录下:
   - [Analysis/](Document/AIDoc/Analysis/) — 代码分析、依赖关系、性能热力图
   - [Tasks/](Document/AIDoc/Tasks/) — 跨会话任务状态、进度备忘
@@ -48,6 +50,7 @@
 | **TCore** | `TCore/Runtime/` | 核心框架：三层体系（Game → Manager → System/Module），事件总线、定时器、对象池 |
 | **TUI** | `TUI/Runtime/` | UI 管理系统：UIManager + BaseUIPanel，支持 DOTween 动画生命周期 |
 | **SceneNavigator** | `SceneNavigator/Runtime/` | 场景导航系统：SceneEntry 入口 + ScenePathAttribute 路径标记 |
+| **TTween** | `Tween/Runtime/` | Tween 动画体系：TTweenPlay（播放器）+ TTweenTimeLine（时间线编排器）+ TTweenNode 子节点 + UI Toolkit 可视化窗口 |
 | **TGame.Console** | `TGame.Console/Runtime/` | 运行时控制台：命令注册/解析/执行系统 |
 | **ToolBox** | `ToolBox/Editor/` | Editor 工具箱窗口：侧边栏 + 内容区 UI Toolkit 面板 |
 | **Mobile** | `Mobile/SafeArea/` | 移动端 SafeArea 适配 |

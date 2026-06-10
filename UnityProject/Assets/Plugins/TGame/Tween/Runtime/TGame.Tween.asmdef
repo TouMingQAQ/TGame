@@ -1,12 +1,9 @@
 {
-    "name": "TUI",
-    "rootNamespace": "TGame.TUI",
+    "name": "TGame.Tween",
+    "rootNamespace": "TGame.Tween",
     "references": [
-        "GUID:fdd566e303b577841905c151dd32fa26",
         "GUID:0fdf6556c4c5a1e47847fda7a0d857e8",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:343deaaf83e0cee4ca978e7df0b80d21",
-        "GUID:15206d8cd4e3c794bb4fe9d44a4f9b69"
+        "GUID:029c1c1b674aaae47a6841a0b89ad80e"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
