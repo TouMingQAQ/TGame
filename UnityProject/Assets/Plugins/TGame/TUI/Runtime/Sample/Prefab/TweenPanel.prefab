@@ -163,9 +163,9 @@ MonoBehaviour:
   _ignoreTimeScale: 1
   _nodeEntries:
   - node: {fileID: 3418288529858027187}
-    startTime: 0
+    startTime: 0.76
   - node: {fileID: 6563041179609151721}
-    startTime: 0
+    startTime: 0.19
 --- !u!114 &3418288529858027187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,8 +179,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenFade
   _target: {fileID: 8183400236666514631}
+  _fromValue: 0
   _targetValue: 1
-  _duration: 0.4
   _ease: 1
   _customCurve:
     serializedVersion: 2
@@ -222,7 +222,6 @@ MonoBehaviour:
   _mode: 0
   _fromValue: {x: 0.5, y: 0.5, z: 1}
   _targetValue: {x: 1, y: 1, z: 1}
-  _duration: 0.3
   _ease: 27
   _customCurve:
     serializedVersion: 2

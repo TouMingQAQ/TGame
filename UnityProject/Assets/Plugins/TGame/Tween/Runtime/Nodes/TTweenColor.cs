@@ -23,9 +23,7 @@ namespace TGame.Tween
 
         [SerializeField]
         private Color _targetValue = Color.white;
-
-        [SerializeField]
-        private float _duration = 0.3f;
+        
 
         [Header("Easing")]
         [SerializeField]
@@ -48,7 +46,7 @@ namespace TGame.Tween
         {
             if (Target == null) return null;
 
-            var tween = Target.DOColor(_targetValue, _duration);
+            var tween = Target.DOColor(_targetValue, Duration);
             tween.ChangeStartValue(_fromValue);
 
             var seq = DOTween.Sequence();

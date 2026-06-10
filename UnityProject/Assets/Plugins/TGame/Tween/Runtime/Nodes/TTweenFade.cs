@@ -22,10 +22,7 @@ namespace TGame.Tween
 
         [SerializeField]
         private float _targetValue = 1f;
-
-        [SerializeField]
-        private float _duration = 0.3f;
-
+        
         [Header("Easing")]
         [SerializeField]
         private Ease _ease = Ease.Linear;
@@ -47,7 +44,7 @@ namespace TGame.Tween
         {
             if (Target == null) return null;
 
-            var tween = Target.DOFade(_targetValue, _duration);
+            var tween = Target.DOFade(_targetValue, Duration);
             tween.ChangeStartValue(_fromValue);
 
             var seq = DOTween.Sequence();

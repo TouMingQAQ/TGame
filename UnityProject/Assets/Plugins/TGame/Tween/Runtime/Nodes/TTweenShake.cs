@@ -18,10 +18,7 @@ namespace TGame.Tween
         [Header("Animation")]
         [SerializeField]
         private Vector3 _strength = Vector3.one;
-
-        [SerializeField]
-        private float _duration = 0.5f;
-
+        
         [SerializeField]
         [Range(0, 20)]
         private int _vibrato = 10;
@@ -40,7 +37,7 @@ namespace TGame.Tween
 
         public override DG.Tweening.Tween BuildTween()
         {
-            return Target.DOShakePosition(_duration, _strength, _vibrato, _randomness, _snapping, _fadeOut);
+            return Target.DOShakePosition(Duration, _strength, _vibrato, _randomness, _snapping, _fadeOut);
         }
 
         private void Reset()

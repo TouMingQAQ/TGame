@@ -10,19 +10,9 @@ namespace TGame.Tween
     [AddComponentMenu("TGame/Tween/Nodes/TTweenDelay")]
     public class TTweenDelay : TTweenNode
     {
-        [Header("Animation")]
-        [SerializeField]
-        private float _duration = 0.5f;
-
-        public float Duration
-        {
-            get => _duration;
-            set => _duration = value;
-        }
-
         public override DG.Tweening.Tween BuildTween()
         {
-            return DOTween.Sequence().AppendInterval(_duration);
+            return DOTween.Sequence().AppendInterval(Duration);
         }
     }
 }

@@ -185,8 +185,7 @@ namespace TGame.Tween
             {
                 var entry = entries[i];
                 if (entry.node == null) continue;
-                // Use a default duration estimate since each node stores duration differently
-                maxEnd = entry.startTime + 0.3f;
+                maxEnd = Mathf.Max(maxEnd, entry.startTime + entry.node.Duration);
             }
             return maxEnd > 0f ? maxEnd : 0.3f;
         }

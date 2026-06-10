@@ -68,6 +68,7 @@
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenMoveLocal.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenMove.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenShake.cs" />
+    <Compile Include="Assets\Plugins\TGame\Tween\Runtime\TTweenPlayWindow.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenRotate.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenDelay.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\TTweenPlayEditor.cs" />

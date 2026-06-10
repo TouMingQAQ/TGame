@@ -31,10 +31,7 @@ namespace TGame.Tween
 
         [SerializeField]
         private Vector3 _targetValue = Vector3.zero;
-
-        [SerializeField]
-        private float _duration = 0.3f;
-
+        
         [Header("Easing")]
         [SerializeField]
         private Ease _ease = Ease.OutQuad;
@@ -53,7 +50,7 @@ namespace TGame.Tween
             // Additive：相对偏移，不使用 FromValue 和 ChangeStartValue
             if (_mode == MoveMode.Additive)
             {
-                var addTween = Target.DOMove(Target.position + _targetValue, _duration, _snapping);
+                var addTween = Target.DOMove(Target.position + _targetValue, Duration, _snapping);
                 ApplyEase(addTween);
                 return addTween;
             }
@@ -68,7 +65,7 @@ namespace TGame.Tween
                 end = _fromValue;
             }
 
-            var tween = Target.DOMove(end, _duration, _snapping);
+            var tween = Target.DOMove(end, Duration, _snapping);
             tween.ChangeStartValue(start);
 
             var seq = DOTween.Sequence();

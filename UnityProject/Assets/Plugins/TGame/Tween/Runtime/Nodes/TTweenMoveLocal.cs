@@ -28,9 +28,7 @@ namespace TGame.Tween
 
         [SerializeField]
         private Vector3 _targetValue = Vector3.zero;
-
-        [SerializeField]
-        private float _duration = 0.3f;
+        
 
         [Header("Easing")]
         [SerializeField]
@@ -45,7 +43,7 @@ namespace TGame.Tween
         {
             if (_mode == MoveMode.Additive)
             {
-                var addTween = Target.DOLocalMove(Target.localPosition + _targetValue, _duration);
+                var addTween = Target.DOLocalMove(Target.localPosition + _targetValue, Duration);
                 ApplyEase(addTween);
                 return addTween;
             }
@@ -58,7 +56,7 @@ namespace TGame.Tween
                 end = _fromValue;
             }
 
-            var tween = Target.DOLocalMove(end, _duration);
+            var tween = Target.DOLocalMove(end, Duration);
             tween.ChangeStartValue(start);
 
             var seq = DOTween.Sequence();

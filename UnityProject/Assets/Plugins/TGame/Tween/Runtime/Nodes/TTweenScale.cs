@@ -29,10 +29,7 @@ namespace TGame.Tween
 
         [SerializeField]
         private Vector3 _targetValue = Vector3.one;
-
-        [SerializeField]
-        private float _duration = 0.3f;
-
+        
         [Header("Easing")]
         [SerializeField]
         private Ease _ease = Ease.OutBack;
@@ -52,7 +49,7 @@ namespace TGame.Tween
                 end = _fromValue;
             }
 
-            var tween = Target.DOScale(end, _duration);
+            var tween = Target.DOScale(end, Duration);
             tween.ChangeStartValue(start);
 
             var seq = DOTween.Sequence();

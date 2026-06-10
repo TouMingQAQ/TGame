@@ -15,5 +15,13 @@ namespace TGame.Tween
         /// 此方法不自动播放，由父构造器统一编排。
         /// </summary>
         public abstract DG.Tweening.Tween BuildTween();
+
+        [SerializeField]
+        private float _duration = 0.3f;
+
+        /// <summary>
+        /// 节点的动画时长（秒）。用于可视化编辑器中块的宽度计算。
+        /// </summary>
+        public float Duration => _duration;
     }
 }
