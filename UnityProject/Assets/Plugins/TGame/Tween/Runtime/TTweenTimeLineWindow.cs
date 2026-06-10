@@ -299,31 +299,50 @@ namespace TGame.Tween
             evt.StopPropagation();
         }
 
-        // ——— Entry 列表 ———
+        // ——— Entry 列表（可拖拽排序） ———
+
+        private UnityEditorInternal.ReorderableList _entryList;
 
         private void DrawEntriesList()
         {
             if (_timeline == null || _serializedObject == null) { EditorGUILayout.HelpBox("No timeline selected.", MessageType.Info); return; }
             _serializedObject.Update();
-            EditorGUILayout.LabelField("TimeLine Entries", EditorStyles.boldLabel);
             if (_entriesProp == null) return;
 
-            for (int i = 0; i < _entriesProp.arraySize; i++)
+            if (_entryList == null || _entryList.serializedProperty == null || !_entryList.serializedProperty.isValid)
             {
-                var ep = _entriesProp.GetArrayElementAtIndex(i);
-                var pp = ep.FindPropertyRelative("play");
-                var tp = ep.FindPropertyRelative("startTime");
-                Color c = EntryColors[i % EntryColors.Length];
-                EditorGUILayout.BeginHorizontal(GUI.skin.box);
-                var cr = EditorGUILayout.GetControlRect(GUILayout.Width(12), GUILayout.Height(18));
-                EditorGUI.DrawRect(new Rect(cr.x, cr.y, 12, 18), c);
-                EditorGUILayout.LabelField($"#{i}", GUILayout.Width(24));
-                EditorGUILayout.LabelField(pp.objectReferenceValue != null ? pp.objectReferenceValue.name : "(none)", GUILayout.Width(120));
-                EditorGUILayout.PropertyField(tp, GUIContent.none, GUILayout.Width(60));
-                EditorGUILayout.PropertyField(pp, GUIContent.none, GUILayout.MinWidth(100));
-                if (GUILayout.Button("×", GUILayout.Width(22))) { _entriesProp.DeleteArrayElementAtIndex(i); _serializedObject.ApplyModifiedProperties(); break; }
-                EditorGUILayout.EndHorizontal();
+                _entryList = new UnityEditorInternal.ReorderableList(_serializedObject, _entriesProp, true, true, false, false);
+                _entryList.drawHeaderCallback = r => EditorGUI.LabelField(r, "TimeLine Entries (drag to reorder)", EditorStyles.boldLabel);
+                _entryList.drawElementCallback = (r, i, _, _) =>
+                {
+                    if (i >= _entriesProp.arraySize) return;
+                    var ep = _entriesProp.GetArrayElementAtIndex(i);
+                    var pp = ep.FindPropertyRelative("play");
+                    var tp = ep.FindPropertyRelative("startTime");
+                    Color c = EntryColors[i % EntryColors.Length];
+
+                    float x = r.x;
+                    EditorGUI.DrawRect(new Rect(x, r.y + 1, 10, r.height - 2), c);
+                    x += 14;
+                    EditorGUI.LabelField(new Rect(x, r.y, 24, r.height), $"#{i}");
+                    x += 26;
+                    string name = pp.objectReferenceValue != null ? pp.objectReferenceValue.name : "(none)";
+                    EditorGUI.LabelField(new Rect(x, r.y, 100, r.height), name);
+                    x += 104;
+                    EditorGUI.PropertyField(new Rect(x, r.y, 55, r.height), tp, GUIContent.none);
+                    x += 59;
+                    EditorGUI.PropertyField(new Rect(x, r.y, r.xMax - x - 26, r.height), pp, GUIContent.none);
+                    if (GUI.Button(new Rect(r.xMax - 22, r.y, 22, r.height), "×"))
+                    {
+                        _entriesProp.DeleteArrayElementAtIndex(i);
+                        _serializedObject.ApplyModifiedProperties();
+                    }
+                };
+                _entryList.elementHeight = EditorGUIUtility.singleLineHeight + 2;
+                _entryList.onReorderCallback = _ => { EditorUtility.SetDirty(_timeline); };
             }
+
+            _entryList.DoLayoutList();
             _serializedObject.ApplyModifiedProperties();
         }
 
