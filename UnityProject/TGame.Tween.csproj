@@ -74,6 +74,7 @@
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\TTweenPlayEditor.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\TTweenTimeLineWindow.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenScale.cs" />
+    <Compile Include="Assets\Plugins\TGame\Tween\Runtime\TTweenTimelineWindowBase.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenCallback.cs" />
     <Compile Include="Assets\Plugins\TGame\Tween\Runtime\Nodes\TTweenColor.cs" />
     <None Include="Assets\Plugins\TGame\Tween\Runtime\TGame.Tween.asmdef" />

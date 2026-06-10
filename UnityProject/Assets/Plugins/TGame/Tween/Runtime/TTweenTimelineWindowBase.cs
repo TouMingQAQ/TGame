@@ -97,7 +97,7 @@ namespace TGame.Tween
         private int _dragIndex = -1;
         private float _dragInitialTime;
         private Vector2 _dragInitialMouse;
-        private bool _needsRepaint;
+        protected bool _needsRepaint;
 
         private ReorderableList _reorderableList;
 

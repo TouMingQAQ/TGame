@@ -17,11 +17,18 @@ namespace TGame.Tween
         public abstract DG.Tweening.Tween BuildTween();
 
         [SerializeField]
+        [Tooltip("节点的动画时长（秒）。在可视化编辑器中控制块的宽度，运行时传入 DOTween。")]
         private float _duration = 0.3f;
 
         /// <summary>
-        /// 节点的动画时长（秒）。用于可视化编辑器中块的宽度计算。
+        /// 节点的动画时长（秒）。
+        /// 可在 Inspector 或 TTweenPlay 可视化窗口中直接编辑。
+        /// 修改后即时影响可视化块宽度和运行时动画时长。
         /// </summary>
-        public float Duration => _duration;
+        public float Duration
+        {
+            get => _duration;
+            set => _duration = value;
+        }
     }
 }

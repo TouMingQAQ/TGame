@@ -61,11 +61,39 @@ namespace TGame.Tween
         protected override void DrawEntryFields(Rect r, int index, SerializedProperty entryProp, SerializedProperty startTimeProp, float startX)
         {
             var np = entryProp.FindPropertyRelative("node");
+            var nodeObj = np.objectReferenceValue as TTweenNode;
             float x = startX;
-            EditorGUI.LabelField(new Rect(x, r.y, 100, r.height), np.objectReferenceValue != null ? np.objectReferenceValue.name : "(none)");
-            x += 104;
-            EditorGUI.PropertyField(new Rect(x, r.y, 55, r.height), startTimeProp, GUIContent.none);
-            x += 59;
+
+            // 节点名
+            EditorGUI.LabelField(new Rect(x, r.y, 72, r.height), nodeObj != null ? nodeObj.name : "(none)");
+            x += 76;
+
+            // startTime
+            EditorGUI.PropertyField(new Rect(x, r.y, 44, r.height), startTimeProp, GUIContent.none);
+            x += 48;
+
+            // Duration — 通过 SerializedObject 编辑节点自身的 _duration
+            var durRect = new Rect(x, r.y, 44, r.height);
+            if (nodeObj != null)
+            {
+                var nodeSO = new SerializedObject(nodeObj);
+                var durProp = nodeSO.FindProperty("_duration");
+                float before = durProp.floatValue;
+                EditorGUI.PropertyField(durRect, durProp, GUIContent.none);
+                if (nodeSO.ApplyModifiedProperties() && !Mathf.Approximately(before, durProp.floatValue))
+                    _needsRepaint = true;
+                nodeSO.Dispose();
+            }
+            else
+            {
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUI.FloatField(durRect, DefaultDuration);
+                }
+            }
+            x += 48;
+
+            // 节点引用
             EditorGUI.PropertyField(new Rect(x, r.y, r.xMax - x - 26, r.height), np, GUIContent.none);
         }
 
