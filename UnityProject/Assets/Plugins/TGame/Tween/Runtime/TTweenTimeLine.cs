@@ -20,6 +20,9 @@ namespace TGame.Tween
 
             [Tooltip("在时间线上的起始时间（秒）")]
             public float startTime;
+
+            [Tooltip("条目别名，用于在编辑器时间轴与列表中区分相同 Play。为空则回退到 Play 名称。")]
+            public string alias;
         }
 
         [Header("Play Settings")]

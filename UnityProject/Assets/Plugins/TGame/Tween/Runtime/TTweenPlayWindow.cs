@@ -39,7 +39,12 @@ namespace TGame.Tween
         protected override string GetEntryLabel(int index)
         {
             if (_entriesProp == null || index >= _entriesProp.arraySize) return $"Node {index}";
-            var np = _entriesProp.GetArrayElementAtIndex(index).FindPropertyRelative("node");
+            var entry = _entriesProp.GetArrayElementAtIndex(index);
+            var aliasProp = entry.FindPropertyRelative("alias");
+            string alias = aliasProp != null ? aliasProp.stringValue : null;
+            if (!string.IsNullOrEmpty(alias)) return alias;
+
+            var np = entry.FindPropertyRelative("node");
             return np.objectReferenceValue != null ? np.objectReferenceValue.name : $"Node {index}";
         }
 
@@ -61,12 +66,17 @@ namespace TGame.Tween
         protected override void DrawEntryFields(Rect r, int index, SerializedProperty entryProp, SerializedProperty startTimeProp, float startX)
         {
             var np = entryProp.FindPropertyRelative("node");
+            var aliasProp = entryProp.FindPropertyRelative("alias");
             var nodeObj = np.objectReferenceValue as TTweenNode;
             float x = startX;
 
-            // 节点名
-            EditorGUI.LabelField(new Rect(x, r.y, 72, r.height), nodeObj != null ? nodeObj.name : "(none)");
-            x += 76;
+            // 节点名（来源对象名）
+            EditorGUI.LabelField(new Rect(x, r.y, 56, r.height), nodeObj != null ? nodeObj.name : "(none)");
+            x += 60;
+
+            // 别名输入框（空时显示灰色占位）
+            DrawAliasField(new Rect(x, r.y, 96, r.height), aliasProp, nodeObj != null ? nodeObj.name : "alias");
+            x += 100;
 
             // startTime
             EditorGUI.PropertyField(new Rect(x, r.y, 44, r.height), startTimeProp, GUIContent.none);
@@ -95,6 +105,36 @@ namespace TGame.Tween
 
             // 节点引用
             EditorGUI.PropertyField(new Rect(x, r.y, r.xMax - x - 26, r.height), np, GUIContent.none);
+        }
+
+        /// <summary>
+        /// 绘制 alias 字段；为空时叠加灰色占位提示，编辑后触发时间轴重绘。
+        /// </summary>
+        private void DrawAliasField(Rect rect, SerializedProperty aliasProp, string placeholder)
+        {
+            if (aliasProp == null)
+            {
+                using (new EditorGUI.DisabledScope(true))
+                    EditorGUI.TextField(rect, string.Empty);
+                return;
+            }
+
+            EditorGUI.BeginChangeCheck();
+            string newValue = EditorGUI.TextField(rect, aliasProp.stringValue);
+            if (EditorGUI.EndChangeCheck())
+            {
+                aliasProp.stringValue = newValue;
+                _needsRepaint = true;
+            }
+
+            if (string.IsNullOrEmpty(aliasProp.stringValue) && Event.current.type == EventType.Repaint)
+            {
+                var prev = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, 0.4f);
+                var pRect = new Rect(rect.x + 2, rect.y, rect.width - 4, rect.height);
+                GUI.Label(pRect, placeholder, EditorStyles.miniLabel);
+                GUI.color = prev;
+            }
         }
 
         // ——— 打开窗口 ———

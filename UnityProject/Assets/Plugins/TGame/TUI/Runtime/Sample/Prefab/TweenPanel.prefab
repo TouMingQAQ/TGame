@@ -163,9 +163,11 @@ MonoBehaviour:
   _ignoreTimeScale: 1
   _nodeEntries:
   - node: {fileID: 3418288529858027187}
-    startTime: 0.76
+    startTime: 0.19999999
+    alias: "\u80CC\u666F\u8FC7\u5EA6"
   - node: {fileID: 6563041179609151721}
-    startTime: 0.19
+    startTime: 0
+    alias: "\u7F29\u653E"
 --- !u!114 &3418288529858027187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -178,6 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c165decd1bbd3b40b9ad7d4900b7358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenFade
+  _duration: 0.6
   _target: {fileID: 8183400236666514631}
   _fromValue: 0
   _targetValue: 1
@@ -218,6 +221,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97169967689244147b52faa972a96884, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenScale
+  _duration: 0.6
   _target: {fileID: 4577590289060802082}
   _mode: 0
   _fromValue: {x: 0.5, y: 0.5, z: 1}
