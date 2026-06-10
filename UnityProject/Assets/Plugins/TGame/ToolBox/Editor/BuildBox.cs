@@ -72,19 +72,40 @@ namespace TGame.ToolBox
             DiscoverPipelines();
             RefreshPlatformBuildNumberEntries();
 
-            var scrollView = new ScrollView();
-            scrollView.style.flexGrow = 1;
-            scrollView.style.paddingLeft = 6;
-            scrollView.style.paddingRight = 6;
-            scrollView.style.paddingTop = 4;
+            // 不再自己 new ScrollView，外层 ToolBoxWindow.ShowContent 已包了一层 ScrollView，
+            //     双层 ScrollView 嵌套会导致内层不出滚动条 / Foldout 折叠时抖动。
+            var root = new VisualElement();
+            root.style.flexGrow = 1;
+            root.style.paddingLeft = 6;
+            root.style.paddingRight = 6;
+            root.style.paddingTop = 4;
 
-            BuildVersionSection(scrollView);
-            BuildConfigSection(scrollView);
-            BuildAssetBundleSection(scrollView);
-            BuildPlayerSection(scrollView);
-            BuildStatusBar(scrollView);
+            BuildVersionSection(root);
+            BuildConfigSection(root);
+            BuildAssetBundleSection(root);
+            BuildPlayerSection(root);
+            BuildStatusBar(root);
 
-            return scrollView;
+            return root;
+        }
+
+        // ============================================================
+        // 共享样式辅助
+        // ============================================================
+
+        /// <summary> 创建一行：固定宽度的 form label + 内容区，row 容器返回供调用方填内容 </summary>
+        private static VisualElement AddFormRow(VisualElement parent, string labelText, out VisualElement contentArea)
+        {
+            var row = new VisualElement();
+            row.AddToClassList("tbx-row");
+            parent.Add(row);
+
+            var label = new Label(labelText);
+            label.AddToClassList("tbx-form-label-fixed");
+            row.Add(label);
+
+            contentArea = row;
+            return row;
         }
 
         // ============================================================
@@ -181,36 +202,14 @@ namespace TGame.ToolBox
             BuildProfileSelector(container);
 
             // ---- Platform display (read-only) ----
-            var platformRow = new VisualElement();
-            platformRow.style.flexDirection = FlexDirection.Row;
-            platformRow.style.alignItems = Align.Center;
-            platformRow.style.marginBottom = 4;
-            container.Add(platformRow);
-
-            var platformLabel = new Label("目标平台");
-            platformLabel.style.width = 100;
-            platformLabel.style.fontSize = 11;
-            platformLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
-            platformRow.Add(platformLabel);
-
+            AddFormRow(container, "目标平台", out var platformRow);
             _platformLabel = new Label("(未选择)");
             _platformLabel.style.flexGrow = 1;
             _platformLabel.style.fontSize = 11;
             platformRow.Add(_platformLabel);
 
             // ---- Output path ----
-            var pathRow = new VisualElement();
-            pathRow.style.flexDirection = FlexDirection.Row;
-            pathRow.style.alignItems = Align.Center;
-            pathRow.style.marginBottom = 4;
-            container.Add(pathRow);
-
-            var pathLabel = new Label("输出路径");
-            pathLabel.style.width = 100;
-            pathLabel.style.fontSize = 11;
-            pathLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
-            pathRow.Add(pathLabel);
-
+            AddFormRow(container, "输出路径", out var pathRow);
             _outputPathField = new TextField();
             _outputPathField.value = _config.outputPath;
             _outputPathField.RegisterValueChangedCallback(evt =>
@@ -249,17 +248,7 @@ namespace TGame.ToolBox
         private void BuildProfileSelector(VisualElement parent)
         {
             // ---- 选择行 ----
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.alignItems = Align.Center;
-            row.style.marginBottom = 4;
-            parent.Add(row);
-
-            var profileLabel = new Label("构建档案");
-            profileLabel.style.width = 100;
-            profileLabel.style.fontSize = 11;
-            profileLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
-            row.Add(profileLabel);
+            AddFormRow(parent, "构建档案", out var row);
 
             RefreshProfileList();
 
@@ -516,17 +505,7 @@ namespace TGame.ToolBox
             foldout.Add(container);
 
             // AB output path
-            var abPathRow = new VisualElement();
-            abPathRow.style.flexDirection = FlexDirection.Row;
-            abPathRow.style.alignItems = Align.Center;
-            abPathRow.style.marginBottom = 4;
-            container.Add(abPathRow);
-
-            var abPathLabel = new Label("AB 输出路径");
-            abPathLabel.style.width = 100;
-            abPathLabel.style.fontSize = 11;
-            abPathLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
-            abPathRow.Add(abPathLabel);
+            AddFormRow(container, "AB 输出路径", out var abPathRow);
 
             _abOutputPathField = new TextField();
             _abOutputPathField.value = _config.abOutputPath;
@@ -632,8 +611,7 @@ namespace TGame.ToolBox
 
             // Pipeline selection
             var pipelineLabel = new Label("构建流水线");
-            pipelineLabel.style.fontSize = 11;
-            pipelineLabel.style.color = new Color(0.6f, 0.6f, 0.6f);
+            pipelineLabel.AddToClassList("tbx-label");
             pipelineLabel.style.marginBottom = 2;
             _playerFoldoutContent.Add(pipelineLabel);
 

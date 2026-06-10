@@ -160,15 +160,21 @@ namespace TGame.ToolBox
                 headerRow.Add(label);
             }
 
-            var curveField = new IMGUIContainer(() =>
-            {
-                EditorGUI.BeginChangeCheck();
-                entry.Curve = EditorGUILayout.CurveField(entry.Curve, GUILayout.Height(60));
-                if (EditorGUI.EndChangeCheck() && editable)
-                    SaveDIYCurves();
-            });
-            curveField.style.height = 62;
+            var curveField = new CurveField { value = entry.Curve };
+            curveField.style.height = 60;
             curveField.style.flexGrow = 1;
+            if (editable)
+            {
+                curveField.RegisterValueChangedCallback(evt =>
+                {
+                    entry.Curve = evt.newValue;
+                    SaveDIYCurves();
+                });
+            }
+            else
+            {
+                curveField.SetEnabled(false);
+            }
             container.Add(curveField);
 
             return container;

@@ -1,8 +1,11 @@
-﻿/* =============================================
+/* =============================================
    ToolBox Theme - Design System
+   注意：Unity USS 不支持 :root，变量在 .tbx-root 上声明，
+   通过 inheritance 传递到整棵子树。
+   不支持 padding/margin 简写，必须拆成 4 个方向。
    ============================================= */
 
-:root {
+.tbx-root {
     /* Background */
     --tbx-bg-base:       rgb(40, 40, 42);
     --tbx-bg-sidebar:    rgb(28, 28, 30);
@@ -45,9 +48,16 @@
     --tbx-sp-8: 32px;
 
     /* Radius */
-    --tbx-radius-sm: 2px;
     --tbx-radius:    4px;
     --tbx-radius-lg: 6px;
+}
+
+/* =============================================
+   Foldout: 移除默认 13px 缩进，由代码统一控制
+   ============================================= */
+
+.tbx-root .unity-foldout__content {
+    margin-left: 0;
 }
 
 /* =============================================
@@ -71,14 +81,23 @@
     height: 34px;
     padding-left: var(--tbx-sp-4);
     padding-right: var(--tbx-sp-3);
+    padding-top: 0;
+    padding-bottom: 0;
     margin-left: var(--tbx-sp-3);
     margin-right: var(--tbx-sp-3);
+    margin-top: 0;
     margin-bottom: 1px;
-    background-color: transparent;
-    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
     color: var(--tbx-text-secondary);
     -unity-font-style: normal;
-    border-radius: var(--tbx-radius);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
 }
 
 .sidebar-tab-button:hover {
@@ -97,6 +116,11 @@
 }
 
 .sidebar-tab-button--selected:hover {
+    background-color: var(--tbx-accent-hover);
+}
+
+/* 选中态下按下，保持 accent 而不是回退到 base button :active */
+.sidebar-tab-button--selected:active {
     background-color: var(--tbx-accent-hover);
 }
 
@@ -176,6 +200,14 @@
     margin-top: var(--tbx-sp-1);
 }
 
+/* BuildBox 通用副字段标签 */
+.tbx-form-label-fixed {
+    width: 100px;
+    font-size: 11px;
+    color: var(--tbx-text-secondary);
+    flex-shrink: 0;
+}
+
 /* =============================================
    Separator
    ============================================= */
@@ -202,29 +234,65 @@
 
 .tbx-card {
     background-color: var(--tbx-bg-card);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
     margin-bottom: var(--tbx-sp-3);
-    padding: var(--tbx-sp-4);
+    padding-top: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
+    padding-bottom: var(--tbx-sp-4);
+    padding-left: var(--tbx-sp-4);
 }
 
 .tbx-card-tight {
     background-color: var(--tbx-bg-card);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
     margin-bottom: var(--tbx-sp-2);
-    padding: var(--tbx-sp-3);
+    padding-top: var(--tbx-sp-3);
+    padding-right: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    padding-left: var(--tbx-sp-3);
 }
 
 .tbx-card-interactive {
     background-color: var(--tbx-bg-card);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
     margin-bottom: var(--tbx-sp-2);
-    padding: var(--tbx-sp-3);
+    padding-top: var(--tbx-sp-3);
+    padding-right: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    padding-left: var(--tbx-sp-3);
 }
 
 .tbx-card-interactive:hover {
@@ -259,6 +327,13 @@
     flex-grow: 1;
 }
 
+/* 通用 row 容器 */
+.tbx-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--tbx-sp-2);
+}
+
 /* =============================================
    Toggle row
    ============================================= */
@@ -283,8 +358,14 @@
     -unity-font-style: bold;
     background-color: var(--tbx-accent);
     color: white;
-    border-width: 0;
-    border-radius: var(--tbx-radius);
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
     padding-left: var(--tbx-sp-5);
     padding-right: var(--tbx-sp-5);
 }
@@ -298,9 +379,18 @@
     font-size: 11px;
     background-color: rgba(255, 255, 255, 0.08);
     color: var(--tbx-text-primary);
-    border-width: 1px;
-    border-color: var(--tbx-border);
-    border-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
     padding-left: var(--tbx-sp-4);
     padding-right: var(--tbx-sp-4);
 }
@@ -313,11 +403,20 @@
     width: 26px;
     height: 26px;
     font-size: 14px;
-    background-color: transparent;
+    background-color: rgba(0, 0, 0, 0);
     color: var(--tbx-text-secondary);
-    border-width: 0;
-    border-radius: var(--tbx-radius);
-    padding: 0;
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 .tbx-btn-icon:hover {
@@ -331,9 +430,18 @@
     font-size: 10px;
     background-color: rgba(255, 255, 255, 0.06);
     color: var(--tbx-text-secondary);
-    border-width: 1px;
-    border-color: var(--tbx-border);
-    border-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
     margin-left: var(--tbx-sp-2);
 }
 
@@ -351,14 +459,26 @@
     margin-right: var(--tbx-sp-3);
     margin-bottom: var(--tbx-sp-3);
     background-color: var(--tbx-bg-card);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
     overflow: hidden;
 }
 
 .tbx-color-card:hover {
-    border-color: var(--tbx-border-focus);
+    border-top-color: var(--tbx-border-focus);
+    border-right-color: var(--tbx-border-focus);
+    border-bottom-color: var(--tbx-border-focus);
+    border-left-color: var(--tbx-border-focus);
 }
 
 .tbx-color-swatch {
@@ -370,14 +490,20 @@
     font-size: 10px;
     -unity-text-align: middle-center;
     color: var(--tbx-text-secondary);
-    padding: var(--tbx-sp-1) var(--tbx-sp-2);
+    padding-top: var(--tbx-sp-1);
+    padding-bottom: var(--tbx-sp-1);
+    padding-left: var(--tbx-sp-2);
+    padding-right: var(--tbx-sp-2);
 }
 
 .tbx-color-hex {
     font-size: 13px;
     -unity-font-style: bold;
     -unity-text-align: middle-center;
-    padding: 0 var(--tbx-sp-2) var(--tbx-sp-2) var(--tbx-sp-2);
+    padding-top: 0;
+    padding-bottom: var(--tbx-sp-2);
+    padding-left: var(--tbx-sp-2);
+    padding-right: var(--tbx-sp-2);
 }
 
 /* =============================================
@@ -386,11 +512,23 @@
 
 .tbx-curve-card {
     background-color: var(--tbx-bg-card);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
     margin-bottom: var(--tbx-sp-3);
-    padding: var(--tbx-sp-3) var(--tbx-sp-4);
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
 }
 
 .tbx-curve-card-header {
@@ -427,11 +565,23 @@
 
 .tbx-status-bar {
     margin-top: var(--tbx-sp-3);
-    padding: var(--tbx-sp-3) var(--tbx-sp-4);
-    border-radius: var(--tbx-radius);
+    padding-top: var(--tbx-sp-3);
+    padding-bottom: var(--tbx-sp-3);
+    padding-left: var(--tbx-sp-4);
+    padding-right: var(--tbx-sp-4);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
     background-color: var(--tbx-bg-card);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
 }
 
 /* =============================================
@@ -447,7 +597,10 @@ ScrollView {
 
 /* Content area scroll views - individual boxes already have inline padding */
 #content-area ScrollView {
-    padding: 0;
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* =============================================
@@ -462,9 +615,18 @@ ScrollView {
     padding-bottom: var(--tbx-sp-3);
     padding-left: var(--tbx-sp-4);
     padding-right: var(--tbx-sp-4);
-    border-radius: var(--tbx-radius);
-    border-width: 1px;
-    border-color: var(--tbx-border);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
+    border-top-width: 1px;
+    border-right-width: 1px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+    border-top-color: var(--tbx-border);
+    border-right-color: var(--tbx-border);
+    border-bottom-color: var(--tbx-border);
+    border-left-color: var(--tbx-border);
 }
 
 /* =============================================
@@ -481,19 +643,24 @@ TextField {
 
 /* =============================================
    Copy feedback overlay
+   position:absolute 必须配 width/height，
+   Unity USS 的 right/bottom 不与 left/top 联动撑开
    ============================================= */
 
 .tbx-copy-overlay {
     position: absolute;
     left: 0;
-    right: 0;
     top: 0;
-    bottom: 0;
+    width: 100%;
+    height: 100%;
     background-color: var(--tbx-bg-overlay);
     color: white;
     -unity-text-align: middle-center;
     font-size: 12px;
-    border-radius: var(--tbx-radius);
+    border-top-left-radius: var(--tbx-radius);
+    border-top-right-radius: var(--tbx-radius);
+    border-bottom-left-radius: var(--tbx-radius);
+    border-bottom-right-radius: var(--tbx-radius);
 }
 
 /* =============================================
@@ -501,18 +668,10 @@ TextField {
    ============================================= */
 
 #sidebar ScrollView {
-    padding: 0;
-}
-
-/* =============================================
-   Empty state hints
-   ============================================= */
-
-#empty-hint {
-    -unity-text-align: middle-center;
-    color: var(--tbx-text-muted);
-    padding-top: var(--tbx-sp-4);
-    padding-bottom: var(--tbx-sp-4);
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
 /* =============================================

@@ -87,6 +87,9 @@ namespace TGame.ToolBox
             if (sheet != null)
                 rootVisualElement.styleSheets.Add(sheet);
 
+            // USS 变量定义在 .tbx-root 上，子树通过 inheritance 拿到（Unity USS 不支持 :root）
+            rootVisualElement.AddToClassList("tbx-root");
+
             var savedWidth = EditorPrefs.GetFloat("ToolBox.SidebarWidth", 200f);
 
             _splitView = new TwoPaneSplitView(0, savedWidth, TwoPaneSplitViewOrientation.Horizontal);
@@ -125,6 +128,7 @@ namespace TGame.ToolBox
 
                 var icon = new Image();
                 icon.image = GetIcon(reg.Icon);
+                icon.scaleMode = ScaleMode.ScaleToFit;
                 icon.style.width = 16;
                 icon.style.height = 16;
                 icon.style.marginRight = 6;
@@ -191,7 +195,10 @@ namespace TGame.ToolBox
             header.Add(title);
             wrapper.Add(header);
 
+            // ScrollView 必须 flexGrow=1 才会撑满 wrapper 剩余空间
             var scrollView = new ScrollView();
+            scrollView.style.flexGrow = 1;
+            scrollView.style.flexShrink = 1;
             scrollView.Add(reg.Factory());
             wrapper.Add(scrollView);
 

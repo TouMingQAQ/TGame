@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -99,7 +100,9 @@ namespace TGame.ToolBox
             _grid.Clear();
             if (_filtered.Count == 0)
             {
-                _grid.Add(new Label("无匹配颜色") { name = "empty-hint" });
+                var hint = new Label("无匹配颜色");
+                hint.AddToClassList("tbx-empty");
+                _grid.Add(hint);
                 return;
             }
             foreach (var entry in _filtered)
@@ -121,13 +124,12 @@ namespace TGame.ToolBox
             addRow.style.alignItems = Align.Center;
             foldout.Add(addRow);
 
-            var colorPicker = new IMGUIContainer(() =>
-            {
-                _pendingColor = EditorGUILayout.ColorField(_pendingColor, GUILayout.Width(60));
-            });
-            colorPicker.style.width = 60;
-            colorPicker.style.height = 20;
+            // UI Toolkit ColorField 替代 IMGUIContainer + EditorGUILayout.ColorField
+            // 避免每帧重绘 + 改善主题一致性
+            var colorPicker = new ColorField { value = _pendingColor, showAlpha = true };
+            colorPicker.style.width = 80;
             colorPicker.style.marginRight = 4;
+            colorPicker.RegisterValueChangedCallback(evt => _pendingColor = evt.newValue);
             addRow.Add(colorPicker);
 
             var nameField = new TextField();
@@ -165,7 +167,9 @@ namespace TGame.ToolBox
 
             if (_library == null || _library.Entries.Count == 0)
             {
-                _diyGrid.Add(new Label("暂无自定义颜色，在上方添加") { name = "empty-hint" });
+                var hint = new Label("暂无自定义颜色，在上方添加");
+                hint.AddToClassList("tbx-empty");
+                _diyGrid.Add(hint);
                 return;
             }
 
@@ -199,6 +203,37 @@ namespace TGame.ToolBox
 
         // --- color card ---
 
+        /// <summary> 棋盘格背景纹理，用于显示半/全透明色卡的"透明"底（lazy 生成，缓存复用） </summary>
+        private static Texture2D _checkerTex;
+
+        private static Texture2D GetCheckerTexture()
+        {
+            if (_checkerTex != null) return _checkerTex;
+            const int size = 16;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                hideFlags = HideFlags.HideAndDontSave,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Repeat,
+            };
+            var c1 = new Color(0.75f, 0.75f, 0.75f);
+            var c2 = new Color(0.55f, 0.55f, 0.55f);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+                tex.SetPixel(x, y, ((x / 8) + (y / 8)) % 2 == 0 ? c1 : c2);
+            tex.Apply();
+            _checkerTex = tex;
+            return tex;
+        }
+
+        /// <summary> 根据色卡背景亮度选取可读的前景色（白底用深灰，深底用色值本身） </summary>
+        private static Color GetReadableHexColor(Color bg)
+        {
+            // 透明色基于其 RGB 部分判断（即假设贴在棋盘灰底上）
+            float lum = bg.r * 0.299f + bg.g * 0.587f + bg.b * 0.114f;
+            return lum > 0.6f ? new Color(0.18f, 0.18f, 0.18f) : bg;
+        }
+
         private VisualElement BuildColorCard(ColorEntry entry, bool editable, int index)
         {
             var card = new VisualElement();
@@ -206,19 +241,38 @@ namespace TGame.ToolBox
 
             var swatch = new VisualElement();
             swatch.AddToClassList("tbx-color-swatch");
-            swatch.style.backgroundColor = entry.Color;
+            // 透明色（alpha < 1）显示棋盘背景，再叠一层带透明的纯色 overlay
+            if (entry.Color.a < 0.999f)
+            {
+                swatch.style.backgroundImage = new StyleBackground(GetCheckerTexture());
+                var overlay = new VisualElement
+                {
+                    style =
+                    {
+                        position = Position.Absolute,
+                        left = 0, top = 0, width = Length.Percent(100), height = Length.Percent(100),
+                        backgroundColor = entry.Color,
+                    },
+                };
+                swatch.Add(overlay);
+            }
+            else
+            {
+                swatch.style.backgroundColor = entry.Color;
+            }
             card.Add(swatch);
 
-           var nameLabel = new Label(entry.Name);
-           nameLabel.AddToClassList("tbx-color-name");
-           card.Add(nameLabel);
+            var nameLabel = new Label(entry.Name);
+            nameLabel.AddToClassList("tbx-color-name");
+            card.Add(nameLabel);
 
-           var hexLabel = new Label($"#{entry.Hex}");
-           hexLabel.AddToClassList("tbx-color-hex");
-           hexLabel.style.color = entry.Color;
-           card.Add(hexLabel);
+            var hexLabel = new Label($"#{entry.Hex}");
+            hexLabel.AddToClassList("tbx-color-hex");
+            // 浅色或透明色都用对比色文字，避免白底白字
+            hexLabel.style.color = GetReadableHexColor(entry.Color);
+            card.Add(hexLabel);
 
-           card.RegisterCallback<ClickEvent>(_ =>
+            card.RegisterCallback<ClickEvent>(_ =>
             {
                 EditorGUIUtility.systemCopyBuffer = $"#{entry.Hex}";
                 ShowCopyFeedback(card, $"已复制 #{entry.Hex}");
