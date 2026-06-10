@@ -57,6 +57,11 @@ namespace TGame.Tween
                 play.CollectChildren();
                 EditorUtility.SetDirty(play);
             }
+
+            if (GUILayout.Button("Open Play Editor", GUILayout.MinWidth(160)))
+            {
+                TTweenPlayWindow.Open(play);
+            }
         }
     }
 
