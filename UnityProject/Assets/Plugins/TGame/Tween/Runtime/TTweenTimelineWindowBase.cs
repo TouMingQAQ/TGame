@@ -386,27 +386,40 @@ namespace TGame.Tween
                 ? Mathf.Max(0, Mathf.Round(dragTime / 0.01f) * 0.01f)
                 : _dragInitialTime;
 
-            // 绘制块
+            // 绘制块（裁剪到时间轴区域内）
             foreach (var (br, idx, label, color, st) in blocks)
             {
+                // 裁剪块 rect 到时间轴区域内
+                var clipBr = ClipRect(br, tlRect);
+                if (clipBr.width <= 0 || clipBr.height <= 0) continue;
+
                 bool inDrag = idx == _dragIndex && Event.current.type == EventType.MouseDrag;
                 bool hover = br.Contains(Event.current.mousePosition) && _dragIndex < 0;
                 Color c = inDrag ? Color.white : hover ? Color.Lerp(color, Color.white, 0.3f) : color;
-                EditorGUI.DrawRect(br, c);
+                EditorGUI.DrawRect(clipBr, c);
+
                 if (inDrag || hover)
-                    EditorGUI.DrawRect(new Rect(br.x - 2, br.y, 2, br.height), Color.white);
+                {
+                    var hoverLine = new Rect(br.x - 2, br.y, 2, br.height);
+                    var clipHover = ClipRect(hoverLine, tlRect);
+                    if (clipHover.width > 0) EditorGUI.DrawRect(clipHover, Color.white);
+                }
 
                 if (inDrag)
                 {
                     float nx = tlRect.x + ((dragDisplayTime - _scrollTime) / visibleTime) * tlRect.width;
                     EditorGUI.DrawRect(new Rect(nx, tlRect.y, 2, tlRect.height), Color.yellow);
                     var pb = new Rect(nx, br.y, br.width, br.height);
-                    Color pc = color; pc.a = 0.5f;
-                    EditorGUI.DrawRect(pb, pc);
+                    var clipPb = ClipRect(pb, tlRect);
+                    if (clipPb.width > 0)
+                    {
+                        Color pc = color; pc.a = 0.5f;
+                        EditorGUI.DrawRect(clipPb, pc);
+                    }
                     GUI.Label(new Rect(nx - 20, tlRect.yMax - 14, 50, 14), $"{dragDisplayTime:F2}s", _dragLabelStyle);
                 }
 
-                GUI.Label(br, label, _blockLabelStyle);
+                GUI.Label(clipBr, label, _blockLabelStyle);
             }
 
             // 滚动条
@@ -572,6 +585,18 @@ namespace TGame.Tween
         protected abstract void DrawEntryFields(Rect r, int index, SerializedProperty entryProp, SerializedProperty startTimeProp, float startX);
 
         // ========== 辅助 ==========
+
+        /// <summary>将 rect 裁剪到 clip 区域内</summary>
+        private static Rect ClipRect(Rect r, Rect clip)
+        {
+            float x = Mathf.Max(r.x, clip.x);
+            float y = Mathf.Max(r.y, clip.y);
+            float xMax = Mathf.Min(r.x + r.width, clip.x + clip.width);
+            float yMax = Mathf.Min(r.y + r.height, clip.y + clip.height);
+            float w = Mathf.Max(0, xMax - x);
+            float h = Mathf.Max(0, yMax - y);
+            return new Rect(x, y, w, h);
+        }
 
         private float GetMaxScroll()
         {
