@@ -60,15 +60,8 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarHost.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarRenderer.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\BuiltInToolbarItems.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarRegistry.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarSettings.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarSettingsWindow.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\Program\QuickLaunchToolbarItem.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\CustomToolbarDesignerTypes.cs" />
-    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\Program\SceneNavigatorReflection.cs" />
+    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\Program\InitScenePickerWindow.cs" />
+    <Compile Include="Assets\Plugins\TGame\EditorToolBar\Editor\Program\QuickLaunchToolbar.cs" />
     <None Include="Assets\Plugins\TGame\EditorToolBar\Editor\TGame.EditorToolBar.Editor.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
@@ -996,6 +989,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="SceneNavigator.Runtime.csproj">
+      <Project>{dca23936-8eb1-c5f6-8149-61e03f34451c}</Project>
+      <Name>SceneNavigator.Runtime</Name>
+    </ProjectReference>
+    <ProjectReference Include="TGame.csproj">
+      <Project>{128553ee-b53c-69bb-c552-622579ec687e}</Project>
+      <Name>TGame</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.

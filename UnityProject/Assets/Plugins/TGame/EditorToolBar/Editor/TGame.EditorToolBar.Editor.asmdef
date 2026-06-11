@@ -1,7 +1,10 @@
 {
     "name": "TGame.EditorToolBar",
     "rootNamespace": "TGame.EditorToolBar",
-    "references": [],
+    "references": [
+        "GUID:bb594cc2fdbcb4e4fa268fccdc7e5e9e",
+        "GUID:fdd566e303b577841905c151dd32fa26"
+    ],
     "includePlatforms": [
         "Editor"
     ],
