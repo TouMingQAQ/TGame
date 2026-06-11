@@ -80,6 +80,10 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIAnimationMaker.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\Model\BaseModel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelModel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILayerRootModule.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIRegistryModule.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILoaderModule.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIVisibilityModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButtonHold.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIEvent.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\ButtonHoldLink.cs" />
