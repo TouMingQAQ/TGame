@@ -130,6 +130,18 @@ namespace TGame.TUI
         /// <summary>Hide 动画完成后调用，此时 GameObject 已 Deactivate</summary>
         protected virtual void AfterHide() { }
 
+        /// <summary>
+        /// 当面板被 UIManager.PushPanel 推入 UI 栈顶时调用，在 Show 动画开始前触发。
+        /// 默认空实现；不需要感知栈的面板可不重写。
+        /// </summary>
+        public virtual void OnPushed(UIPanelStackEntry entry) { }
+
+        /// <summary>
+        /// 当面板从 UI 栈顶被 UIManager.PopPanel/BackTo/PopToRoot 弹出时调用，在 Hide 动画开始前触发。
+        /// 默认空实现；不需要感知栈的面板可不重写。
+        /// </summary>
+        public virtual void OnPopped(UIPanelStackEntry entry) { }
+
         protected virtual void OnDestroy()
         {
             _sequence?.Kill();

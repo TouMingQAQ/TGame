@@ -18,6 +18,10 @@ namespace TGame.TUI
         private TButtonPanel _buttonPanel;
         [SerializeField]
         private TweenPanel _tweenPanel;
+        [SerializeField]
+        private StackSamplePanel _stackSamplePanel;
+        [SerializeField]
+        private StackSubPanel _stackSubPanel;
         private void Awake()
         {
             var uimgr = Game.Instance.GetManager<UIManager>();
@@ -27,8 +31,10 @@ namespace TGame.TUI
             uimgr.RegisterPanel(_numberPanel);
             uimgr.RegisterPanel(_buttonPanel);
             uimgr.RegisterPanel(_tweenPanel);
-            uimgr.ShowPanel<SamplePanel>();
-
+            // 栈演示：StackSamplePanel 在 Normal 层，StackSubPanel 在 Popup 层
+            uimgr.RegisterPanel(_stackSamplePanel, UILayer.Normal);
+            uimgr.RegisterPanel(_stackSubPanel, UILayer.Popup);
+            uimgr.PushPanel<StackSamplePanel>();
         }
     }
 }

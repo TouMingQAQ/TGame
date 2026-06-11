@@ -68,10 +68,12 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\HelloPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\BaseMVVMPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TButtonPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSubPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\BaseUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\IUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TUISample.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\AnimationCurve\AnimationCurveTest.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIPanelStackEntry.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberView.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManager.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationNormal.cs" />
@@ -80,6 +82,7 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButtonHold.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIEvent.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\ButtonHoldLink.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSamplePanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimation.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButton.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\SamplePanel.cs" />
