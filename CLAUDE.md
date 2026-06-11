@@ -14,6 +14,7 @@
 
 - 读写代码文件（.cs、.json、.md 等）时，始终使用 UTF-8 编码（不带 BOM）
 - **新增或修改代码时，必须检查 .asmdef 引用是否完整**：每新建一个 .asmdef 或向已有模块添加外部依赖（如 DOTween、UniTask）时，需确认其 `references` 字段包含了所需的 asmdef GUID。可参考已有模块（如 TUI.asmdef、TGame.asmdef）确认引用的 GUID 集合。缺少引用会导致编译错误。
+- **每次修改 .cs 文件后，必须用 `dotnet build <ModuleName>.csproj` 校验**：进入 **0 错误 + 0 个 `warning CS`** 状态才能回复用户完成。命令在 `UnityProject/` 目录下执行,见"构建与测试"小节。**`MSB3277` warning(包版本冲突)可忽略**,与代码无关。
 - 在 `namespace TGame.Tween` 等命名空间内使用 `DG.Tweening.Tween` 时，**必须使用完全限定名** `DG.Tweening.Tween`，避免与命名空间 `TGame.Tween` 产生解析歧义。
 - AI 生成的文档统一存放于 [Document/AIDoc/](Document/AIDoc/) 目录下:
   - [Analysis/](Document/AIDoc/Analysis/) — 代码分析、依赖关系、性能热力图
@@ -24,11 +25,38 @@
 
 ## 构建与测试
 
-通过 Unity Hub 在 Unity Editor 中打开项目。解决方案文件位于 [UnityProject/TGameV1.sln](UnityProject/TGameV1.sln)，但 C# 编译在 Editor 内部完成——不要直接构建 .sln 文件。
+通过 Unity Hub 在 Unity Editor 中打开项目。解决方案文件位于 [UnityProject/TGameV1.sln](UnityProject/TGameV1.sln)，但 C# 编译在 Editor 内部完成——**不要直接构建 .sln 文件**(会拉起 20 个模块全量编译,慢且易触发跨模块包冲突)。
 
 - **Edit mode 测试:** Window → General → Test Runner → Run All（`dotnet test` 可能因 Unity 运行时依赖而不可用）
 - **Play mode 测试:** 同一个 Test Runner 窗口，切换到 PlayMode 标签页
 - **构建:** File → Build Profiles → 选择目标平台 → Build
+
+### 快速 C# 编译检查（推荐：每次改完代码都跑）
+
+```bash
+cd UnityProject
+dotnet build <ModuleName>.csproj -nologo
+```
+
+例如本次 EditorToolBar 插件:
+
+```bash
+cd UnityProject
+dotnet build TGame.EditorToolBar.csproj -nologo
+```
+
+- Unity 6000.3.2f1 已安装于 `G:\Unity Editor\6000.3.2f1\`,引用程序集路径 `G:\Unity Editor\6000.3.2f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\`
+- 单模块编译约 2-5 秒，**0 错误才算通过**
+- 区分两种 warning：**`warning CS` 是代码问题必须修**;**`MSB3277`(包版本冲突)与代码无关,可忽略**
+- 一次性过滤出代码层问题:
+
+  ```bash
+  cd UnityProject && dotnet build TGame.EditorToolBar.csproj -nologo 2>&1 | grep -E "error CS|warning CS"
+  ```
+
+  无输出 = 0 错误 0 代码 warning,完成
+- 适用场景:语法/类型/引用错误检查。**不能**验证:`UnityEditor.Toolbar` 等 internal 类型的反射调用(在普通 .NET 编译里能过,运行时 Unity 内部改名才会失败)
+- 全模块编译请走 Unity Editor 内部 `Assets → Reimport All` 或 `Ctrl+R`
 
 ## 关键依赖
 
