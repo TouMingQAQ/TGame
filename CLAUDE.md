@@ -132,10 +132,11 @@ TGame (MonoBehaviour 单例, DontDestroyOnLoad)
 
 ### TUI UI 系统
 
-- `UIManager` — UI 层级管理（通过 `UILayer` 枚举区分层级）
-- `BaseUIPanel` — UI 面板基类，提供 DOTween Sequence 动画支持和四个生命周期钩子
+- `UIManager` — UI 层级管理（通过 `UILayer` 枚举区分层级），负责面板注册/加载/单实例显隐
+- `BaseUIPanel` — UI 面板基类，提供 DOTween Sequence 动画支持和四个生命周期钩子，含 `Layer` 序列化字段和 `Hidden` 事件
 - `IUIPanel` — UI 面板接口
 - `UIAnimationMaker` — UI 动画工具
+- `StackPanelModel` — 栈式 Panel 管理 Model（`Model/StackPanelModel.cs`），挂在 `UIManager` 下；提供 `Open<T>/CloseTop/BackTo/PopToRoot`，校验 `新.Layer >= 顶.Layer` 后拒绝打开，订阅 `Panel.Hidden` 事件实现外部关闭兜底。详见 [Analysis/TUI-StackPanelModel.md](Document/AIDoc/Analysis/TUI-StackPanelModel.md)
 
 ### 目录规范
 

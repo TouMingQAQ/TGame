@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using DG.Tweening;
 
@@ -18,21 +19,35 @@ namespace TGame.TUI
         [Header("Animation")]
         [SerializeField] protected bool _ignoreTimeScale = true;
 
+        [Header("UI")]
+        [SerializeField] private UILayer _layer = UILayer.Normal;
+
         [SerializeField] protected CanvasGroup _canvasGroup;
         [SerializeField] protected RectTransform root;
-        
+
         public CanvasGroup CanvasGroup => _canvasGroup;
         public RectTransform Root => root;
         public bool IsVisible => gameObject.activeSelf;
+        /// <summary>面板注册/运行时层级。UIManager.LoadPanel 时由配置覆盖</summary>
+        public UILayer Layer => _layer;
 
         private Sequence _sequence;
         private AnimState _animState = AnimState.None;
+
+        /// <summary>
+        /// Hide 动画完成、gameObject 已 Deactivate 时触发。
+        /// 供 StackPanelModel 监听以实现"顶层被外部关闭时自动恢复上一层"语义。
+        /// </summary>
+        public event Action<BaseUIPanel> Hidden;
 
         private void Reset()
         {
             TryGetComponent(out _canvasGroup);
             TryGetComponent(out root);
         }
+
+        /// <summary>由 UIManager.LoadPanel 调用,把配置中的 Layer 写入面板运行时字段</summary>
+        internal void SetLayer(UILayer layer) => _layer = layer;
 
         protected virtual void Awake()
         {
@@ -116,6 +131,7 @@ namespace TGame.TUI
             _canvasGroup.blocksRaycasts = false;
             gameObject.SetActive(false);
             AfterHide();
+            Hidden?.Invoke(this);
         }
 
         /// <summary>Show 动画开始前调用</summary>
@@ -131,21 +147,22 @@ namespace TGame.TUI
         protected virtual void AfterHide() { }
 
         /// <summary>
-        /// 当面板被 UIManager.PushPanel 推入 UI 栈顶时调用，在 Show 动画开始前触发。
-        /// 默认空实现；不需要感知栈的面板可不重写。
+        /// 当面板被 StackPanelModel.Open 推入栈顶时调用,在 Show 动画开始前触发。
+        /// 默认空实现;不需要感知栈的面板可不重写。
         /// </summary>
-        public virtual void OnPushed(UIPanelStackEntry entry) { }
+        public virtual void OnPushed(StackPanelEntry entry) { }
 
         /// <summary>
-        /// 当面板从 UI 栈顶被 UIManager.PopPanel/BackTo/PopToRoot 弹出时调用，在 Hide 动画开始前触发。
-        /// 默认空实现；不需要感知栈的面板可不重写。
+        /// 当面板从栈顶被 StackPanelModel.CloseTop/BackTo/PopToRoot 弹出时调用,在 Hide 动画开始前触发。
+        /// 默认空实现;不需要感知栈的面板可不重写。
         /// </summary>
-        public virtual void OnPopped(UIPanelStackEntry entry) { }
+        public virtual void OnPopped(StackPanelEntry entry) { }
 
         protected virtual void OnDestroy()
         {
             _sequence?.Kill();
             _sequence = null;
+            Hidden = null;
         }
     }
 }

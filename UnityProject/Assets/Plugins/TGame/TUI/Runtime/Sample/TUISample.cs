@@ -34,7 +34,7 @@ namespace TGame.TUI
             // 栈演示：StackSamplePanel 在 Normal 层，StackSubPanel 在 Popup 层
             uimgr.RegisterPanel(_stackSamplePanel, UILayer.Normal);
             uimgr.RegisterPanel(_stackSubPanel, UILayer.Popup);
-            uimgr.PushPanel<StackSamplePanel>();
+            uimgr.GetModule<StackPanelModel>().Open<StackSamplePanel>();
         }
     }
 }

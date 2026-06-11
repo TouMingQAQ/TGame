@@ -29,12 +29,12 @@ namespace TGame.TUI
             base.AfterShow();
             var uimgr = Game.Instance.GetManager<UIManager>();
             if (uimgr != null && _depthLabel != null)
-                _depthLabel.text = $"StackDepth = {uimgr.StackDepth}";
+                _depthLabel.text = $"StackDepth = {uimgr.GetModule<StackPanelModel>().StackDepth}";
         }
 
         private void OnOpenSub()
         {
-            Game.Instance.GetManager<UIManager>().PushPanel<StackSubPanel>();
+            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().Open<StackSubPanel>();
         }
     }
 }

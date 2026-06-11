@@ -34,19 +34,20 @@ namespace TGame.TUI
             base.AfterShow();
             var uimgr = Game.Instance.GetManager<UIManager>();
             if (uimgr == null) return;
-            if (_depthLabel != null) _depthLabel.text = $"StackDepth = {uimgr.StackDepth}";
-            if (_topLabel != null) _topLabel.text = $"Top = {uimgr.GetStackTop()?.Name}";
+            var model = uimgr.GetModule<StackPanelModel>();
+            if (_depthLabel != null) _depthLabel.text = $"StackDepth = {model.StackDepth}";
+            if (_topLabel != null) _topLabel.text = $"Top = {model.GetStackTop()?.Name}";
         }
 
         private void OnBack()
         {
-            Game.Instance.GetManager<UIManager>().PopPanel();
+            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().CloseTop();
         }
 
         private void OnBackToRoot()
         {
-            // 弹到只剩栈底（StackSamplePanel）
-            Game.Instance.GetManager<UIManager>().PopToRoot();
+            // 弹到只剩栈底(StackSamplePanel)
+            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().PopToRoot();
         }
     }
 }
