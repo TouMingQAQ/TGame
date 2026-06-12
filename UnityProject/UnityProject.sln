@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask", "UniTask.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.Linq", "UniTask.Linq.csproj", "{6c7ba970-2140-f542-76f7-1e69c1cd3cac}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.EditorToolBar", "TGame.EditorToolBar.csproj", "{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.Console", "TGame.Console.csproj", "{abb38e15-2a78-29ee-c0cd-e6250d940c14}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.Addressables", "UniTask.Addressables.csproj", "{22b6cca9-1294-f848-6564-897448c71005}"
@@ -33,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.DOTween", "UniTask.DOTween.csproj", "{e82b2c91-c531-49f3-fd06-2c0a3bdcbcb9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.EditorToolBar", "TGame.EditorToolBar.csproj", "{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{f190e6fd-6f62-a0ff-5754-e83120972a79}"
 EndProject
 Global
@@ -48,8 +48,6 @@ Global
 		{398e1245-07c2-61ce-7dd0-baf2ce0339a3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6c7ba970-2140-f542-76f7-1e69c1cd3cac}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6c7ba970-2140-f542-76f7-1e69c1cd3cac}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{abb38e15-2a78-29ee-c0cd-e6250d940c14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{abb38e15-2a78-29ee-c0cd-e6250d940c14}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{22b6cca9-1294-f848-6564-897448c71005}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -72,6 +70,8 @@ Global
 		{2106585b-b409-cb68-b5f4-5b9dd210a60f}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{e82b2c91-c531-49f3-fd06-2c0a3bdcbcb9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{e82b2c91-c531-49f3-fd06-2c0a3bdcbcb9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{b8eb0a47-cb71-a4d2-9579-8a5b1f5c97fc}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{f190e6fd-6f62-a0ff-5754-e83120972a79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{f190e6fd-6f62-a0ff-5754-e83120972a79}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection

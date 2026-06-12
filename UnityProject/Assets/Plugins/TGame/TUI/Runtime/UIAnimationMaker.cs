@@ -5,7 +5,7 @@ namespace TGame.TUI
 {
     /// <summary>
     /// 常用 UI 动画制作器，提供静态方法生成 Tween，
-    /// 在 BaseUIPanel.BuildAnimation() 中组合使用。
+    /// 在 BaseUIPanel.BuildShowAnimation() / BuildHideAnimation() 中组合使用。
     /// </summary>
     public static class UIAnimationMaker
     {

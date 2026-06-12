@@ -7,7 +7,6 @@ namespace TGame.Tween
     /// CanvasGroup 透明度构造器。
     /// 从 _fromValue 到 _targetValue 的透明度动画。
     /// </summary>
-    [RequireComponent(typeof(CanvasGroup))]
     [AddComponentMenu("TGame/Tween/Nodes/TTweenFade")]
     public class TTweenFade : TTweenNode
     {

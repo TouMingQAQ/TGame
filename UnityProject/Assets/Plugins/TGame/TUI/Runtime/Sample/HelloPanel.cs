@@ -15,11 +15,6 @@ namespace TGame.TUI
             closeBtn.onClick.AddListener(Hide);
         }
 
-        protected override Sequence BuildAnimation()
-        {
-            return base.BuildAnimation();
-        }
-
         protected override void BeforeShow()
         {
             TDebug.Log("HelloPanel",1,"BeforeShow");

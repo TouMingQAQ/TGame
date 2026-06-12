@@ -1,4 +1,5 @@
 using TGame.TCore.Runtime;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,7 +11,7 @@ namespace TGame.TUI
     public class StackSamplePanel : BaseUIPanel
     {
         [SerializeField] private Button _openSubButton;
-        [SerializeField] private Text _depthLabel;
+        [SerializeField] private TMP_Text _depthLabel;
 
         protected override void Awake()
         {

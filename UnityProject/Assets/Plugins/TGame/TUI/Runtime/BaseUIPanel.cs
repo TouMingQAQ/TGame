@@ -8,7 +8,8 @@ namespace TGame.TUI
     /// UI 面板抽象基类，每个面板自带独立 Canvas 和 CanvasGroup。
     /// 独立 Canvas 避免一个面板 UI 变化导致其他面板重建网格。
     /// CanvasGroup 用于控制面板整体透明度、交互和射线检测。
-    /// Show/Hide 通过 DOTween Sequence 播放动画，子类重写 BuildAnimation 自定义动画效果。
+    /// Show 走 _showSequence.PlayForward，Hide 走 _hideSequence.PlayForward（若已重写）或 _showSequence.SmoothRewind（默认回退）。
+    /// 子类可分别重写 BuildShowAnimation / BuildHideAnimation 自定义入场/离场动画。
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(RectTransform))]
@@ -31,7 +32,8 @@ namespace TGame.TUI
         /// <summary>面板注册/运行时层级。UIManager.LoadPanel 时由配置覆盖</summary>
         public UILayer Layer => _layer;
 
-        private Sequence _sequence;
+        private Sequence _showSequence;
+        private Sequence _hideSequence;   // null = Hide 沿用 _showSequence 的 SmoothRewind
         private AnimState _animState = AnimState.None;
 
         /// <summary>
@@ -51,23 +53,17 @@ namespace TGame.TUI
 
         protected virtual void Awake()
         {
-            _sequence = BuildAnimation();
-            _sequence.SetAutoKill(false);
-            _sequence.Pause();
-            _sequence.SetLink(gameObject);
-            _sequence.SetUpdate(_ignoreTimeScale);
-            _sequence.OnComplete(OnShowComplete);
-            _sequence.OnRewind(OnHideComplete);
+            ConfigureSequence();
         }
 
         public virtual void Init() { }
 
         /// <summary>
-        /// 构建动画 Sequence，子类重写以自定义 Show/Hide 动画。
-        /// Sequence 通过 PlayForward 播放 Show 动画，PlayBackwards 播放 Hide 动画。
-        /// 默认实现：CanvasGroup alpha 0→1 淡入动画。
+        /// 构建 Show 动画 Sequence。子类重写以自定义入场动画。
+        /// Sequence 已在 Awake 中装配（SetAutoKill/Pause/SetLink/SetUpdate/OnComplete/OnRewind）。
+        /// 返回 null 视为实现错误，Awake 会用 FadeIn 兜底并 LogWarning。
         /// </summary>
-        protected virtual Sequence BuildAnimation()
+        protected virtual Sequence BuildShowAnimation()
         {
             var seq = DOTween.Sequence();
             seq.Append(UIAnimationMaker.FadeIn(CanvasGroup));
@@ -76,15 +72,45 @@ namespace TGame.TUI
         }
 
         /// <summary>
-        /// 显示面板，向前播放动画 Sequence。方法立即返回，动画异步播放。
+        /// 构建 Hide 动画 Sequence。子类重写以自定义离场动画。
+        /// 返回 null（默认）表示"Hide 走 _showSequence.SmoothRewind"，即沿用 Show 动画的反向。
+        /// 返回非空 Sequence 则 Hide 走独立 PlayForward，完成时触发 OnHideComplete。
+        /// </summary>
+        protected virtual Sequence BuildHideAnimation() => null;
+
+
+        void ConfigureSequence()
+        {
+            _showSequence = BuildShowAnimation();
+            _hideSequence = BuildHideAnimation();
+            if(_showSequence == null)
+                _showSequence = this.BuildShowAnimation();//保证Show不为空
+            _showSequence.SetAutoKill(false);
+            _showSequence.Pause();
+            _showSequence.SetLink(gameObject);
+            _showSequence.SetUpdate(_ignoreTimeScale);
+            _showSequence.OnComplete(OnShowComplete);
+            if (_hideSequence == null)
+                _showSequence.OnRewind(OnHideComplete);//如果
+            else
+            {
+                _hideSequence.SetAutoKill(false);
+                _hideSequence.Pause();
+                _hideSequence.SetLink(gameObject);
+                _hideSequence.SetUpdate(_ignoreTimeScale);
+                _hideSequence.OnComplete(OnHideComplete);
+            }
+            
+        }
+        /// <summary>
+        /// 显示面板，向前播放 _showSequence 动画。方法立即返回，动画异步播放。
         /// </summary>
         public virtual void Show()
         {
             if (_animState == AnimState.Showing) return;
-
             BeforeShow();
 
-            _sequence.Pause();
+            _showSequence.Pause();
             _animState = AnimState.None;
 
             gameObject.SetActive(true);
@@ -92,11 +118,14 @@ namespace TGame.TUI
             _canvasGroup.blocksRaycasts = true;
 
             _animState = AnimState.Showing;
-            _sequence.PlayForward();
+            if(_hideSequence != null)
+                _showSequence.Rewind();
+            _showSequence.PlayForward();
         }
 
         /// <summary>
-        /// 隐藏面板，反向播放动画 Sequence。方法立即返回，动画异步播放。
+        /// 隐藏面板。若子类重写了 BuildHideAnimation 则正向播放 _hideSequence，
+        /// 否则反向播放 _showSequence。方法立即返回，动画异步播放。
         /// GameObject 在动画完成后才 Deactivate。
         /// </summary>
         public virtual void Hide()
@@ -106,14 +135,22 @@ namespace TGame.TUI
 
             BeforeHide();
 
-            _sequence.Pause();
-            _animState = AnimState.None;
-
             _canvasGroup.interactable = true;
             _canvasGroup.blocksRaycasts = true;
 
             _animState = AnimState.Hiding;
-            _sequence.SmoothRewind();
+
+            if (_hideSequence != null)
+            {
+                _hideSequence.Pause();
+                _hideSequence.Rewind();
+                _hideSequence.PlayForward();
+            }
+            else
+            {
+                _showSequence.Pause();
+                _showSequence.SmoothRewind();
+            }
         }
 
         private void OnShowComplete()
@@ -160,8 +197,10 @@ namespace TGame.TUI
 
         protected virtual void OnDestroy()
         {
-            _sequence?.Kill();
-            _sequence = null;
+            _showSequence?.Kill();
+            _showSequence = null;
+            _hideSequence?.Kill();
+            _hideSequence = null;
             Hidden = null;
         }
     }

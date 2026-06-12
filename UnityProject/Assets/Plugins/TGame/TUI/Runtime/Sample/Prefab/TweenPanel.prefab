@@ -87,9 +87,6 @@ GameObject:
   - component: {fileID: 4136629575300657989}
   - component: {fileID: 8183400236666514631}
   - component: {fileID: 1899586041973802725}
-  - component: {fileID: 7359662254041494364}
-  - component: {fileID: 3418288529858027187}
-  - component: {fileID: 6563041179609151721}
   m_Layer: 5
   m_Name: TweenPanel
   m_TagString: Untagged
@@ -110,6 +107,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4577590289060802082}
+  - {fileID: 8434519833181108709}
+  - {fileID: 2775150104024500257}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -142,16 +141,57 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TUI::TGame.TUI.TweenPanel
   _ignoreTimeScale: 1
+  _layer: 200
   _canvasGroup: {fileID: 8183400236666514631}
   root: {fileID: 4136629575300657989}
-  tweenPlay: {fileID: 7359662254041494364}
---- !u!114 &7359662254041494364
+  showTweenPlay: {fileID: 5463216924990017217}
+  hideTweenPlay: {fileID: 8839235593864624143}
+--- !u!1 &3227069470921654237
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8434519833181108709}
+  - component: {fileID: 5463216924990017217}
+  - component: {fileID: 2937725175185489473}
+  - component: {fileID: 2901129852151064949}
+  - component: {fileID: 4890384333423528360}
+  m_Layer: 5
+  m_Name: ShowTween
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8434519833181108709
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3227069470921654237}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4136629575300657989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5463216924990017217
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733258490854663843}
+  m_GameObject: {fileID: 3227069470921654237}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2ba9cc4196c7164f9f80444351e8901, type: 3}
@@ -162,25 +202,37 @@ MonoBehaviour:
   _loopType: 0
   _ignoreTimeScale: 1
   _nodeEntries:
-  - node: {fileID: 3418288529858027187}
-    startTime: 0.19999999
+  - node: {fileID: 2901129852151064949}
+    startTime: 0
     alias: "\u80CC\u666F\u8FC7\u5EA6"
-  - node: {fileID: 6563041179609151721}
+  - node: {fileID: 4890384333423528360}
     startTime: 0
     alias: "\u7F29\u653E"
---- !u!114 &3418288529858027187
+--- !u!225 &2937725175185489473
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3227069470921654237}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &2901129852151064949
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733258490854663843}
+  m_GameObject: {fileID: 3227069470921654237}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4c165decd1bbd3b40b9ad7d4900b7358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenFade
-  _duration: 0.6
+  _duration: 0.4
   _target: {fileID: 8183400236666514631}
   _fromValue: 0
   _targetValue: 1
@@ -209,13 +261,13 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &6563041179609151721
+--- !u!114 &4890384333423528360
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733258490854663843}
+  m_GameObject: {fileID: 3227069470921654237}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 97169967689244147b52faa972a96884, type: 3}
@@ -247,6 +299,150 @@ MonoBehaviour:
       tangentMode: 0
       weightedMode: 0
       inWeight: 0.17204338
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!1 &3401390603718265705
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2775150104024500257}
+  - component: {fileID: 8839235593864624143}
+  - component: {fileID: 466121214224542697}
+  - component: {fileID: 8360053477394953367}
+  m_Layer: 5
+  m_Name: HideTween
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2775150104024500257
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3401390603718265705}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4136629575300657989}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8839235593864624143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3401390603718265705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c2ba9cc4196c7164f9f80444351e8901, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenPlay
+  _autoPlayOnStart: 0
+  _loops: 1
+  _loopType: 0
+  _ignoreTimeScale: 1
+  _nodeEntries:
+  - node: {fileID: 466121214224542697}
+    startTime: 0.099999994
+    alias: "\u80CC\u666F\u8FC7\u5EA6"
+  - node: {fileID: 8360053477394953367}
+    startTime: 0
+    alias: "\u7F29\u653E"
+--- !u!114 &466121214224542697
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3401390603718265705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c165decd1bbd3b40b9ad7d4900b7358, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenFade
+  _duration: 0.6
+  _target: {fileID: 8183400236666514631}
+  _fromValue: 1
+  _targetValue: 0
+  _ease: 1
+  _customCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &8360053477394953367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3401390603718265705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97169967689244147b52faa972a96884, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Tween::TGame.Tween.TTweenScale
+  _duration: 0.6
+  _target: {fileID: 4577590289060802082}
+  _mode: 0
+  _fromValue: {x: 1, y: 1, z: 1}
+  _targetValue: {x: 0.5, y: 0.5, z: 1}
+  _ease: 27
+  _customCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
       outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2

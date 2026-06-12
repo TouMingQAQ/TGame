@@ -26,8 +26,9 @@ namespace TGame.TUI
     /// 关键不变量:
     ///   - Load 幂等:二次调用直接返回缓存,不重复 Instantiate
     ///   - Prefab 缺组件 / LayerRoot 未配:LogError + return null,不污染缓存
-    ///   - GO 销毁由 Unload 或 UIManager.OnDestroy 负责;Module.Destroy 只清字典
-    ///     (避免对已被 UIManager.OnDestroy 销毁的 GO 二次 Destroy 触发警告)
+    ///   - GO 销毁走三条路:Unload / UIManager.OnDestroy / 业务方外部 Destroy;
+    ///     前两条由调用方清缓存,第三条由 Load/Get/IsLoaded 的假 null 守卫兜底清理。
+    ///     Module.Destroy 只清字典(避免对已被 UIManager.OnDestroy 销毁的 GO 二次 Destroy 触发警告)
     /// </summary>
     public sealed class UILoaderModule : BaseModule
     {
@@ -45,11 +46,17 @@ namespace TGame.TUI
         /// <summary>
         /// 按 Type 加载,已加载则直接返回缓存。
         /// 未注册 → LogError + return null;Prefab 缺组件 → LogError + Destroy(go) + return null。
+        /// 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新 Instantiate。
         /// </summary>
         public BaseUIPanel Load(Type type)
         {
             if (_loaded.TryGetValue(type, out var existing))
-                return existing;
+            {
+                // Unity 假 null:C# 引用非 null,但 Object 已被 Destroy
+                if (existing != null && existing.gameObject != null)
+                    return existing;
+                _loaded.Remove(type);
+            }
 
             if (!_ui.GetModule<UIRegistryModule>().TryGetConfig(type, out var config))
             {
@@ -98,18 +105,31 @@ namespace TGame.TUI
         /// <summary>获取已加载的面板(泛型)</summary>
         public T Get<T>() where T : BaseUIPanel => Get(typeof(T)) as T;
 
-        /// <summary>获取已加载的面板(Type),未加载返回 null</summary>
+        /// <summary>获取已加载的面板(Type),未加载返回 null。GameObject 已被外部 Destroy 时清理缓存并返回 null</summary>
         public BaseUIPanel Get(Type type)
         {
-            _loaded.TryGetValue(type, out var p);
+            if (_loaded.TryGetValue(type, out var p) && (p == null || p.gameObject == null))
+            {
+                _loaded.Remove(type);
+                return null;
+            }
             return p;
         }
 
         /// <summary>是否已加载(泛型)</summary>
         public bool IsLoaded<T>() where T : BaseUIPanel => IsLoaded(typeof(T));
 
-        /// <summary>是否已加载(Type)</summary>
-        public bool IsLoaded(Type type) => _loaded.ContainsKey(type);
+        /// <summary>是否已加载(Type)。GameObject 已被外部 Destroy 时清理缓存并返回 false</summary>
+        public bool IsLoaded(Type type)
+        {
+            if (!_loaded.TryGetValue(type, out var p)) return false;
+            if (p == null || p.gameObject == null)
+            {
+                _loaded.Remove(type);
+                return false;
+            }
+            return true;
+        }
 
         // ===== 卸载 =====
 
