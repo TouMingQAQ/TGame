@@ -72,6 +72,14 @@ namespace TGame.TUI
         public BaseUIPanel ShowPanel(Type type)
             => GetModule<UIVisibilityModule>().Show(type);
 
+        /// <summary>
+        /// 按顺序打开Panel
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public T ShowPanelStack<T>() where T : BaseUIPanel
+            => GetModule<StackPanelModel>().Open<T>();
+        
         /// <summary>隐藏面板(泛型,转发到 UIVisibilityModule)。广播 PanelClosedEvent</summary>
         public void HidePanel<T>() where T : BaseUIPanel
             => GetModule<UIVisibilityModule>().Hide<T>();

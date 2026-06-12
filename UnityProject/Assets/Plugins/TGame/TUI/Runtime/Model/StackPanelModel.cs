@@ -29,7 +29,7 @@ namespace TGame.TUI
         public int StackDepth => _stack.Count;
 
         /// <summary>栈顶面板类型,栈空返回 null</summary>
-        public Type GetStackTop() => _stack.Count == 0 ? null : _stack[_stack.Count - 1].PanelType;
+        public Type GetStackTop() => _stack.Count == 0 ? null : _stack[^1].PanelType;
 
         /// <summary>类型是否在栈中(任意位置)</summary>
         public bool IsInStack<T>() where T : BaseUIPanel => IsInStack(typeof(T));
@@ -48,7 +48,7 @@ namespace TGame.TUI
         /// <summary>类型是否在栈顶</summary>
         public bool IsStackTop(Type type)
         {
-            return _stack.Count > 0 && _stack[_stack.Count - 1].PanelType == type;
+            return _stack.Count > 0 && _stack[^1].PanelType == type;
         }
 
         /// <summary>返回栈快照(仅 Type 列表,调试用)</summary>
@@ -88,7 +88,7 @@ namespace TGame.TUI
             // 层级守门:新 Panel.Layer 必须 >= 当前栈顶.Layer(空栈放行)
             if (_stack.Count > 0)
             {
-                var topPanel = _stack[_stack.Count - 1].Instance;
+                var topPanel = _stack[^1].Instance;
                 if (topPanel != null && (int)panel.Layer < (int)topPanel.Layer)
                 {
                     Debug.LogError($"[StackPanelModel] Refuse open {panelType.Name}(Layer={panel.Layer}) on top of {topPanel.GetType().Name}(Layer={topPanel.Layer}): new layer must be >= current top layer");
@@ -116,10 +116,10 @@ namespace TGame.TUI
         /// 弹出栈顶面板。栈空返回 false。
         /// 弹栈后若新栈顶当前不可见,会自动 Show 以维持"栈顶可见"不变量。
         /// </summary>
-        public bool CloseTop()
+        public bool Back()
         {
             if (_stack.Count == 0) return false;
-            var top = _stack[_stack.Count - 1];
+            var top = _stack[^1];
             _stack.RemoveAt(_stack.Count - 1);
 
             _suppressHiddenHandler = true;
@@ -160,7 +160,7 @@ namespace TGame.TUI
 
             while (_stack.Count > targetIndex + 1)
             {
-                if (!CloseTop()) break;
+                if (!Back()) break;
             }
             EnsureVisible(panelType);
             return true;
@@ -174,7 +174,7 @@ namespace TGame.TUI
             if (_stack.Count <= 1) return false;
             while (_stack.Count > 1)
             {
-                if (!CloseTop()) break;
+                if (!Back()) break;
             }
             EnsureVisible(_stack[0].PanelType);
             return true;
@@ -207,7 +207,7 @@ namespace TGame.TUI
         {
             if (_suppressHiddenHandler) return;          // 我自己 CloseTop 触发的,不管
             if (_stack.Count == 0) return;
-            if (_stack[_stack.Count - 1].Instance != panel) return;  // 不是顶层,不管
+            if (_stack[^1].Instance != panel) return;  // 不是顶层,不管
 
             // 顶层被外部关掉,移除栈项并恢复上一层
             _stack.RemoveAt(_stack.Count - 1);
@@ -223,7 +223,7 @@ namespace TGame.TUI
         {
             while (_stack.Count > 0)
             {
-                var top = _stack[_stack.Count - 1];
+                var top = _stack[^1];
                 if (top.Instance == null || top.Instance.gameObject == null)
                 {
                     Debug.LogWarning($"[StackPanelModel] Stale stack entry {top.PanelType.Name}, removing");

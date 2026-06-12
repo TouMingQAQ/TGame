@@ -29,5 +29,9 @@ namespace TGame.TUI
         {
             Game.Instance.GetManager<UIManager>().ShowPanel<TweenPanel>();
         }
+        public void OpenStackPanel()
+        {
+            Game.Instance.GetManager<UIManager>().ShowPanelStack<StackSamplePanel>();
+        }
     }
 }

@@ -10,7 +10,7 @@ namespace TGame.TUI
     /// </summary>
     public class StackSamplePanel : BaseUIPanel
     {
-        [SerializeField] private Button _openSubButton;
+        [SerializeField] private TButton _openSubButton;
         [SerializeField] private TMP_Text _depthLabel;
 
         protected override void Awake()
@@ -35,7 +35,7 @@ namespace TGame.TUI
 
         private void OnOpenSub()
         {
-            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().Open<StackSubPanel>();
+            Game.Instance.GetManager<UIManager>().ShowPanelStack<StackSubPanel>();
         }
     }
 }

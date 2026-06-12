@@ -42,13 +42,13 @@ namespace TGame.TUI
 
         private void OnBack()
         {
-            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().CloseTop();
+            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().Back();
         }
 
         private void OnBackToRoot()
         {
             // 弹到只剩栈底(StackSamplePanel)
-            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().PopToRoot();
+            Game.Instance.GetManager<UIManager>().GetModule<StackPanelModel>().ClearStackAndHide();
         }
     }
 }
