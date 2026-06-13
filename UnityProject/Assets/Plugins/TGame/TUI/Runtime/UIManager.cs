@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TGame.TCore.Runtime;
 using UnityEngine;
@@ -24,9 +24,14 @@ namespace TGame.TUI
         [SerializeField] private Transform _popupRoot;
         [SerializeField] private Transform _overlayRoot;
         [SerializeField] private Transform _topRoot;
+        [SerializeField] private Transform _tooltipRoot;
+        [SerializeField] private UIConfig _config;
+
+        internal float PopupOffset => _config != null ? _config.TooltipOffset : 8f;
 
         /// <summary>
         /// 填表到 UILayerRootModule。SerializeField 字段保留在 UIManager(MonoBehaviour)上以兼容 Prefab 序列化。
+        /// 同时读取 UIConfig(非场景配置)并自动注册默认浮窗。
         /// </summary>
         private void Awake()
         {
@@ -37,6 +42,13 @@ namespace TGame.TUI
             root.SetLayerRoot(UILayer.Popup, _popupRoot);
             root.SetLayerRoot(UILayer.Overlay, _overlayRoot);
             root.SetLayerRoot(UILayer.Top, _topRoot);
+            root.SetLayerRoot(UILayer.Tooltip, _tooltipRoot);
+
+            // 读取 UIConfig,自动注册默认浮窗(零调用方样板)
+            if (_config != null && _config.DefaultTooltip != null)
+            {
+                GetModule<PopupModule>().Register(_config.DefaultTooltip);
+            }
         }
 
         private void Start()
@@ -47,7 +59,15 @@ namespace TGame.TUI
             GetModule<StackPanelModel>().SetUIManager(this);
             GetModule<UILoaderModule>().SetUIManager(this);
             GetModule<UIVisibilityModule>().SetUIManager(this);
+            GetModule<PopupModule>().SetUIManager(this);
             // UIRegistryModule / UILayerRootModule 不需要 UIManager 引用,跳过
+        }
+
+        private void Update()
+        {
+            var popupModule = GetModule<PopupModule>();
+            if (popupModule.HasFollowTargets)
+                popupModule.Tick(Time.unscaledDeltaTime);
         }
 
         // ===== 转发 API(零迁移) =====
@@ -115,6 +135,49 @@ namespace TGame.TUI
         /// <summary>查询 UILayer 根 Transform(转发到 UILayerRootModule)</summary>
         public Transform GetLayerRoot(UILayer layer)
             => GetModule<UILayerRootModule>().GetLayerRoot(layer);
+
+        // ===== Popup 转发 API(零迁移) =====
+
+        /// <summary>注册浮窗预制体(转发到 PopupModule),默认挂在 UILayer.Tooltip。</summary>
+        public void RegisterPopup<T>(T prefab) where T : BaseUIPopup
+            => GetModule<PopupModule>().Register(prefab);
+
+        /// <summary>
+        /// 在屏幕坐标 screenAnchor 处打开浮窗(转发到 PopupModule)。
+        /// 同 Type 同时只显示一个(单实例);越界时按 preferred 翻转。
+        /// followMouse 时由 PopupModule.Tick 每帧拉鼠标坐标重定位。
+        /// </summary>
+        /// <param name="screenAnchor">屏幕坐标(通常是鼠标位置)</param>
+        /// <param name="setup">可选 setup 回调,传入强类型实例,用于 SetData / SetText 等</param>
+        /// <param name="boundsArea">边界 RectTransform(null = 整个屏幕)</param>
+        /// <param name="flip">首选翻转方向(默认 BottomRight)</param>
+        /// <param name="followMouse">true = 每帧重定位到鼠标;false = 固定锚点(默认)</param>
+        public T ShowPopup<T>(Vector2 screenAnchor, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              bool followMouse = false)
+            where T : BaseUIPopup
+            => GetModule<PopupModule>().Show(screenAnchor, setup, boundsArea, flip, followMouse);
+
+        /// <summary>隐藏指定类型浮窗(转发到 PopupModule)。</summary>
+        public void HidePopup<T>() where T : BaseUIPopup
+            => GetModule<PopupModule>().Hide<T>();
+
+        /// <summary>按 Type 隐藏浮窗(转发到 PopupModule)。</summary>
+        public void HidePopup(Type type)
+            => GetModule<PopupModule>().Hide(type);
+
+        /// <summary>隐藏所有当前显示的浮窗(转发到 PopupModule)。</summary>
+        public void HideAllPopups()
+            => GetModule<PopupModule>().HideAll();
+
+        /// <summary>指定类型浮窗当前是否正在显示(转发到 PopupModule)。</summary>
+        public bool IsPopupVisible<T>() where T : BaseUIPopup
+            => GetModule<PopupModule>().IsVisible<T>();
+
+        /// <summary>按 Type 查询浮窗是否正在显示。</summary>
+        public bool IsPopupVisible(Type type)
+            => GetModule<PopupModule>().IsVisible(type);
 
         /// <summary>
         /// 销毁所有已加载面板的 GameObject + ClearModule()(逐个调 Module.Destroy())。

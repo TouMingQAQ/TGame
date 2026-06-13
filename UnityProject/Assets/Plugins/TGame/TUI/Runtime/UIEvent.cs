@@ -45,4 +45,23 @@ namespace TGame.TUI
             StackDepth = depth;
         }
     }
+
+    /// <summary>
+    /// 浮窗显示事件，通过 BaseManager.Call 广播。
+    /// 语义上区别于 PanelOpenedEvent:Popup 是"瞬时气泡",生命周期短,跟鼠标走。
+    /// </summary>
+    public readonly struct PopupShownEvent
+    {
+        public readonly string PopupName;
+        public PopupShownEvent(string name) => PopupName = name;
+    }
+
+    /// <summary>
+    /// 浮窗隐藏事件(动画完成),通过 BaseManager.Call 广播
+    /// </summary>
+    public readonly struct PopupHiddenEvent
+    {
+        public readonly string PopupName;
+        public PopupHiddenEvent(string name) => PopupName = name;
+    }
 }

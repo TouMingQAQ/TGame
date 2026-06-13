@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using DG.Tweening;
 
@@ -8,7 +8,7 @@ namespace TGame.TUI
     /// UI 面板抽象基类，每个面板自带独立 Canvas 和 CanvasGroup。
     /// 独立 Canvas 避免一个面板 UI 变化导致其他面板重建网格。
     /// CanvasGroup 用于控制面板整体透明度、交互和射线检测。
-    /// Show 走 _showSequence.PlayForward，Hide 走 _hideSequence.PlayForward（若已重写）或 _showSequence.SmoothRewind（默认回退）。
+    /// Show 走 _showSequence.Restart，Hide 走 _hideSequence.Restart（若已重写）或 _showSequence.SmoothRewind（默认回退）。
     /// 子类可分别重写 BuildShowAnimation / BuildHideAnimation 自定义入场/离场动画。
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
@@ -24,11 +24,10 @@ namespace TGame.TUI
         [SerializeField] private UILayer _layer = UILayer.Normal;
 
         [SerializeField] protected CanvasGroup _canvasGroup;
-        [SerializeField] protected RectTransform root;
-
         public CanvasGroup CanvasGroup => _canvasGroup;
-        public RectTransform Root => root;
         public bool IsVisible => gameObject.activeSelf;
+        public bool IsHiding => _animState == AnimState.Hiding;
+        public bool IsShowing => _animState == AnimState.Showing;
         /// <summary>面板注册/运行时层级。UIManager.LoadPanel 时由配置覆盖</summary>
         public UILayer Layer => _layer;
 
@@ -45,7 +44,6 @@ namespace TGame.TUI
         private void Reset()
         {
             TryGetComponent(out _canvasGroup);
-            TryGetComponent(out root);
         }
 
         /// <summary>由 UIManager.LoadPanel 调用,把配置中的 Layer 写入面板运行时字段</summary>
@@ -74,7 +72,7 @@ namespace TGame.TUI
         /// <summary>
         /// 构建 Hide 动画 Sequence。子类重写以自定义离场动画。
         /// 返回 null（默认）表示"Hide 走 _showSequence.SmoothRewind"，即沿用 Show 动画的反向。
-        /// 返回非空 Sequence 则 Hide 走独立 PlayForward，完成时触发 OnHideComplete。
+        /// 返回非空 Sequence 则 Hide 走独立 Restart，完成时触发 OnHideComplete。
         /// </summary>
         protected virtual Sequence BuildHideAnimation() => null;
 
@@ -108,9 +106,10 @@ namespace TGame.TUI
         public virtual void Show()
         {
             if (_animState == AnimState.Showing) return;
-            BeforeShow();
 
-            _showSequence.Pause();
+            StopHideAnimationForShow();
+
+            BeforeShow();
             _animState = AnimState.None;
 
             gameObject.SetActive(true);
@@ -118,9 +117,7 @@ namespace TGame.TUI
             _canvasGroup.blocksRaycasts = true;
 
             _animState = AnimState.Showing;
-            if(_hideSequence != null)
-                _showSequence.Rewind();
-            _showSequence.PlayForward();
+            _showSequence.Restart();
         }
 
         /// <summary>
@@ -135,6 +132,8 @@ namespace TGame.TUI
 
             BeforeHide();
 
+            StopShowAnimationForHide();
+
             _canvasGroup.interactable = true;
             _canvasGroup.blocksRaycasts = true;
 
@@ -142,19 +141,47 @@ namespace TGame.TUI
 
             if (_hideSequence != null)
             {
-                _hideSequence.Pause();
-                _hideSequence.Rewind();
-                _hideSequence.PlayForward();
+                PlayHideSequence();
             }
             else
             {
-                _showSequence.Pause();
-                _showSequence.SmoothRewind();
+                PlayShowSequenceBackward();
             }
+        }
+
+        private void StopHideAnimationForShow()
+        {
+            _showSequence.Pause();
+
+            if (_hideSequence == null) return;
+
+            _hideSequence.Pause();
+            if (_hideSequence.Elapsed() > 0f)
+                _hideSequence.Rewind();
+        }
+
+        private void StopShowAnimationForHide()
+        {
+            _showSequence.Pause();
+        }
+
+        private void PlayHideSequence()
+        {
+            _hideSequence.Pause();
+            _hideSequence.Restart();
+        }
+
+        private void PlayShowSequenceBackward()
+        {
+            if (_showSequence.Elapsed() <= 0f)
+                OnHideComplete();
+            else
+                _showSequence.SmoothRewind();
         }
 
         private void OnShowComplete()
         {
+            if (_animState != AnimState.Showing) return;
             _animState = AnimState.None;
             _canvasGroup.interactable = true;
             _canvasGroup.blocksRaycasts = true;
@@ -163,6 +190,7 @@ namespace TGame.TUI
 
         private void OnHideComplete()
         {
+            if (_animState != AnimState.Hiding) return;
             _animState = AnimState.None;
             _canvasGroup.interactable = false;
             _canvasGroup.blocksRaycasts = false;

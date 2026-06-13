@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using TGame.TCore.Runtime;
 using UnityEngine;
@@ -230,7 +230,7 @@ namespace TGame.TUI
                     _stack.RemoveAt(_stack.Count - 1);
                     continue;
                 }
-                if (!top.Instance.IsVisible) top.Instance.Show();
+                if (!top.Instance.IsVisible || top.Instance.IsHiding) top.Instance.Show();
                 return;
             }
         }
@@ -243,7 +243,7 @@ namespace TGame.TUI
             if (_ui.IsPanelLoaded(panelType))
             {
                 var p = _ui.GetPanel(panelType);
-                if (p != null && !p.IsVisible) p.Show();
+                if (p != null && (!p.IsVisible || p.IsHiding)) p.Show();
             }
         }
 

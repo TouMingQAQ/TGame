@@ -66,8 +66,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TUI::TGame.TUI.TButtonPanel
   _ignoreTimeScale: 1
+  _layer: 200
   _canvasGroup: {fileID: 1816725044863830509}
-  root: {fileID: 2423435431972094298}
 --- !u!222 &2420263637243007050
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -256,6 +256,7 @@ GameObject:
   - component: {fileID: 6149120784882037952}
   - component: {fileID: 1180955388715714257}
   - component: {fileID: 2508011073192404261}
+  - component: {fileID: 4466854250215163642}
   m_Layer: 5
   m_Name: TButton
   m_TagString: Untagged
@@ -390,6 +391,22 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &4466854250215163642
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285318433352740959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eb559bfa88b9ae4680f62093264d7b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TUI::TGame.TUI.DefaultToolTipTrigger
+  _tooltipText: "\u9ED8\u8BA4\u7684TButton"
+  _direction: 0
+  _boundsArea: {fileID: 0}
+  _followMouse: 1
 --- !u!1 &7935165423517216410
 GameObject:
   m_ObjectHideFlags: 0
@@ -913,6 +930,7 @@ GameObject:
   - component: {fileID: 3869604989897313836}
   - component: {fileID: 7082250028307681679}
   - component: {fileID: 3608651803164602418}
+  - component: {fileID: 7458329499091407527}
   m_Layer: 5
   m_Name: TButtonHold
   m_TagString: Untagged
@@ -1090,6 +1108,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: TUI::TGame.TUI.ButtonHoldLink
   buttonHold: {fileID: 7082250028307681679}
   progressImage: {fileID: 8983005296474594160}
+--- !u!114 &7458329499091407527
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8750838020883334921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eb559bfa88b9ae4680f62093264d7b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TUI::TGame.TUI.DefaultToolTipTrigger
+  _tooltipText: "\u53EF\u4EE5\u957F\u6309\u7684Button"
+  _direction: 0
+  _boundsArea: {fileID: 0}
+  _followMouse: 1
 --- !u!1 &8848251117459456324
 GameObject:
   m_ObjectHideFlags: 0

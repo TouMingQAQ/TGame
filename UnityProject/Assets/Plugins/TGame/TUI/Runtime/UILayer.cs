@@ -17,7 +17,9 @@ namespace TGame.TUI
         Popup = 300,
         /// <summary>覆盖层，sortingOrder=400</summary>
         Overlay = 400,
-        /// <summary>顶层，sortingOrder=500</summary>
-        Top = 500
+        /// <summary>顶层,sortingOrder=500</summary>
+        Top = 500,
+        /// <summary>浮窗层,sortingOrder=600。始终最顶,在 Modal 之上,用于 Tooltip/气泡/ContextMenu 等</summary>
+        Tooltip = 600
     }
 }

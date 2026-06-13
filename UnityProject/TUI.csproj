@@ -64,12 +64,14 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\View\BaseView.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TweenPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILayer.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIConfig.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\HelloPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\BaseMVVMPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TButtonPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSubPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\BaseUIPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\PopupLayoutHelper.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIRegistryModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\IUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILoaderModule.cs" />
@@ -78,11 +80,15 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberView.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManager.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationNormal.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\DefaultToolTip.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationTween.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelEntry.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIAnimationMaker.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\DefaultToolTipTrigger.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\BaseUIPopup.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILayerRootModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\Model\BaseModel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\PopupModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelModel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButtonHold.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIEvent.cs" />
@@ -992,6 +998,9 @@
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>

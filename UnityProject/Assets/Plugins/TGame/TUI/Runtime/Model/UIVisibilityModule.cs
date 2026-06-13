@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TGame.TCore.Runtime;
 
 namespace TGame.TUI
@@ -42,7 +42,7 @@ namespace TGame.TUI
             var loader = _ui.GetModule<UILoaderModule>();
             var panel = loader.Load(type);
             if (panel == null) return null;
-            if (panel.IsVisible) return panel;
+            if (panel.IsVisible && !panel.IsHiding) return panel;
 
             // 移至同层末尾 = 渲染在最上层
             panel.transform.SetAsLastSibling();
