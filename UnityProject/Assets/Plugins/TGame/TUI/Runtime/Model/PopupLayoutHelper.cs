@@ -16,7 +16,7 @@ namespace TGame.TUI
 
     /// <summary>
     /// 浮窗布局静态算法。
-    /// 输入: 鼠标屏幕坐标 + 浮窗尺寸 + Popup Root RT + 边界 RT(可空 = Popup Root) + 偏好方向 + 偏移。
+    /// 输入: 目标点/目标 RectTransform + 浮窗尺寸 + Popup Root RT + 边界 RT(可空 = Popup Root) + 偏好方向 + 偏移。
     /// 输出: (anchoredPosition, pivot) — 写到 _content RectTransform 上。
     /// 翻转语义: 4 个候选方向,按 preferred 优先,选第一个"浮窗 4 边都在 areaRect 内"的。
     /// </summary>
@@ -28,9 +28,33 @@ namespace TGame.TUI
             RectTransform popupRoot,
             RectTransform boundsArea,
             PopupFlipDirection preferred,
-            float offset)
+            Vector2 offset)
         {
             Vector2 anchorPoint = ScreenToRootPoint(popupRoot, screenAnchor);
+            Rect targetRect = new Rect(anchorPoint, Vector2.zero);
+            return SolveTargetRect(targetRect, contentSize, popupRoot, boundsArea, preferred, offset);
+        }
+
+        public static (Vector2 anchoredPosition, Vector2 pivot) Solve(
+            RectTransform target,
+            Vector2 contentSize,
+            RectTransform popupRoot,
+            RectTransform boundsArea,
+            PopupFlipDirection preferred,
+            Vector2 offset)
+        {
+            Rect targetRect = GetRectInRoot(popupRoot, target);
+            return SolveTargetRect(targetRect, contentSize, popupRoot, boundsArea, preferred, offset);
+        }
+
+        private static (Vector2 anchoredPosition, Vector2 pivot) SolveTargetRect(
+            Rect targetRect,
+            Vector2 contentSize,
+            RectTransform popupRoot,
+            RectTransform boundsArea,
+            PopupFlipDirection preferred,
+            Vector2 offset)
+        {
             Rect areaRect = GetAreaRect(popupRoot, boundsArea);
 
             // 4 个候选: pivot 是浮窗贴近鼠标的角。
@@ -48,7 +72,7 @@ namespace TGame.TUI
             for (int i = 0; i < candidates.Length; i++)
             {
                 var c = candidates[i];
-                Vector2 pivotPos = anchorPoint + GetShift(c.dir, offset);
+                Vector2 pivotPos = GetPivotPosition(targetRect, c.dir, offset);
                 Vector2 bl = pivotPos - c.pivot * contentSize;
                 Vector2 tr = bl + contentSize;
 
@@ -68,8 +92,34 @@ namespace TGame.TUI
             }
 
             var best = candidates[bestIndex];
-            Vector2 bestPivotPos = anchorPoint + GetShift(best.dir, offset);
+            Vector2 bestPivotPos = GetPivotPosition(targetRect, best.dir, offset);
             return (ClampPivotPosition(bestPivotPos, best.pivot, contentSize, areaRect), best.pivot);
+        }
+
+        private static Rect GetRectInRoot(RectTransform popupRoot, RectTransform target)
+        {
+            if (target == null)
+                return new Rect(Vector2.zero, Vector2.zero);
+
+            var worldCorners = new Vector3[4];
+            target.GetWorldCorners(worldCorners);
+
+            float minX = float.PositiveInfinity;
+            float minY = float.PositiveInfinity;
+            float maxX = float.NegativeInfinity;
+            float maxY = float.NegativeInfinity;
+            var targetCamera = GetCanvasCamera(target);
+            for (int i = 0; i < worldCorners.Length; i++)
+            {
+                Vector2 screen = RectTransformUtility.WorldToScreenPoint(targetCamera, worldCorners[i]);
+                Vector2 point = ScreenToRootPoint(popupRoot, screen);
+                minX = Mathf.Min(minX, point.x);
+                minY = Mathf.Min(minY, point.y);
+                maxX = Mathf.Max(maxX, point.x);
+                maxY = Mathf.Max(maxY, point.y);
+            }
+
+            return Rect.MinMaxRect(minX, minY, maxX, maxY);
         }
 
         private static Rect GetAreaRect(RectTransform popupRoot, RectTransform boundsArea)
@@ -148,15 +198,15 @@ namespace TGame.TUI
             }
         }
 
-        /// <summary>浮窗 pivot 角在 Popup Root 本地坐标里的偏移向量</summary>
-        private static Vector2 GetShift(PopupFlipDirection dir, float offset)
+        /// <summary>根据方向选目标矩形对应边角,再叠加用户定义的目标偏移。</summary>
+        private static Vector2 GetPivotPosition(Rect targetRect, PopupFlipDirection dir, Vector2 offset)
         {
             return dir switch
             {
-                PopupFlipDirection.BottomRight => new Vector2(offset, -offset), // pivot(0,1) 向右下推
-                PopupFlipDirection.BottomLeft => new Vector2(-offset, -offset), // pivot(1,1) 向左下推
-                PopupFlipDirection.TopRight => new Vector2(offset, offset),     // pivot(0,0) 向右上推
-                PopupFlipDirection.TopLeft => new Vector2(-offset, offset),     // pivot(1,0) 向左上推
+                PopupFlipDirection.BottomRight => new Vector2(targetRect.xMax + offset.x, targetRect.yMin - offset.y),
+                PopupFlipDirection.BottomLeft => new Vector2(targetRect.xMin - offset.x, targetRect.yMin - offset.y),
+                PopupFlipDirection.TopRight => new Vector2(targetRect.xMax + offset.x, targetRect.yMax + offset.y),
+                PopupFlipDirection.TopLeft => new Vector2(targetRect.xMin - offset.x, targetRect.yMax + offset.y),
                 _ => Vector2.zero,
             };
         }

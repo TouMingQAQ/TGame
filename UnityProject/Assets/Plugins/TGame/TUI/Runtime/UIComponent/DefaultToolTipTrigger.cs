@@ -1,4 +1,4 @@
-using TGame.TCore.Runtime;
+﻿using TGame.TCore.Runtime;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -15,6 +15,7 @@ namespace TGame.TUI
     {
         [SerializeField] [TextArea] private string _tooltipText = "Tooltip";
         [SerializeField] private PopupFlipDirection _direction = PopupFlipDirection.BottomRight;
+        [SerializeField] private Vector2 _offset = new Vector2(15f, 15f);
         [SerializeField] private RectTransform _boundsArea;
         [SerializeField] private bool _followMouse;
 
@@ -28,7 +29,7 @@ namespace TGame.TUI
         public void OnPointerEnter(PointerEventData eventData)
         {
             _ui?.ShowPopup<DefaultToolTip>(eventData.position, p => p.SetText(_tooltipText),
-                boundsArea: _boundsArea, followMouse: _followMouse,flip: _direction);
+                boundsArea: _boundsArea, followMouse: _followMouse, flip: _direction, offset: _offset);
         }
 
         public void OnPointerExit(PointerEventData eventData)

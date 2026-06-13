@@ -43,7 +43,7 @@ namespace TGame.TUI
             public RectTransform PopupRoot;
             public RectTransform BoundsArea;
             public PopupFlipDirection Flip;
-            public float Offset;
+            public Vector2 Offset;
         }
 
         private const float DEFAULT_OFFSET = 8f;
@@ -92,13 +92,35 @@ namespace TGame.TUI
         public T Show<T>(Vector2 screenAnchor, Action<T> setup = null,
                          RectTransform boundsArea = null,
                          PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                         bool followMouse = false,
+                         Vector2? offset = null)
+            where T : BaseUIPopup
+            => Show(typeof(T), screenAnchor, p => setup?.Invoke((T)p), boundsArea, flip, followMouse, offset) as T;
+
+        public T Show<T>(Vector2 screenAnchor, Vector2 offset, Action<T> setup = null,
+                         RectTransform boundsArea = null,
+                         PopupFlipDirection flip = PopupFlipDirection.BottomRight,
                          bool followMouse = false)
             where T : BaseUIPopup
-            => Show(typeof(T), screenAnchor, p => setup?.Invoke((T)p), boundsArea, flip, followMouse) as T;
+            => Show(screenAnchor, setup, boundsArea, flip, followMouse, offset);
+
+        public T Show<T>(RectTransform target, Action<T> setup = null,
+                         RectTransform boundsArea = null,
+                         PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                         Vector2? offset = null)
+            where T : BaseUIPopup
+            => Show(typeof(T), target, p => setup?.Invoke((T)p), boundsArea, flip, offset) as T;
+
+        public T Show<T>(RectTransform target, Vector2 offset, Action<T> setup = null,
+                         RectTransform boundsArea = null,
+                         PopupFlipDirection flip = PopupFlipDirection.BottomRight)
+            where T : BaseUIPopup
+            => Show(target, setup, boundsArea, flip, offset);
 
         /// <summary>按 Type 显示浮窗(转发自 UIManager.ShowPopup)。</summary>
         public BaseUIPopup Show(Type type, Vector2 screenAnchor, Action<BaseUIPopup> setup,
-                                RectTransform boundsArea, PopupFlipDirection flip, bool followMouse = false)
+                                RectTransform boundsArea, PopupFlipDirection flip, bool followMouse = false,
+                                Vector2? offset = null)
         {
             if (_ui == null)
             {
@@ -149,14 +171,14 @@ namespace TGame.TUI
 
             var popupRoot = popup.transform as RectTransform;
             SetupPopupRoot(popupRoot);
-            float offset = GetOffset(popup);
+            Vector2 resolvedOffset = GetOffset(popup, offset);
             bool shouldPlayShow = !popup.IsVisible || popup.IsHiding;
 
             // 1. 数据 setup(在 Anchor 之前,布局尺寸可能受数据影响)
             setup?.Invoke(popup);
 
             // 2. 位置(必须 Show 之前,否则动画第一帧位置跳变)
-            popup.Anchor(screenAnchor, popupRoot, boundsArea, flip, offset);
+            popup.Anchor(screenAnchor, popupRoot, boundsArea, flip, resolvedOffset);
 
             // 3. 渲染顺序:同 Layer 末尾
             popup.transform.SetAsLastSibling();
@@ -183,13 +205,84 @@ namespace TGame.TUI
                     PopupRoot = popupRoot,
                     BoundsArea = boundsArea,
                     Flip = flip,
-                    Offset = offset
+                    Offset = resolvedOffset
                 };
             }
             else
             {
                 _follow.Remove(type);
             }
+            return popup;
+        }
+
+        public BaseUIPopup Show(Type type, RectTransform target, Action<BaseUIPopup> setup,
+                                RectTransform boundsArea, PopupFlipDirection flip, Vector2? offset = null)
+        {
+            if (target == null)
+            {
+                Debug.LogError("[PopupModule] target RectTransform is null");
+                return null;
+            }
+            if (_ui == null)
+            {
+                Debug.LogError("[PopupModule] UIManager not set; call SetUIManager first");
+                return null;
+            }
+            if (!_prefabs.TryGetValue(type, out var prefab))
+            {
+                Debug.LogError($"[PopupModule] Popup {type.Name} not registered; call RegisterPopup first");
+                return null;
+            }
+
+            if (!_active.TryGetValue(type, out var popup) || popup == null || popup.gameObject == null)
+            {
+                if (_active.ContainsKey(type)) _active.Remove(type);
+
+                var root = _ui.GetModule<UILayerRootModule>().GetLayerRoot(UILayer.Tooltip);
+                if (root == null)
+                {
+                    Debug.LogError("[PopupModule] Tooltip layer root missing; assign _tooltipRoot on UIManager prefab");
+                    return null;
+                }
+
+                var go = UnityEngine.Object.Instantiate(prefab, root);
+                popup = go.GetComponent<BaseUIPopup>();
+                if (popup == null)
+                {
+                    Debug.LogError($"[PopupModule] prefab for {type.Name} missing {type.Name} component");
+                    UnityEngine.Object.Destroy(go);
+                    return null;
+                }
+
+                var rootRt = go.transform as RectTransform;
+                SetupPopupRoot(rootRt);
+                popup.ApplyPopupRaycastPolicy();
+
+                Action<BaseUIPanel> onHidden = p => OnPopupHidden((BaseUIPopup)p);
+                popup.Hidden += onHidden;
+                _subs[popup] = onHidden;
+
+                go.SetActive(false);
+                _active[type] = popup;
+            }
+
+            var popupRoot = popup.transform as RectTransform;
+            SetupPopupRoot(popupRoot);
+            Vector2 resolvedOffset = GetOffset(popup, offset);
+            bool shouldPlayShow = !popup.IsVisible || popup.IsHiding;
+
+            setup?.Invoke(popup);
+            popup.Anchor(target, popupRoot, boundsArea, flip, resolvedOffset);
+            popup.transform.SetAsLastSibling();
+            popup.ApplyPopupRaycastPolicy();
+
+            if (shouldPlayShow)
+            {
+                popup.Show();
+                _ui.Call(new PopupShownEvent(type.Name));
+            }
+
+            _follow.Remove(type);
             return popup;
         }
 
@@ -288,11 +381,13 @@ namespace TGame.TUI
             rootRt.localScale = Vector3.one;
         }
 
-        private float GetOffset(BaseUIPopup popup)
+        private Vector2 GetOffset(BaseUIPopup popup, Vector2? offsetOverride)
         {
+            if (offsetOverride.HasValue)
+                return offsetOverride.Value;
             if (_ui != null)
                 return _ui.PopupOffset;
-            return popup != null ? popup.DefaultOffset : DEFAULT_OFFSET;
+            return popup != null ? popup.DefaultTargetOffset : Vector2.one * DEFAULT_OFFSET;
         }
 
         /// <summary>

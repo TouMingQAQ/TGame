@@ -27,7 +27,7 @@ namespace TGame.TUI
         [SerializeField] private Transform _tooltipRoot;
         [SerializeField] private UIConfig _config;
 
-        internal float PopupOffset => _config != null ? _config.TooltipOffset : 8f;
+        internal Vector2 PopupOffset => Vector2.one * (_config != null ? _config.TooltipOffset : 8f);
 
         /// <summary>
         /// 填表到 UILayerRootModule。SerializeField 字段保留在 UIManager(MonoBehaviour)上以兼容 Prefab 序列化。
@@ -152,12 +152,39 @@ namespace TGame.TUI
         /// <param name="boundsArea">边界 RectTransform(null = 整个屏幕)</param>
         /// <param name="flip">首选翻转方向(默认 BottomRight)</param>
         /// <param name="followMouse">true = 每帧重定位到鼠标;false = 固定锚点(默认)</param>
+        /// <param name="offset">目标到浮窗的二维偏移。null 时使用 UIConfig / Popup prefab 默认值</param>
         public T ShowPopup<T>(Vector2 screenAnchor, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              bool followMouse = false,
+                              Vector2? offset = null)
+            where T : BaseUIPopup
+            => GetModule<PopupModule>().Show(screenAnchor, setup, boundsArea, flip, followMouse, offset);
+
+        /// <summary>在屏幕坐标 screenAnchor 处打开浮窗,并指定目标到浮窗的二维偏移。</summary>
+        public T ShowPopup<T>(Vector2 screenAnchor, Vector2 offset, Action<T> setup = null,
                               RectTransform boundsArea = null,
                               PopupFlipDirection flip = PopupFlipDirection.BottomRight,
                               bool followMouse = false)
             where T : BaseUIPopup
-            => GetModule<PopupModule>().Show(screenAnchor, setup, boundsArea, flip, followMouse);
+            => GetModule<PopupModule>().Show(screenAnchor, offset, setup, boundsArea, flip, followMouse);
+
+        /// <summary>
+        /// 贴指定 RectTransform 打开浮窗。翻转时会根据方向自动选择目标 Rect 的对应边角。
+        /// </summary>
+        public T ShowPopup<T>(RectTransform target, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              Vector2? offset = null)
+            where T : BaseUIPopup
+            => GetModule<PopupModule>().Show(target, setup, boundsArea, flip, offset);
+
+        /// <summary>贴指定 RectTransform 打开浮窗,并指定目标到浮窗的二维偏移。</summary>
+        public T ShowPopup<T>(RectTransform target, Vector2 offset, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight)
+            where T : BaseUIPopup
+            => GetModule<PopupModule>().Show(target, offset, setup, boundsArea, flip);
 
         /// <summary>隐藏指定类型浮窗(转发到 PopupModule)。</summary>
         public void HidePopup<T>() where T : BaseUIPopup

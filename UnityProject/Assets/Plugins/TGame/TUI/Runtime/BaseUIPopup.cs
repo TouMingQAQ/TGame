@@ -28,6 +28,9 @@ namespace TGame.TUI
         /// <summary>Prefab 上配置的默认偏移量。</summary>
         public float DefaultOffset => _defaultOffset;
 
+        /// <summary>Prefab 上配置的默认二维偏移量。</summary>
+        public Vector2 DefaultTargetOffset => Vector2.one * _defaultOffset;
+
         /// <summary>由 PopupModule 在 setup 回调里调用,子类用来写入数据。data 为 null 时清空。</summary>
         public abstract void SetData<TData>(TData data) where TData : class;
 
@@ -38,7 +41,7 @@ namespace TGame.TUI
         /// </summary>
         public virtual void Anchor(Vector2 screenAnchor, RectTransform boundsArea,
                                   PopupFlipDirection flip, float? offsetOverride = null)
-            => Anchor(screenAnchor, ResolvePopupRoot(), boundsArea, flip, offsetOverride);
+            => Anchor(screenAnchor, ResolvePopupRoot(), boundsArea, flip, ToOffset(offsetOverride));
 
         /// <summary>
         /// 使用指定 Popup Root 做屏幕点到本地坐标的转换。
@@ -46,6 +49,10 @@ namespace TGame.TUI
         /// </summary>
         public virtual void Anchor(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
                                   PopupFlipDirection flip, float? offsetOverride = null)
+            => Anchor(screenAnchor, popupRoot, boundsArea, flip, ToOffset(offsetOverride));
+
+        public virtual void Anchor(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
+                                  PopupFlipDirection flip, Vector2 offset)
         {
             if (_content == null)
             {
@@ -57,7 +64,23 @@ namespace TGame.TUI
 
             // 强制刷新 layout,获取 TMP/ContentSizeFitter 后的真实尺寸
             LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
-            ApplyLayout(screenAnchor, popupRoot, boundsArea, flip, offsetOverride, GetContentSize());
+            ApplyLayout(screenAnchor, popupRoot, boundsArea, flip, offset, GetContentSize());
+        }
+
+        public virtual void Anchor(RectTransform target, RectTransform popupRoot, RectTransform boundsArea,
+                                  PopupFlipDirection flip, Vector2 offset)
+        {
+            if (_content == null)
+            {
+                Debug.LogError($"[BaseUIPopup] {GetType().Name} missing _content RectTransform, cannot anchor", this);
+                return;
+            }
+
+            PrepareLayoutRoot(popupRoot);
+
+            // 强制刷新 layout,获取 TMP/ContentSizeFitter 后的真实尺寸
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_content);
+            ApplyLayout(target, popupRoot, boundsArea, flip, offset, GetContentSize());
         }
 
         /// <summary>
@@ -65,10 +88,14 @@ namespace TGame.TUI
         /// </summary>
         internal void SetPosition(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
                                   PopupFlipDirection flip, float? offsetOverride = null)
+            => SetPosition(screenAnchor, popupRoot, boundsArea, flip, ToOffset(offsetOverride));
+
+        internal void SetPosition(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
+                                  PopupFlipDirection flip, Vector2 offset)
         {
             if (_content == null) return;
             PrepareLayoutRoot(popupRoot);
-            ApplyLayout(screenAnchor, popupRoot, boundsArea, flip, offsetOverride, GetContentSize());
+            ApplyLayout(screenAnchor, popupRoot, boundsArea, flip, offset, GetContentSize());
         }
 
         internal void ApplyPopupRaycastPolicy()
@@ -101,12 +128,27 @@ namespace TGame.TUI
         }
 
         private void ApplyLayout(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
-                                 PopupFlipDirection flip, float? offsetOverride, Vector2 size)
+                                 PopupFlipDirection flip, Vector2 offset, Vector2 size)
         {
             var (pos, pivot) = PopupLayoutHelper.Solve(
-                screenAnchor, size, popupRoot, boundsArea, flip, offsetOverride ?? _defaultOffset);
+                screenAnchor, size, popupRoot, boundsArea, flip, offset);
             _content.pivot = pivot;
             _content.anchoredPosition = pos;
+        }
+
+        private void ApplyLayout(RectTransform target, RectTransform popupRoot, RectTransform boundsArea,
+                                 PopupFlipDirection flip, Vector2 offset, Vector2 size)
+        {
+            var (pos, pivot) = PopupLayoutHelper.Solve(
+                target, size, popupRoot, boundsArea, flip, offset);
+            _content.pivot = pivot;
+            _content.anchoredPosition = pos;
+        }
+
+        private Vector2 ToOffset(float? offsetOverride)
+        {
+            float offset = offsetOverride ?? _defaultOffset;
+            return new Vector2(offset, offset);
         }
 
         private Vector2 GetContentSize()
