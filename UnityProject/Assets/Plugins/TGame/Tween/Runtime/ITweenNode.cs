@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using UnityEngine;
 
 namespace TGame.Tween
@@ -29,6 +29,14 @@ namespace TGame.Tween
         {
             get => _duration;
             set => _duration = value;
+        }
+
+        /// <summary>
+        /// 获取运行时实际播放时长。默认节点直接使用手动配置的 Duration。
+        /// </summary>
+        public virtual float GetPlaybackDuration()
+        {
+            return _duration;
         }
     }
 }

@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace TGame.Tween
 {
+    public sealed class TTweenAnimatorStateNameAttribute : PropertyAttribute
+    {
+    }
+
     /// <summary>
     /// Animator State 构造器。
     /// 用 DOTween 驱动 Animator 的 normalizedTime,把 Animator Controller 中的一段 State 接入 TTweenPlay 时间轴。
@@ -10,12 +14,6 @@ namespace TGame.Tween
     [AddComponentMenu("TGame/Tween/Nodes/TTweenAnimatorState")]
     public class TTweenAnimatorState : TTweenNode
     {
-        private enum DurationMode
-        {
-            AnimatorStateLength,
-            NodeDuration,
-        }
-
         [Header("Target")]
         [SerializeField]
         [Tooltip("要采样的 Animator,为空时使用自身或父级 Animator")]
@@ -23,6 +21,7 @@ namespace TGame.Tween
 
         [Header("State")]
         [SerializeField]
+        [TTweenAnimatorStateName]
         [Tooltip("Animator Controller 中的 State 名称")]
         private string _stateName;
 
@@ -41,15 +40,7 @@ namespace TGame.Tween
 
         [Header("Duration")]
         [SerializeField]
-        [Tooltip("AnimatorStateLength = 尽量按 Animator 原生速度播放;NodeDuration = 使用 TTweenNode.Duration 手动控制时长")]
-        private DurationMode _durationMode = DurationMode.AnimatorStateLength;
-
-        [SerializeField]
-        [Tooltip("可选。指定后优先用该 Clip.length 计算原生时长;为空时尝试按 StateName 在 Animator Controller 中查找同名 Clip")]
-        private AnimationClip _clip;
-
-        [SerializeField]
-        [Tooltip("按原生时长播放时,是否把 Animator.speed 计入速度计算")]
+        [Tooltip("按 Animator State 原生时长播放时,是否把 Animator.speed 计入速度计算")]
         private bool _respectAnimatorSpeed = true;
 
         [Header("Animator Control")]
@@ -88,6 +79,16 @@ namespace TGame.Tween
         {
             get => _layer;
             set => _layer = value;
+        }
+
+        public override float GetPlaybackDuration()
+        {
+            return TryGetPlaybackDuration(out var duration) ? duration : 0.0001f;
+        }
+
+        public bool TryGetPlaybackDuration(out float duration)
+        {
+            return TryResolveDuration(FindAnimatorTarget(false), out duration);
         }
 
         public override DG.Tweening.Tween BuildTween()
@@ -142,13 +143,23 @@ namespace TGame.Tween
 
         private Animator ResolveTarget()
         {
-            if (_target != null)
-                return _target;
+            return FindAnimatorTarget(true);
+        }
 
-            _target = GetComponent<Animator>();
-            if (_target == null)
-                _target = GetComponentInParent<Animator>();
-            return _target;
+        private Animator FindAnimatorTarget(bool cacheTarget)
+        {
+            var target = _target;
+            if (target != null)
+                return target;
+
+            target = GetComponent<Animator>();
+            if (target == null)
+                target = GetComponentInParent<Animator>();
+
+            if (cacheTarget)
+                _target = target;
+
+            return target;
         }
 
         private bool TryResolveStateHash(Animator target, out int stateHash)
@@ -180,47 +191,27 @@ namespace TGame.Tween
 
         private float ResolveDuration(Animator target)
         {
-            if (_durationMode == DurationMode.NodeDuration)
-                return Mathf.Max(0.0001f, Duration);
+            if (TryResolveDuration(target, out var duration))
+                return duration;
 
-            float range = Mathf.Abs(_toNormalizedTime - _fromNormalizedTime);
-            if (range <= 0f)
-                return 0.0001f;
-
-            if (TryGetClipLength(target, out var clipLength))
-                return Mathf.Max(0.0001f, clipLength * range / GetAnimatorSpeedFactor(target));
-
-            if (TryGetStateLength(target, out var stateLength))
-                return Mathf.Max(0.0001f, stateLength * range / GetAnimatorSpeedFactor(target));
-
-            Debug.LogWarning($"[TTweenAnimatorState] Cannot resolve duration for '{_stateName}', fallback to node Duration", this);
-            return Mathf.Max(0.0001f, Duration);
+            Debug.LogWarning($"[TTweenAnimatorState] Cannot resolve Animator state duration for '{_stateName}'", this);
+            return 0.0001f;
         }
 
-        private bool TryGetClipLength(Animator target, out float clipLength)
+        private bool TryResolveDuration(Animator target, out float duration)
         {
-            clipLength = 0f;
-            if (_clip != null)
+            duration = 0f;
+            float range = Mathf.Abs(_toNormalizedTime - _fromNormalizedTime);
+            if (range <= 0f)
             {
-                clipLength = _clip.length;
-                return clipLength > 0f;
+                duration = 0.0001f;
+                return true;
             }
 
-            var controller = target != null ? target.runtimeAnimatorController : null;
-            if (controller == null)
-                return false;
-
-            string shortStateName = GetShortStateName(_stateName);
-            var clips = controller.animationClips;
-            for (int i = 0; i < clips.Length; i++)
+            if (TryGetStateLength(target, out var stateLength))
             {
-                var clip = clips[i];
-                if (clip == null) continue;
-                if (clip.name == _stateName || clip.name == shortStateName)
-                {
-                    clipLength = clip.length;
-                    return clipLength > 0f;
-                }
+                duration = Mathf.Max(0.0001f, stateLength * range / GetAnimatorSpeedFactor(target));
+                return true;
             }
 
             return false;
@@ -232,12 +223,15 @@ namespace TGame.Tween
             if (target == null || _layer < 0 || _layer >= target.layerCount)
                 return false;
 
+            if (!TryResolveStateHash(target, out var stateHash))
+                return false;
+
             var currentState = target.GetCurrentAnimatorStateInfo(_layer);
             int currentHash = currentState.fullPathHash;
             float currentNormalizedTime = currentState.normalizedTime;
             float currentSpeed = target.speed;
 
-            target.Play(_stateHash, _layer, _fromNormalizedTime);
+            target.Play(stateHash, _layer, _fromNormalizedTime);
             target.Update(0f);
 
             var sampledState = target.GetCurrentAnimatorStateInfo(_layer);
@@ -260,17 +254,6 @@ namespace TGame.Tween
 
             float speed = Mathf.Abs(target.speed);
             return speed > 0.0001f ? speed : 1f;
-        }
-
-        private static string GetShortStateName(string stateName)
-        {
-            if (string.IsNullOrEmpty(stateName))
-                return string.Empty;
-
-            int dotIndex = stateName.LastIndexOf('.');
-            return dotIndex >= 0 && dotIndex + 1 < stateName.Length
-                ? stateName[(dotIndex + 1)..]
-                : stateName;
         }
 
         private void CaptureAnimatorSpeed(Animator target)
@@ -319,4 +302,172 @@ namespace TGame.Tween
                 _target = GetComponentInParent<Animator>();
         }
     }
+
+#if UNITY_EDITOR
+    [UnityEditor.CustomPropertyDrawer(typeof(TTweenAnimatorStateNameAttribute))]
+    internal sealed class TTweenAnimatorStateNameDrawer : UnityEditor.PropertyDrawer
+    {
+        public override void OnGUI(Rect position, UnityEditor.SerializedProperty property, GUIContent label)
+        {
+            if (property.propertyType != UnityEditor.SerializedPropertyType.String)
+            {
+                UnityEditor.EditorGUI.PropertyField(position, property, label);
+                return;
+            }
+
+            var animator = ResolveAnimator(property);
+            var layer = ResolveLayer(property);
+            var controller = ResolveController(animator);
+            var stateNames = CollectStateNames(controller, layer);
+
+            if (stateNames.Count == 0)
+            {
+                UnityEditor.EditorGUI.PropertyField(position, property, label);
+                return;
+            }
+
+            var values = new System.Collections.Generic.List<string>(stateNames.Count + 2) { string.Empty };
+            var displayNames = new System.Collections.Generic.List<string>(stateNames.Count + 2) { "<None>" };
+            values.AddRange(stateNames);
+            displayNames.AddRange(stateNames);
+
+            string currentValue = property.stringValue;
+            string relativeCurrentValue = ToRelativeStateName(currentValue, controller, layer);
+            int selectedIndex = values.IndexOf(currentValue);
+            if (selectedIndex < 0)
+                selectedIndex = values.IndexOf(relativeCurrentValue);
+
+            if (selectedIndex < 0 && !string.IsNullOrEmpty(currentValue))
+            {
+                values.Add(currentValue);
+                displayNames.Add($"{currentValue} (Missing)");
+                selectedIndex = values.Count - 1;
+            }
+
+            if (selectedIndex < 0)
+                selectedIndex = 0;
+
+            UnityEditor.EditorGUI.BeginProperty(position, label, property);
+            UnityEditor.EditorGUI.BeginChangeCheck();
+            int newIndex = UnityEditor.EditorGUI.Popup(position, label.text, selectedIndex, displayNames.ToArray());
+            if (UnityEditor.EditorGUI.EndChangeCheck())
+                property.stringValue = values[newIndex];
+            UnityEditor.EditorGUI.EndProperty();
+        }
+
+        private static Animator ResolveAnimator(UnityEditor.SerializedProperty property)
+        {
+            var targetProp = property.serializedObject.FindProperty("_target");
+            var animator = targetProp != null ? targetProp.objectReferenceValue as Animator : null;
+            if (animator != null)
+                return animator;
+
+            if (property.serializedObject.targetObject is Component component)
+            {
+                animator = component.GetComponent<Animator>();
+                return animator != null ? animator : component.GetComponentInParent<Animator>();
+            }
+
+            return null;
+        }
+
+        private static int ResolveLayer(UnityEditor.SerializedProperty property)
+        {
+            var layerProp = property.serializedObject.FindProperty("_layer");
+            return layerProp != null ? layerProp.intValue : 0;
+        }
+
+        private static UnityEditor.Animations.AnimatorController ResolveController(Animator animator)
+        {
+            RuntimeAnimatorController controller = animator != null ? animator.runtimeAnimatorController : null;
+            while (controller is AnimatorOverrideController overrideController)
+                controller = overrideController.runtimeAnimatorController;
+            return controller as UnityEditor.Animations.AnimatorController;
+        }
+
+        private static System.Collections.Generic.List<string> CollectStateNames(
+            UnityEditor.Animations.AnimatorController controller,
+            int layer)
+        {
+            var stateNames = new System.Collections.Generic.List<string>();
+            if (controller == null || layer < 0 || layer >= controller.layers.Length)
+                return stateNames;
+
+            CollectStateNames(controller.layers[layer].stateMachine, string.Empty, stateNames);
+            return stateNames;
+        }
+
+        private static void CollectStateNames(
+            UnityEditor.Animations.AnimatorStateMachine stateMachine,
+            string prefix,
+            System.Collections.Generic.List<string> stateNames)
+        {
+            if (stateMachine == null)
+                return;
+
+            var states = stateMachine.states;
+            for (int i = 0; i < states.Length; i++)
+            {
+                var state = states[i].state;
+                if (state == null)
+                    continue;
+
+                string stateName = string.IsNullOrEmpty(prefix) ? state.name : $"{prefix}.{state.name}";
+                if (!stateNames.Contains(stateName))
+                    stateNames.Add(stateName);
+            }
+
+            var childStateMachines = stateMachine.stateMachines;
+            for (int i = 0; i < childStateMachines.Length; i++)
+            {
+                var childStateMachine = childStateMachines[i].stateMachine;
+                if (childStateMachine == null)
+                    continue;
+
+                string childPrefix = string.IsNullOrEmpty(prefix)
+                    ? childStateMachine.name
+                    : $"{prefix}.{childStateMachine.name}";
+                CollectStateNames(childStateMachine, childPrefix, stateNames);
+            }
+        }
+
+        private static string ToRelativeStateName(
+            string stateName,
+            UnityEditor.Animations.AnimatorController controller,
+            int layer)
+        {
+            if (string.IsNullOrEmpty(stateName) || controller == null || layer < 0 || layer >= controller.layers.Length)
+                return stateName;
+
+            string layerPrefix = controller.layers[layer].name + ".";
+            return stateName.StartsWith(layerPrefix, System.StringComparison.Ordinal)
+                ? stateName.Substring(layerPrefix.Length)
+                : stateName;
+        }
+    }
+
+    [UnityEditor.CustomEditor(typeof(TTweenAnimatorState))]
+    internal sealed class TTweenAnimatorStateEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            serializedObject.Update();
+            DrawPropertiesExcluding(serializedObject, "m_Script", "_duration");
+
+            if (target is TTweenAnimatorState animatorState)
+            {
+                UnityEditor.EditorGUILayout.Space(4);
+                using (new UnityEditor.EditorGUI.DisabledScope(true))
+                {
+                    float duration = animatorState.TryGetPlaybackDuration(out var resolvedDuration)
+                        ? resolvedDuration
+                        : 0f;
+                    UnityEditor.EditorGUILayout.FloatField("Playback Duration", duration);
+                }
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+#endif
 }

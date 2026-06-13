@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -188,7 +188,7 @@ namespace TGame.Tween
             {
                 var entry = entries[i];
                 if (entry.node == null) continue;
-                maxEnd = Mathf.Max(maxEnd, entry.startTime + entry.node.Duration);
+                maxEnd = Mathf.Max(maxEnd, entry.startTime + entry.node.GetPlaybackDuration());
             }
             return maxEnd > 0f ? maxEnd : 0.3f;
         }

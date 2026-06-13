@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 
@@ -33,7 +33,7 @@ namespace TGame.Tween
             if (_entriesProp == null || index >= _entriesProp.arraySize) return DefaultDuration;
             var np = _entriesProp.GetArrayElementAtIndex(index).FindPropertyRelative("node");
             var nodeObj = np.objectReferenceValue as TTweenNode;
-            return nodeObj != null ? nodeObj.Duration : TTweenPlay.DefaultEntryDuration;
+            return nodeObj != null ? nodeObj.GetPlaybackDuration() : TTweenPlay.DefaultEntryDuration;
         }
 
         protected override string GetEntryLabel(int index)
@@ -86,13 +86,23 @@ namespace TGame.Tween
             var durRect = new Rect(x, r.y, 44, r.height);
             if (nodeObj != null)
             {
-                var nodeSO = new SerializedObject(nodeObj);
-                var durProp = nodeSO.FindProperty("_duration");
-                float before = durProp.floatValue;
-                EditorGUI.PropertyField(durRect, durProp, GUIContent.none);
-                if (nodeSO.ApplyModifiedProperties() && !Mathf.Approximately(before, durProp.floatValue))
-                    _needsRepaint = true;
-                nodeSO.Dispose();
+                if (nodeObj is TTweenAnimatorState)
+                {
+                    using (new EditorGUI.DisabledScope(true))
+                    {
+                        EditorGUI.FloatField(durRect, nodeObj.GetPlaybackDuration());
+                    }
+                }
+                else
+                {
+                    var nodeSO = new SerializedObject(nodeObj);
+                    var durProp = nodeSO.FindProperty("_duration");
+                    float before = durProp.floatValue;
+                    EditorGUI.PropertyField(durRect, durProp, GUIContent.none);
+                    if (nodeSO.ApplyModifiedProperties() && !Mathf.Approximately(before, durProp.floatValue))
+                        _needsRepaint = true;
+                    nodeSO.Dispose();
+                }
             }
             else
             {

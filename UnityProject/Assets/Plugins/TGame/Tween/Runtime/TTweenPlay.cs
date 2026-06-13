@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -144,7 +144,7 @@ namespace TGame.Tween
             float maxTime = 0f;
             foreach (var e in _nodeEntries)
             {
-                float dur = e.node != null ? e.node.Duration : DefaultEntryDuration;
+                float dur = e.node != null ? e.node.GetPlaybackDuration() : DefaultEntryDuration;
                 float end = e.startTime + dur;
                 if (end > maxTime) maxTime = end;
             }
