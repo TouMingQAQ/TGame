@@ -110,7 +110,7 @@ namespace TGame.EditorToolBar.BuiltIn
         {
             var content = new MainToolbarContent(
                 GetTargetSceneButtonText(),
-                EditorGUIUtility.IconContent("")?.image as Texture2D,
+                null,
                 "目标场景:用于「运行」按钮");
             return new MainToolbarDropdown(content, ShowTargetSceneMenu);
         }
