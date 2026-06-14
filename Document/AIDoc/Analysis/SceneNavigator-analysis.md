@@ -95,12 +95,12 @@ public class SceneNavigatorProfile : ScriptableObject
 
 存储位置约定：`Assets/Plugins/TGame/SceneNavigator/Resources/SceneNavigatorProfile.asset`（必须放 `Resources/` 目录以便 `Resources.Load`）。
 
-## SceneNavigatorBox（ToolBox 面板）
+## SceneNavigatorBox（ToolBox Box,已停用）
 
 `SceneNavigatorBox : IToolBoxContentVisualElement` —— 沿用 [ToolBox](ToolBox-analysis.md) 的 Box 注册机制：
 
 ```csharp
-[ToolBox("快捷启动", Order = 0)]
+[ToolBox("快捷启动", Order = 0)]   // 2026-06 已删除
 public class SceneNavigatorBox : IToolBoxContentVisualElement
 {
     public static BoxRegistration Registration => new() {
@@ -110,6 +110,8 @@ public class SceneNavigatorBox : IToolBoxContentVisualElement
     ...
 }
 ```
+
+> **2026-06 状态**：`SceneNavigatorBox` 仍实现 `IToolBoxContentVisualElement` 接口并提供 `Registration`，但**从 `ToolBoxWindow._groups["程序"]` 字典中移除**——ToolBox 侧边面板不再显示"快捷启动" Tab。理由：与 `EditorToolBar.QuickLaunchToolbar`（主工具栏）功能高度重合，**主工具栏入口已足够**。如未来需要恢复，加回 `_groups` 字典一行即可。
 
 UI 结构：
 

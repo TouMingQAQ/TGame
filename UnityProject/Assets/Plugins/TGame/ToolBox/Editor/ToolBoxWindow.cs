@@ -27,7 +27,6 @@ namespace TGame.ToolBox
                 HelloBox.Registration,
                 PathBox.Registration,
                 DebugBox.Registration,
-                SceneNavigator.SceneNavigatorBox.Registration,
             }),
             ["资源"] = ("资源工具", new List<BoxRegistration>
             {

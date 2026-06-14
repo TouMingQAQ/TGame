@@ -25,7 +25,7 @@
 ```text
 ToolBoxWindow (EditorWindow)
  ├─ _groups: Dictionary<groupKey, (title, boxes)>   ← 静态分组定义
- │   ├─ "程序" → HelloBox, PathBox, DebugBox, SceneNavigatorBox
+ │   ├─ "程序" → HelloBox, PathBox, DebugBox
  │   ├─ "资源" → ColorBox, AnimationCurveBox
  │   └─ "构建" → BuildBox
  ├─ ToolBoxWindow.uss                              ← 主题 + 变量
@@ -75,7 +75,6 @@ private static readonly Dictionary<string, (string title, List<BoxRegistration> 
         HelloBox.Registration,
         PathBox.Registration,
         DebugBox.Registration,
-        SceneNavigator.SceneNavigatorBox.Registration,
     }),
     ["资源"] = ("资源工具", new List<BoxRegistration>
     {
@@ -89,7 +88,9 @@ private static readonly Dictionary<string, (string title, List<BoxRegistration> 
 };
 ```
 
-**3 个分组共 7 个 Box**。新增 Box 需要在 `_groups` 加一行。
+**3 个分组共 6 个 Box**。新增 Box 需要在 `_groups` 加一行。
+
+> **历史 Box**：`SceneNavigatorBox`（"快捷启动" Tab）于 2026-06 从 `_groups` 移除（用户偏好 ToolBar 入口已足够，ToolBox 侧边面板不必重复）。代码、`Registration` 属性、`IToolBoxContentVisualElement` 接口实现**全部保留**——如未来需要恢复，加回 `SceneNavigator.SceneNavigatorBox.Registration` 一行即可。
 
 ### 菜单入口
 
@@ -138,17 +139,20 @@ TwoPaneSplitView (Horizontal, sidebar | content)
 
 **已知坑**：Unity 早期版本中 `padding` 简写会被静默忽略。`c974e37` 修复主要是这一类问题。
 
-## 7 个 Box 概览
+## 6 个 Box 概览
 
 | Box | Group | 主要功能 | 依赖 |
 | --- | --- | --- | --- |
 | `HelloBox` | 程序 | 渲染 `README.md`（自实现轻量 markdown 解析器） | `Assets/Plugins/TGame/ToolBox/Editor/HelloBox/README.md` |
 | `PathBox` | 程序 | 列出 Unity 6 个常用路径（`dataPath`、`persistentDataPath` 等），可复制/打开 | `Application` 静态 API |
 | `DebugBox` | 程序 | TDebug 控制面板（Settings SO + 运行时开关 + 上下文控制 + 文件日志） | `TGame.TCore.Runtime` (TDebug, TDebugSettings) |
-| `SceneNavigatorBox` | 程序 | 场景启动/初始化（详见 [SceneNavigator-analysis.md](SceneNavigator-analysis.md)） | `TGame.SceneNavigator` + `TGame.TCore.Runtime` |
 | `ColorBox` | 资源 | 内置色卡（CSS 命名 100+ 色）+ DIY 色卡持久化（`ColorLibrary.asset`） | `Assets/Resources/ColorLibrary.asset` |
 | `AnimationCurveBox` | 资源 | 内置 13 种经典曲线（线性/缓入缓出/弹性/反弹/过冲等）+ DIY 曲线（`CurveLibrary.asset`） | `Assets/Resources/CurveLibrary.asset` |
 | `BuildBox` | 构建 | 完整构建面板（详见 [BuildBox](#buildbox-构建管线) 章节） | `BuildConfig` + `BuildProfile` + 多个 IBuildPipeline |
+
+> **未在 ToolBoxWindow 注册的 Box**（保留接口实现，预留接入）：
+>
+> - `SceneNavigator.SceneNavigatorBox` —— "快捷启动" Tab。代码、Registration 属性、接口实现保留，**仅从 `ToolBoxWindow._groups` 移除**。
 
 ### HelloBox 自实现 markdown 解析器
 
