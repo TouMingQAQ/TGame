@@ -84,6 +84,7 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationTween.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelEntry.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIAnimationMaker.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Text\TextMeshProScroller.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\DefaultToolTipTrigger.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\BaseUIPopup.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILayerRootModule.cs" />
