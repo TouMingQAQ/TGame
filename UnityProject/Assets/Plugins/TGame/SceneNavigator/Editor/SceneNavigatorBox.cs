@@ -10,7 +10,6 @@ using UnityEngine.UIElements;
 
 namespace TGame.SceneNavigator
 {
-    [ToolBox("快捷启动", Order = 0)]
     public class SceneNavigatorBox : IToolBoxContentVisualElement
     {
         public static BoxRegistration Registration => new()

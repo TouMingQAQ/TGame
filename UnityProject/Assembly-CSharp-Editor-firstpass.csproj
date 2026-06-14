@@ -71,7 +71,6 @@
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\IToolBoxContentVisualElement.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\DebugBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\CurveLibrary.cs" />
-    <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ToolBoxAttribute.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\BuildProfileManager.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\ColorBox.cs" />
     <Compile Include="Assets\Plugins\TGame\ToolBox\Editor\HelloBox\HelloBox.cs" />
