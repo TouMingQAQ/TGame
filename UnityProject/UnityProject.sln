@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.TextMeshPro", "UniT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-Editor", "Assembly-CSharp-Editor.csproj", "{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.Addressable.Runtime", "TGame.Addressable.Runtime.csproj", "{0899a735-54b5-9ec2-086c-16fba914b34f}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneNavigator.Runtime", "SceneNavigator.Runtime.csproj", "{dca23936-8eb1-c5f6-8149-61e03f34451c}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.Editor", "UniTask.Editor.csproj", "{7af71ee9-3887-ab8e-77b0-224245b4f887}"
@@ -62,6 +64,8 @@ Global
 		{d771d185-edaf-b5a9-d394-eec1ec19b438}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{c0d2c93c-61c4-d907-edf3-4ffb4de5c299}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0899a735-54b5-9ec2-086c-16fba914b34f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0899a735-54b5-9ec2-086c-16fba914b34f}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{dca23936-8eb1-c5f6-8149-61e03f34451c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{dca23936-8eb1-c5f6-8149-61e03f34451c}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7af71ee9-3887-ab8e-77b0-224245b4f887}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

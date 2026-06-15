@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
 using Debug = UnityEngine.Debug;
 
 namespace TGame.Addressable
@@ -28,7 +26,8 @@ namespace TGame.Addressable
     ///   - _globalCts:基类 Destroy 时触发,联动外部 ct 让所有 in-flight 任务被取消
     ///
     /// 依赖:
-    ///   - AddressableManager:SetManager 注入,事件广播走 _mgr.Call
+    ///   - AddressableManager:SetManager(AddressableManager) 注入,事件广播走 _mgr.Call
+    ///   - 其他 BaseManager(如 UIManager):SetManager(BaseManager) 注入广播目标
     ///   - UnityEngine.AddressableAssets.Addressables:加载/释放入口
     ///   - Cysharp.Threading.Tasks:ToUniTask(cancellationToken)
     ///
@@ -52,11 +51,24 @@ namespace TGame.Addressable
         private CancellationTokenSource _globalCts;
 
         private AddressableManager _mgr;
+        private BaseManager _broadcastTarget;
 
         /// <summary>由 AddressableManager.Start() 注入自身引用,之后才能广播事件</summary>
         public void SetManager(AddressableManager mgr) => _mgr = mgr;
 
+        /// <summary>
+        /// 注入事件广播目标 BaseManager。
+        /// 当 AddressableModel 被挂载到非 AddressableManager 的 BaseManager 下时(例如 UIManager),
+        /// 通过此方法指定事件广播出口。UIManager 等其他 Manager 不需要 _mgr 引用。
+        /// </summary>
+        public void SetManager(BaseManager broadcastTarget) => _broadcastTarget = broadcastTarget;
+
         public override bool Enable { get; set; } = true;
+
+        /// <summary>
+        /// 事件广播出口:优先用 _mgr(AddressableManager),否则用 _broadcastTarget(挂载到其他 BaseManager 时)。
+        /// </summary>
+        private BaseManager BroadcastTarget => _mgr ?? (BaseManager)_broadcastTarget;
 
         /// <summary>当前句柄池条目数(调试用)</summary>
         public int HandleCount => _handles.Count;
@@ -209,7 +221,7 @@ namespace TGame.Addressable
                 {
                     entry.RefCount++;
                     _handles[addrKey] = entry;
-                    _mgr?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
+                    BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
                     return entry.Handle.Result as T;
                 }
                 _handles.Remove(addrKey);
@@ -224,7 +236,7 @@ namespace TGame.Addressable
                 {
                     joinEntry.RefCount++;
                     _handles[addrKey] = joinEntry;
-                    _mgr?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
+                    BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
                     return joinEntry.Handle.Result as T;
                 }
                 // 原加载取消/失败后句柄未写入,回退到新加载
@@ -260,7 +272,7 @@ namespace TGame.Addressable
                 if (handle.IsValid())
                     Addressables.Release(handle);
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                _mgr?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
+                BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
                 throw;
             }
             catch (Exception ex)
@@ -269,7 +281,7 @@ namespace TGame.Addressable
                 if (handle.IsValid())
                     Addressables.Release(handle);
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                _mgr?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
+                BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
                 return default;
             }
             finally
@@ -278,7 +290,7 @@ namespace TGame.Addressable
             }
 
             var totalMs = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-            _mgr?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, result != null, totalMs));
+            BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, result != null, totalMs));
             return result;
         }
 
@@ -297,7 +309,7 @@ namespace TGame.Addressable
                 catch (Exception e) { Debug.LogWarning($"[AddressableModel] Release handle failed: {e.Message}"); }
             }
             _handles.Remove(key);
-            _mgr?.Call(new AddressableReleasedEvent(key.Key, key.AssetType));
+            BroadcastTarget?.Call(new AddressableReleasedEvent(key.Key, key.AssetType));
         }
 
         /// <summary>批量预热核心:解析 locations → 并行 LoadInternalAsync → 进度广播。
@@ -316,7 +328,7 @@ namespace TGame.Addressable
             if (locHandle.Result == null || locHandle.Result.Count == 0)
             {
                 Addressables.Release(locHandle);
-                _mgr?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
+                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
                 return;
             }
 
@@ -337,7 +349,7 @@ namespace TGame.Addressable
             if (todoCount == 0)
             {
                 Addressables.Release(locHandle);
-                _mgr?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
+                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
                 return;
             }
 
@@ -349,14 +361,14 @@ namespace TGame.Addressable
             catch (OperationCanceledException)
             {
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                _mgr?.Call(new AddressablePreloadCompletedEvent(context, todoCount, elapsed));
+                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, todoCount, elapsed));
                 Addressables.Release(locHandle);
                 throw;
             }
 
             Addressables.Release(locHandle);
             var totalMs = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-            _mgr?.Call(new AddressablePreloadCompletedEvent(context, todoCount, totalMs));
+            BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, todoCount, totalMs));
         }
     }
 }

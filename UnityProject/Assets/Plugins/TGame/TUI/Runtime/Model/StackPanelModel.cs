@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
 using UnityEngine;
 
@@ -83,6 +85,59 @@ namespace TGame.TUI
             }
 
             var panel = _ui.LoadPanel(panelType);
+            if (panel == null) return null;
+
+            // 层级守门:新 Panel.Layer 必须 >= 当前栈顶.Layer(空栈放行)
+            if (_stack.Count > 0)
+            {
+                var topPanel = _stack[^1].Instance;
+                if (topPanel != null && (int)panel.Layer < (int)topPanel.Layer)
+                {
+                    Debug.LogError($"[StackPanelModel] Refuse open {panelType.Name}(Layer={panel.Layer}) on top of {topPanel.GetType().Name}(Layer={topPanel.Layer}): new layer must be >= current top layer");
+                    return null;
+                }
+            }
+
+            // 订阅 Hidden 事件,用于外部关闭兜底
+            Action<BaseUIPanel> handler = OnPanelHidden;
+            panel.Hidden += handler;
+            _subs[panel] = handler;
+
+            var entry = new StackPanelEntry(panelType, panel, _stack.Count + 1);
+            panel.OnPushed(entry);
+            panel.transform.SetAsLastSibling();
+            panel.Show();
+            _stack.Add(entry);
+
+            _ui.Call(new PanelOpenedEvent(panelType.Name));
+            _ui.Call(new PanelPushedEvent(panelType.Name, _stack.Count));
+            return panel;
+        }
+
+        /// <summary>
+        /// 异步将面板压入栈顶。Addressable 模式下走 UILoaderModule.LoadAsync,Prefab 模式下回退到同步 Load。
+        /// 已加载则复用,不重复 Instantiate。
+        /// 同面板已在栈中时拒绝重复 Open。
+        /// 校验新 Panel.Layer >= 当前栈顶.Layer,不满足则 LogError 并拒绝。
+        /// </summary>
+        public async UniTask<T> OpenAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
+            => (T)await OpenAsync(typeof(T), ct);
+
+        /// <summary>异步按 Type 压入栈顶</summary>
+        public async UniTask<BaseUIPanel> OpenAsync(Type panelType, CancellationToken ct = default)
+        {
+            if (_ui == null)
+            {
+                Debug.LogError("[StackPanelModel] UIManager not set; call SetUIManager first");
+                return null;
+            }
+            if (IsInStack(panelType))
+            {
+                Debug.LogWarning($"[StackPanelModel] Panel {panelType.Name} is already in stack, refusing to open");
+                return _ui.GetPanel(panelType);
+            }
+
+            var panel = await _ui.GetModule<UILoaderModule>().LoadAsync(panelType, ct);
             if (panel == null) return null;
 
             // 层级守门:新 Panel.Layer 必须 >= 当前栈顶.Layer(空栈放行)
