@@ -22,7 +22,7 @@ namespace TGame.Addressable
     ///
     /// 状态:
     ///   - _handles:Dictionary&lt;AddressableKey, HandleEntry&gt; — 句柄池
-    ///   - _loadingMap:Dictionary&lt;AddressableKey, CancellationTokenSource&gt; — 进行中加载,Destroy 时 Cancel 全体
+    ///   - _loadingMap:Dictionary&lt;AddressableKey, InFlight&gt; — 进行中加载,InFlight 持有 CTS + 完成信号
     ///   - _globalCts:基类 Destroy 时触发,联动外部 ct 让所有 in-flight 任务被取消
     ///
     /// 依赖:
@@ -36,7 +36,7 @@ namespace TGame.Addressable
     ///   - RefCount &gt; 0 时 Handle.IsValid() 应为 true;RefCount 归零立即 Release
     ///   - 预热逐资源独立 Handle(非 batch),与单资源加载共用句柄池,Release 时路径一致
     ///   - 取消时通过 linkedCts 联动,await 抛 OperationCanceledException,finally 清理 _loadingMap
-    ///   - 并发同一 key 的 LoadAsync 通过 _loadingMap.TryGetValue 查重:后到者在 CTS 上等候并重试句柄池
+    ///   - 并发同一 key 的 LoadAsync 通过 _loadingMap.TryGetValue 查重:后到者在 InFlight.Completed 上等候并重试句柄池
     /// </summary>
     public sealed class AddressableModel : BaseModule
     {
@@ -44,11 +44,18 @@ namespace TGame.Addressable
         // 不存 Handle.Result 强引用,避免阻止 GC 释放资源
         private readonly Dictionary<AddressableKey, HandleEntry> _handles = new();
 
-        // 进行中加载:同一 key 的并发请求共用一个 CancellationTokenSource
-        private readonly Dictionary<AddressableKey, CancellationTokenSource> _loadingMap = new();
+        // 进行中加载:同一 key 的并发请求共用一个 InFlight(CTS + 完成信号)
+        private readonly Dictionary<AddressableKey, InFlight> _loadingMap = new();
 
         // 全局取消源:Destroy 时 Cancel,联动所有 in-flight 任务
         private CancellationTokenSource _globalCts;
+
+        /// <summary>进行中加载的共享状态:CTS 用于取消,Completed 用于唤醒后到者</summary>
+        private sealed class InFlight
+        {
+            public CancellationTokenSource Cts;
+            public readonly UniTaskCompletionSource Completed = new();
+        }
 
         private AddressableManager _mgr;
         private BaseManager _broadcastTarget;
@@ -185,10 +192,10 @@ namespace TGame.Addressable
                 _globalCts.Dispose();
                 _globalCts = null;
             }
-            // 仅 Cancel(不 Dispose):每个 in-flight LoadInternalAsync 的 using 声明自己 Dispose 各自的 linkedCts
-            foreach (var cts in _loadingMap.Values)
+            foreach (var entry in _loadingMap.Values)
             {
-                try { cts.Cancel(); } catch { /* ignore */ }
+                try { entry.Cts?.Cancel(); } catch { /* ignore */ }
+                entry.Completed.TrySetCanceled();
             }
             _loadingMap.Clear();
         }
@@ -210,7 +217,7 @@ namespace TGame.Addressable
         }
 
         /// <summary>核心加载流程。
-        /// 并发防重入:若 _loadingMap 已有该 key 的进行中加载,后到者复用已有 CTS 等待同一任务。</summary>
+        /// 并发防重入:若 _loadingMap 已有该 key 的进行中加载,后到者在 InFlight.Completed 上等候后重试句柄池。</summary>
         private async UniTask<T> LoadInternalAsync<T>(AddressableKey addrKey, object rawKey,
                                                        CancellationToken ct) where T : UnityEngine.Object
         {
@@ -227,10 +234,11 @@ namespace TGame.Addressable
                 _handles.Remove(addrKey);
             }
 
-            // 2. 并发防重入:若已有该 key 的进行中加载,等待其 CTS 取消或完成后重试句柄池
-            if (_loadingMap.TryGetValue(addrKey, out var existingCts))
+            // 2. 并发防重入:若已有该 key 的进行中加载,后到者在完成信号上等候并重试句柄池
+            if (_loadingMap.TryGetValue(addrKey, out var inflight))
             {
-                try { await existingCts.Token.WaitUntilCanceled(); } catch { /* cancelled */ }
+                // 等待进行中加载结束,同时尊重自己的 ct(自己被取消则抛 OCE 向上传播)
+                await inflight.Completed.Task.AttachExternalCancellation(ct);
                 // 重试句柄池查重
                 if (_handles.TryGetValue(addrKey, out var joinEntry) && joinEntry.Handle.IsValid())
                 {
@@ -239,14 +247,15 @@ namespace TGame.Addressable
                     BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
                     return joinEntry.Handle.Result as T;
                 }
-                // 原加载取消/失败后句柄未写入,回退到新加载
+                // 原加载失败/取消后句柄未写入,回退到新加载
             }
 
             // 3. Merged CancellationToken:外部 ct + _globalCts
             _globalCts ??= new CancellationTokenSource();
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(_globalCts.Token, ct);
             var mergedToken = linkedCts.Token;
-            _loadingMap[addrKey] = linkedCts;
+            var currentInFlight = new InFlight { Cts = linkedCts };
+            _loadingMap[addrKey] = currentInFlight;
 
             var startTime = Time.realtimeSinceStartupAsDouble;
             T result = default;
@@ -286,7 +295,9 @@ namespace TGame.Addressable
             }
             finally
             {
+                // 先从 map 摘除(避免后到者醒来后又看到旧 entry),再唤醒已等候的后到者
                 _loadingMap.Remove(addrKey);
+                currentInFlight.Completed.TrySetResult();
             }
 
             var totalMs = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
@@ -353,10 +364,24 @@ namespace TGame.Addressable
                 return;
             }
 
-            // Step 3: 并行加载。UniTask.WhenAll 只接受 UniTask(无值),内部结果已写入 _handles
+            // Step 3: 并行加载,逐个上报进度。UniTask.WhenAll 只接受 UniTask(无值),内部结果已写入 _handles
             try
             {
-                await UniTask.WhenAll(tasks);
+                int total = tasks.Count, completed = 0;
+                var wrapped = new List<UniTask>(total);
+                foreach (var t in tasks)
+                {
+                    wrapped.Add(ReportingWrap(t, context, total));
+                }
+                await UniTask.WhenAll(wrapped);
+
+                async UniTask ReportingWrap(UniTask inner, string ctx, int totalCount)
+                {
+                    await inner;
+                    var done = Interlocked.Increment(ref completed);
+                    progress?.Report((float)done / totalCount);
+                    BroadcastTarget?.Call(new AddressablePreloadProgressEvent(ctx, done, totalCount));
+                }
             }
             catch (OperationCanceledException)
             {

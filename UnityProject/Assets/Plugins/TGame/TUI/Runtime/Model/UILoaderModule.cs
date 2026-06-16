@@ -44,6 +44,8 @@ namespace TGame.TUI
         private readonly Dictionary<Type, BaseUIPanel> _loaded = new();
         // Addressable 模式:Type → 当前持有引用的 address,Unload 时调 AddressableModel.Release
         private readonly Dictionary<Type, string> _loadedAddresses = new();
+        // 异步加载去重:Type → 进行中的加载任务(Preserve 后可安全多 await)
+        private readonly Dictionary<Type, UniTask<BaseUIPanel>> _loading = new();
 
         /// <summary>由 UIManager.Start 注入自身引用</summary>
         public void SetUIManager(UIManager ui) => _ui = ui;
@@ -129,72 +131,101 @@ namespace TGame.TUI
         /// 未注册 → LogError + return null;Addressable 加载失败 → LogError + return null。
         /// 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新加载。
         /// <para>Prefab 模式为方便起见,内部走同步 Load(无 IO 等待,UniTask 立刻完成)。</para>
+        /// <para>并发同 Type 的调用共享同一次底层加载,只 Instantiate 一个 Panel。</para>
         /// </summary>
-        public async UniTask<BaseUIPanel> LoadAsync(Type type, CancellationToken ct = default)
+        public UniTask<BaseUIPanel> LoadAsync(Type type, CancellationToken ct = default)
         {
             if (_loaded.TryGetValue(type, out var existing))
             {
                 if (existing != null && existing.gameObject != null)
-                    return existing;
+                    return UniTask.FromResult(existing);
                 _loaded.Remove(type);
             }
 
-            if (!_ui.GetModule<UIRegistryModule>().TryGetConfig(type, out var config))
-            {
-                Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered");
-                return null;
-            }
+            // in-flight 去重:并发同类型复用同一任务(Preserve 允许多 awaiter)
+            if (_loading.TryGetValue(type, out var inflight))
+                return inflight;
 
-            GameObject prefab = config.Prefab;
-            if (config.Mode == RegisterMode.Addressable)
+            var task = LoadCoreAsync(type, ct).Preserve();
+            _loading[type] = task;
+            return task;
+        }
+
+        /// <summary>异步加载核心逻辑,由 <see cref="LoadAsync(Type,CancellationToken)"/> 调用。
+        /// 完成后从 _loading 移除,保证成功/失败/取消都不残留。</summary>
+        private async UniTask<BaseUIPanel> LoadCoreAsync(Type type, CancellationToken ct)
+        {
+            try
             {
-                var addrModel = _ui.GetModule<AddressableModel>();
-                if (addrModel == null)
+                // 双重检查:进入时可能另一调用刚好完成
+                if (_loaded.TryGetValue(type, out var cached))
                 {
-                    Debug.LogError($"[UILoaderModule] AddressableModel not found on UIManager; ensure UIManager.Start creates it");
+                    if (cached != null && cached.gameObject != null)
+                        return cached;
+                    _loaded.Remove(type);
+                }
+
+                if (!_ui.GetModule<UIRegistryModule>().TryGetConfig(type, out var config))
+                {
+                    Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered");
                     return null;
                 }
-                prefab = await addrModel.LoadAsync<GameObject>(config.Address, ct);
-                if (prefab == null)
+
+                GameObject prefab = config.Prefab;
+                if (config.Mode == RegisterMode.Addressable)
                 {
-                    Debug.LogError($"[UILoaderModule] Addressables load returned null for {type.Name} (address={config.Address})");
+                    var addrModel = _ui.GetModule<AddressableModel>();
+                    if (addrModel == null)
+                    {
+                        Debug.LogError($"[UILoaderModule] AddressableModel not found on UIManager; ensure UIManager.Start creates it");
+                        return null;
+                    }
+                    prefab = await addrModel.LoadAsync<GameObject>(config.Address, ct);
+                    if (prefab == null)
+                    {
+                        Debug.LogError($"[UILoaderModule] Addressables load returned null for {type.Name} (address={config.Address})");
+                        return null;
+                    }
+                }
+
+                var root = _ui.GetModule<UILayerRootModule>().GetLayerRoot(config.Layer);
+                if (root == null)
+                {
+                    Debug.LogError($"[UILoaderModule] No layer root for {config.Layer}");
                     return null;
                 }
-            }
 
-            var root = _ui.GetModule<UILayerRootModule>().GetLayerRoot(config.Layer);
-            if (root == null)
-            {
-                Debug.LogError($"[UILoaderModule] No layer root for {config.Layer}");
-                return null;
-            }
+                var go = UnityEngine.Object.Instantiate(prefab, root);
+                var panel = go.GetComponent(type) as BaseUIPanel;
+                if (panel == null)
+                {
+                    Debug.LogError($"[UILoaderModule] Prefab for {type.Name} missing component {type.Name}");
+                    UnityEngine.Object.Destroy(go);
+                    return null;
+                }
 
-            var go = UnityEngine.Object.Instantiate(prefab, root);
-            var panel = go.GetComponent(type) as BaseUIPanel;
-            if (panel == null)
-            {
-                Debug.LogError($"[UILoaderModule] Prefab for {type.Name} missing component {type.Name}");
-                UnityEngine.Object.Destroy(go);
-                return null;
+                panel.SetLayer(config.Layer);
+                var rt = go.transform as RectTransform;
+                if (rt != null)
+                {
+                    rt.anchorMin = Vector2.zero;
+                    rt.anchorMax = Vector2.one;
+                    rt.offsetMin = Vector2.zero;
+                    rt.offsetMax = Vector2.zero;
+                }
+                panel.Init();
+                go.SetActive(false);
+                _loaded[type] = panel;
+                if (config.Mode == RegisterMode.Addressable)
+                {
+                    _loadedAddresses[type] = config.Address;
+                }
+                return panel;
             }
-
-            panel.SetLayer(config.Layer);
-            var rt = go.transform as RectTransform;
-            if (rt != null)
+            finally
             {
-                rt.anchorMin = Vector2.zero;
-                rt.anchorMax = Vector2.one;
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
+                _loading.Remove(type);
             }
-            panel.Init();
-            go.SetActive(false);
-            _loaded[type] = panel;
-            if (config.Mode == RegisterMode.Addressable)
-            {
-                _loadedAddresses[type] = config.Address;
-            }
-            return panel;
         }
 
         // ===== 查询 =====
@@ -281,6 +312,7 @@ namespace TGame.TUI
             }
             _loadedAddresses.Clear();
             _loaded.Clear();
+            _loading.Clear();
         }
     }
 }
