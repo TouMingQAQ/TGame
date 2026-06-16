@@ -60,6 +60,8 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Plugins\TGame\FSM\Runtime\FSMState.cs" />
+    <Compile Include="Assets\Plugins\TGame\FSM\Runtime\FSMControl.cs" />
     <Compile Include="Assets\Plugins\TGame\Mobile\SafeArea\SafeArea.cs" />
     <None Include="Assets\Plugins\UniTask\package.json" />
     <None Include="Assets\Plugins\TGame\Font\7000常用字优化版.txt" />
