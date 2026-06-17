@@ -73,8 +73,7 @@ namespace TGame.FSM
         {
             // 重置到默认状态:清空当前 state 与 states 字典,重新注册 DefaultState,并切到 DefaultState
             // 注意:这会丢弃之前 AddState 注册的所有非默认 state;若需保留,请在调用 Init 前自行管理
-            currentState = null;
-            states.Clear();
+            ClearStates(exitCurrent: true);
             AddState(DefaultState);
             ChangeState<TDefault>();
         }
@@ -82,7 +81,7 @@ namespace TGame.FSM
         /// 默认状态
         /// </summary>
         protected TDefault DefaultState { get;private set; }
-        
+
         /// <summary>
         /// 当前状态
         /// </summary>
@@ -93,7 +92,7 @@ namespace TGame.FSM
         /// </summary>
         protected Dictionary<Type, IFSMState> states = new Dictionary<Type, IFSMState>();
 
-   
+
         /// <summary>
         /// 更新
         /// </summary>
@@ -128,11 +127,13 @@ namespace TGame.FSM
             var typ = typeof(T);
 
             // 重入:把目标 state 入队(基于当前 transition 链去重,防止 A↔B 互切死循环)
+            // 注意:入队时不入 visitedThisTransition,改为消费时再 Add。
+            // 这样重入分支只做"去重"判断,真正入 visited 的时机在消费队列,
+            // 保证 FIFO 链路上每个 type 真正被切换前才计入 visited
             if (changeStateFlg)
             {
-                if (visitedThisTransition.Contains(typ))
+                if (visitedThisTransition.Contains(typ) || pendingStateQueue.Contains(typ))
                     return true;
-                visitedThisTransition.Add(typ);
                 pendingStateQueue.Enqueue(typ);
                 return true;
             }
@@ -179,14 +180,15 @@ namespace TGame.FSM
                 if (visitedThisTransition.Contains(queued))
                     continue;
                 visitedThisTransition.Add(queued);
-                ChangeStateInternal(queued);
+                if (!ChangeStateInternal(queued))
+                    break;
             }
             return true;
         }
 
         #endregion
-        
-    
+
+
         /// <summary>
         /// 添加状态
         /// </summary>
@@ -203,6 +205,13 @@ namespace TGame.FSM
                 if (ReferenceEquals(oldRegistered, state))
                     return new FSMStateHandle<T>(this, oldRegistered);
                 // 不同实例:旧实例收 OnRemove,新实例接管
+                // 若旧实例是当前激活状态,先 OnExit 并置空 currentState,防止 Update 继续 tick 旧实例
+                // 以及后续 ChangeState<T>() 被同类型短路锁死在旧实例上
+                if (ReferenceEquals(oldRegistered, currentState))
+                {
+                    currentState.OnExit(this);
+                    currentState = null;
+                }
                 oldRegistered.OnRemove(this);
                 // 接口里 Control 是 read-only,通过 cast 调实现类的 internal setter
                 if (oldRegistered is FSMState<T> oldState)
@@ -232,16 +241,33 @@ namespace TGame.FSM
             var type = typeof(T);
             if (!states.TryGetValue(typeof(T), out var state))
                 return new FSMStateHandle<T>(this, null);
-            // 若是当前 state,先 OnExit 再清引用,避免 Update 空跑或下次 ChangeState 失败
-            if (currentState == state)
+            // 通知顺序:OnRemove 先于 states.Remove,与 AddState 替换路径一致(语义:"即将被移除")
+            // ClearStates 还会清空 Control,避免被移除 state 继续操作旧控制器
+            bool exitCurrent = ReferenceEquals(currentState, state);
+            ClearStates(exitCurrent: exitCurrent);
+            return new FSMStateHandle<T>(this, state);
+        }
+
+        /// <summary>
+        /// 统一清理入口。由 Init() / RemoveState&lt;T&gt;() 共用,保证两条路径生命周期一致。
+        /// exitCurrent == true 时先 OnExit 当前状态并置空 currentState,
+        /// 然后遍历所有已注册 state 触发 OnRemove + Control = null,最后清空 states。
+        /// </summary>
+        private void ClearStates(bool exitCurrent)
+        {
+            if (exitCurrent && currentState != null)
             {
                 currentState.OnExit(this);
                 currentState = null;
             }
-            states.Remove(type);
-            state.OnRemove(this);
-            return new FSMStateHandle<T>(this, state);
+            foreach (var kv in states)
+            {
+                kv.Value.OnRemove(this);
+                if (kv.Value is FSMState<TDefault> typedState)
+                    typedState.Control = null;
+            }
+            states.Clear();
         }
-        
+
     }
 }

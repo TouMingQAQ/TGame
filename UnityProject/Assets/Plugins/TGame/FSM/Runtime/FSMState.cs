@@ -23,15 +23,15 @@ namespace TGame.FSM
     public class FSMState<T> : IFSMState where T : FSMState<T>, new()
     {
         public IFSMControl Control { get; internal set; }
-        
+
         public virtual void OnAdd(IFSMControl control) {}
-        
+
         public virtual void OnRemove(IFSMControl control) {}
-        
+
         public virtual void OnEnter(IFSMControl control) { }
-        
+
         public virtual void OnTick(IFSMControl control,float deltaTime) { }
-        
+
         public virtual void OnExit(IFSMControl control) { }
 
         protected bool ChangeState<TState>() where TState : FSMState<TState>, new()
