@@ -26,8 +26,7 @@ namespace TGame.Addressable
     ///   - _globalCts:基类 Destroy 时触发,联动外部 ct 让所有 in-flight 任务被取消
     ///
     /// 依赖:
-    ///   - AddressableManager:SetManager(AddressableManager) 注入,事件广播走 _mgr.Call
-    ///   - 其他 BaseManager(如 UIManager):SetManager(BaseManager) 注入广播目标
+    ///   - AddressableManager / UIManager 等 BaseManager:SetManager(BaseManager) 注入,事件广播走 _mgr.Call
     ///   - UnityEngine.AddressableAssets.Addressables:加载/释放入口
     ///   - Cysharp.Threading.Tasks:ToUniTask(cancellationToken)
     ///
@@ -57,25 +56,19 @@ namespace TGame.Addressable
             public readonly UniTaskCompletionSource Completed = new();
         }
 
-        private AddressableManager _mgr;
-        private BaseManager _broadcastTarget;
-
-        /// <summary>由 AddressableManager.Start() 注入自身引用,之后才能广播事件</summary>
-        public void SetManager(AddressableManager mgr) => _mgr = mgr;
+        private BaseManager _mgr;
 
         /// <summary>
         /// 注入事件广播目标 BaseManager。
-        /// 当 AddressableModel 被挂载到非 AddressableManager 的 BaseManager 下时(例如 UIManager),
-        /// 通过此方法指定事件广播出口。UIManager 等其他 Manager 不需要 _mgr 引用。
+        /// AddressableManager 在 Start() 中调用以订阅自身事件总线;
+        /// 其他 BaseManager(如 UIManager)挂载同一份模型实例时,也通过此方法指定广播出口。
         /// </summary>
-        public void SetManager(BaseManager broadcastTarget) => _broadcastTarget = broadcastTarget;
+        public void SetManager(BaseManager mgr) => _mgr = mgr;
 
         public override bool Enable { get; set; } = true;
 
-        /// <summary>
-        /// 事件广播出口:优先用 _mgr(AddressableManager),否则用 _broadcastTarget(挂载到其他 BaseManager 时)。
-        /// </summary>
-        private BaseManager BroadcastTarget => _mgr ?? (BaseManager)_broadcastTarget;
+        /// <summary>事件广播出口</summary>
+        private BaseManager BroadcastTarget => _mgr;
 
         /// <summary>当前句柄池条目数(调试用)</summary>
         public int HandleCount => _handles.Count;
