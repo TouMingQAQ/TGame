@@ -4,15 +4,14 @@
 
 All file read/write operations **must** use UTF-8 encoding.
 
-- For `.cs` files in a Unity project: use **UTF-8 with BOM** (`-Encoding UTF8` in PowerShell).
-- For `.md`, `.json`, `.xml`, `.yml`, `.shader`, `.asset`, `.meta` files: use **UTF-8 without BOM** unless the file already has a BOM.
+- All text files (`.cs`, `.md`, `.json`, `.xml`, `.yml`, `.shader`, `.asset`, `.meta`, `.csproj`, `.sln`) use **UTF-8 without BOM**. This matches `CLAUDE.md:15` and is consistent with all existing TGame module files (verified via `head -c 3 file.cs | xxd` — no BOM bytes).
 - When reading files with `Get-Content`, always specify `-Encoding UTF8`.
-- When writing files with `Set-Content`, always specify `-Encoding UTF8` (PowerShell 7) or `-Encoding UTF8BOM` (PowerShell 7) for `.cs` files.
-
-**Rationale**: Unity's C# compiler and the editor expect `.cs` files to be UTF-8 with BOM. Using the wrong encoding corrupts Chinese characters and other non-ASCII text in comments and string literals, producing garbled text that is irreversible.
+- When writing files with `Set-Content` on PowerShell 7+, the default `-Encoding utf8` produces UTF-8 with BOM. To match the no-BOM project rule, explicitly use `-Encoding utf8NoBOM` (PS 6+) or write the bytes directly.
+- **Rationale**: Unity 6's C# compiler does not require BOM; this project's TGame modules all use UTF-8 without BOM and compile cleanly. BOM differences are a cross-platform hazard (PowerShell 5.1 vs 7+ default, Git `core.autocrlf`, line-ending tools) and the project rule of "no BOM" avoids the entire class of issues.
 
 ## General
 
+- When writing new `.cs` files, match the existing modules: copy the encoding (UTF-8 no BOM) and line endings (CRLF, per `git config core.autocrlf` on this Windows checkout) of a neighboring file. Do not let editor defaults sneak in BOM.
 - Default to ASCII when editing or creating files. Only introduce non-ASCII or Unicode characters when there is a clear reason and the file already uses that character set.
 
 ## AI Documentation
