@@ -4,20 +4,19 @@ namespace TGame.TUI
 {
     /// <summary>
     /// UIManager 配置资产(ScriptableObject)。
-    /// 装载"非场景配置"类资源:默认浮窗 prefab、全局浮窗参数等。
-    /// **不**装场景引用(layer root、canvas 等)— 那些仍由 UIManager.prefab 自身 SerializeField 管理。
+    /// 装载默认浮窗 prefab 和全局浮窗参数,由 UIManager 传入 UIRoot.Init() 使用。
     ///
     /// 使用方式:
     ///   1. Project 视图右键 → Create → TGame/UI/UI Config → 命名(如 UIConfig.asset)
     ///   2. Inspector 填 defaultTooltip prefab + 全局参数
     ///   3. 拖到 UIManager.prefab 的 _config 字段
-    ///   4. UIManager.Awake 自动读取并 RegisterPopup(defaultTooltip)
+    ///   4. UIManager.Awake 传入 UIRoot.Init(this, config),自动注册默认浮窗
     /// </summary>
     [CreateAssetMenu(fileName = "UIConfig", menuName = "TGame/UI/UI Config")]
     public class UIConfig : ScriptableObject
     {
         [Header("Default Tooltip")]
-        [Tooltip("默认浮窗 prefab。UIManager.Awake 会自动注册到 PopupModule,业务方可直接 ShowPopup<DefaultToolTip> 使用")]
+        [Tooltip("默认浮窗 prefab。UIRoot.Init 会自动注册,业务方可直接 ShowPopup<DefaultToolTip> 使用")]
         [SerializeField] private DefaultToolTip _defaultTooltip;
 
         [Header("Global Popup Settings")]

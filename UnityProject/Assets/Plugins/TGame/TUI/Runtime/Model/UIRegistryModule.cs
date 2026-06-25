@@ -1,117 +1,127 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using TGame.Addressable;
 using TGame.TCore.Runtime;
 using UnityEngine;
 
 namespace TGame.TUI
 {
     /// <summary>
-    /// 面板注册模式。Prefab = 旧路径,Inspector 直接拖 prefab 引用;
-    /// Addressable = 新路径,提供 Addressables address 字符串,运行时由 UILoaderModule 异步加载。
-    /// </summary>
-    public enum RegisterMode
-    {
-        /// <summary>旧路径:Inspector 拖 prefab,UILoaderModule 同步 Instantiate</summary>
-        Prefab,
-        /// <summary>新路径:Addressables address,UILoaderModule 走 AddressableModel.LoadAsync</summary>
-        Addressable,
-    }
-
-    /// <summary>
-    /// 单个面板的注册配置。三种注册模式(Prefab / Addressable)的元数据共存于同一字典,
-    /// 通过 <see cref="Mode"/> 字段区分,避免维护双份注册表。
-    /// </summary>
-    public readonly struct PanelConfig
-    {
-        /// <summary>注册模式</summary>
-        public readonly RegisterMode Mode;
-        /// <summary>旧路径 prefab(Mode == Prefab 时有效,Addressable 时为 null)</summary>
-        public readonly GameObject Prefab;
-        /// <summary>Addressables address(Mode == Addressable 时有效,Prefab 时为 null)</summary>
-        public readonly string Address;
-        /// <summary>UI 层级,影响 Instantiate 时的父节点和渲染顺序</summary>
-        public readonly UILayer Layer;
-
-        public PanelConfig(RegisterMode mode, GameObject prefab, string address, UILayer layer)
-        {
-            Mode = mode;
-            Prefab = prefab;
-            Address = address;
-            Layer = layer;
-        }
-    }
-
-    /// <summary>
-    /// UI 面板注册表 Module。
-    /// 职责:记录每个面板类型对应的 prefab/address 和所属 UILayer,供 UILoaderModule 实例化时读取。
+    /// UI 面板注册表 Module,挂载在 UIManager 上(全局单例:全 UIRoot 共享)。
+    /// 职责:记录每个面板类型对应的 Addressables address,供 UILoaderModule 异步加载时读取。
     ///
-    /// 状态:<c>Dictionary&lt;Type, PanelConfig&gt;</c>
+    /// 划界:本表只管"资产身份"(Type → address),属于资产侧,挂在 UIManager 上与 AddressableModule 同 host。
+    /// 同一 Type 的 address 在所有 UIRoot 下一致 —— 渲染隔离(不同 UIRoot 各自的实例)由 UILoaderModule 的 per-UIRoot 实例缓存负责。
     ///
-    /// 依赖:无
-    ///
-    /// 调用链:
-    ///   业务方 RegisterPanel(prefab) / RegisterPanelAsync(address) → UIManager 转发
-    ///     → 本模块 Register
-    ///   UILoaderModule.Load(type) / LoadAsync(type) → 本模块 TryGetConfig
-    ///
-    /// 生命周期:挂在 UIManager 下,由 BaseManager.GetModule&lt;T&gt;() 创建并 Init。
-    /// 字典不持 Unity Object 强引用之外的资源,Destroy 时不需清理。
+    /// 状态:<c>Dictionary&lt;Type, string&gt;</c>
+    /// 依赖:无(预热时传入 AddressableModule 走 label 自动注册)
     /// </summary>
     public sealed class UIRegistryModule : BaseModule
     {
-        private readonly Dictionary<Type, PanelConfig> _configs = new();
+        private readonly Dictionary<Type, string> _addresses = new();
 
         /// <summary>
-        /// 注册一个面板类型(旧 Prefab 路径,同步)。
-        /// 已注册的同 Type 会被拒绝并 LogWarning,避免静默覆盖。
+        /// 注册面板(Addressable 路径,泛型入口)。已注册的同 Type 会被拒绝并 LogWarning,避免静默覆盖。
         /// </summary>
-        /// <typeparam name="T">面板具体类型(继承自 BaseUIPanel)</typeparam>
-        /// <param name="prefab">面板预制体引用(场景中或 Resources 里挂着的实例)</param>
-        /// <param name="layer">所属 UI 层级,影响 Instantiate 时的父节点和渲染顺序</param>
-        public void Register<T>(T prefab, UILayer layer = UILayer.Normal) where T : BaseUIPanel
-        {
-            var type = typeof(T);
-            if (_configs.ContainsKey(type))
-            {
-                Debug.LogWarning($"[UIRegistryModule] Panel {type.Name} already registered");
-                return;
-            }
-            _configs[type] = new PanelConfig(RegisterMode.Prefab, prefab.gameObject, null, layer);
-        }
+        public void Register<T>(string address) where T : BaseUIPanel
+            => Register(typeof(T), address);
 
         /// <summary>
-        /// 注册一个面板类型(Addressable 路径,提供 address 字符串)。
+        /// 注册面板(Addressable 路径,运行时 Type 入口 —— 预热反查到的 panel 用)。
         /// 已注册的同 Type 会被拒绝并 LogWarning,避免静默覆盖。
         /// </summary>
-        /// <typeparam name="T">面板具体类型(继承自 BaseUIPanel)</typeparam>
-        /// <param name="address">Addressables address 字符串(在 Addressables Groups 窗口配置)</param>
-        /// <param name="layer">所属 UI 层级</param>
-        public void Register<T>(string address, UILayer layer = UILayer.Normal) where T : BaseUIPanel
+        public void Register(Type panelType, string address)
         {
-            var type = typeof(T);
             if (string.IsNullOrEmpty(address))
             {
-                Debug.LogError($"[UIRegistryModule] Register {type.Name}: address is null or empty");
+                Debug.LogError($"[UIRegistryModule] Register {panelType.Name}: address is null or empty");
                 return;
             }
-            if (_configs.ContainsKey(type))
+            if (_addresses.ContainsKey(panelType))
             {
-                Debug.LogWarning($"[UIRegistryModule] Panel {type.Name} already registered");
+                Debug.LogWarning($"[UIRegistryModule] Panel {panelType.Name} already registered, skipping");
                 return;
             }
-            _configs[type] = new PanelConfig(RegisterMode.Addressable, null, address, layer);
+            _addresses[panelType] = address;
         }
 
         /// <summary>
-        /// 查询某 Type 的注册配置。
+        /// 按 Addressables label 预热:解析 label → address 列表,
+        /// 对每个 address 调 <paramref name="addr"/>.LoadAsync&lt;GameObject&gt; 暖热句柄池,
+        /// 并从 prefab 反查 BaseUIPanel 具体子类,把 (panelType, address) 自动写入本表。
+        /// 不 Instantiate —— 仅暖热句柄池,后续 LoadPanelAsync&lt;T&gt; 命中池直接 Instantiate。
+        ///
+        /// 已注册的同 Type 会被 Register 跳过(LogWarning);Addressable 加载失败的 address 会被记录并跳过,不影响其他 address。
+        /// </summary>
+        public async UniTask PreloadByLabelAsync(
+            string label, AddressableModule addr,
+            IProgress<float> progress = null, CancellationToken ct = default)
+        {
+            if (addr == null)
+            {
+                Debug.LogError("[UIRegistryModule] PreloadByLabelAsync: AddressableModule is null");
+                return;
+            }
+            if (string.IsNullOrEmpty(label))
+            {
+                Debug.LogError("[UIRegistryModule] PreloadByLabelAsync: label is null or empty");
+                return;
+            }
+
+            var addresses = await addr.ResolveAddressesByLabelAsync(label, ct);
+            int total = addresses.Count;
+            if (total == 0)
+            {
+                Debug.LogWarning($"[UIRegistryModule] PreloadByLabelAsync: no addresses under label '{label}'");
+                return;
+            }
+
+            int done = 0;
+            var tasks = addresses.Select(address => LoadOneAsync(address, addr, ct, () =>
+            {
+                var n = Interlocked.Increment(ref done);
+                progress?.Report((float)n / total);
+            }));
+            await UniTask.WhenAll(tasks);
+
+            async UniTask LoadOneAsync(string a, AddressableModule m, CancellationToken c, Action onDone)
+            {
+                try
+                {
+                    var prefab = await m.LoadAsync<GameObject>(a, c);
+                    if (prefab != null && prefab.GetComponent<BaseUIPanel>() is BaseUIPanel panel)
+                        Register(panel.GetType(), a);
+                    else if (prefab != null)
+                        Debug.LogWarning($"[UIRegistryModule] Preload: prefab '{a}' has no BaseUIPanel on root, skipped");
+                }
+                catch (OperationCanceledException) { throw; }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[UIRegistryModule] Preload '{a}' failed: {e.Message}");
+                }
+                finally
+                {
+                    onDone?.Invoke();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 查询某 Type 的注册 address。
         /// </summary>
         /// <param name="type">面板类型</param>
-        /// <param name="config">命中时返回 PanelConfig,未命中返回 default</param>
+        /// <param name="address">命中时返回 address,未命中返回 null</param>
         /// <returns>true = 命中,false = 未注册</returns>
-        public bool TryGetConfig(Type type, out PanelConfig config)
-            => _configs.TryGetValue(type, out config);
+        public bool TryGetAddress(Type type, out string address)
+            => _addresses.TryGetValue(type, out address);
 
         /// <summary>某 Type 是否已注册(调试/校验用)</summary>
-        public bool IsRegistered(Type type) => _configs.ContainsKey(type);
+        public bool IsRegistered(Type type) => _addresses.ContainsKey(type);
+
+        /// <summary>已注册条目数(调试用)</summary>
+        public int Count => _addresses.Count;
     }
 }

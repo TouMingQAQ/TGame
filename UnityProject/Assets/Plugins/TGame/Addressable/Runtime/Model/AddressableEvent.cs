@@ -63,4 +63,36 @@ namespace TGame.Addressable
             TotalDurationMs = durationMs;
         }
     }
+
+    /// <summary>容器加载完成事件(全部 address 加载完或部分失败/取消)</summary>
+    public readonly struct AddressableContainerLoadedEvent
+    {
+        public readonly string ContainerName;
+        public readonly int TotalRequested;
+        public readonly int Succeeded;
+        public readonly float DurationMs;
+
+        public AddressableContainerLoadedEvent(string name, int total, int succeeded, float durationMs)
+        {
+            ContainerName = name;
+            TotalRequested = total;
+            Succeeded = succeeded;
+            DurationMs = durationMs;
+        }
+    }
+
+    /// <summary>容器卸载完成事件</summary>
+    public readonly struct AddressableContainerUnloadedEvent
+    {
+        public readonly string ContainerName;
+        public readonly int ReleasedCount;
+        public readonly float DurationMs;
+
+        public AddressableContainerUnloadedEvent(string name, int released, float durationMs)
+        {
+            ContainerName = name;
+            ReleasedCount = released;
+            DurationMs = durationMs;
+        }
+    }
 }

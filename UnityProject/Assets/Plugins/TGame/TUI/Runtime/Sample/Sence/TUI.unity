@@ -326,16 +326,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd484fdbd641dcf40816640694bcdaf2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: TUI::TGame.TUI.TUISample
-  _helloPanel: {fileID: 7450084870809270021, guid: 54a4fa07c2fa51141ab789d8d794c721, type: 3}
-  _samplePanel: {fileID: 4459222663467716672, guid: bafc2404567043340a38f236f71f6d61, type: 3}
-  _animationCurveTestPanel: {fileID: 8408782188451394081, guid: 66a61946e48f0d74fba0b759ba7625d5, type: 3}
-  _numberPanel: {fileID: 5447825638353641394, guid: 30e90b7921c52a144adc0a7223e1d73d, type: 3}
-  _buttonPanel: {fileID: 2740767798122114112, guid: 5a98acf5368e1534ab45abd02cae095d, type: 3}
-  _tweenPanel: {fileID: 1899586041973802725, guid: 6ef2b7d72cdc7374191158551084dd91, type: 3}
-  _stackSamplePanel: {fileID: 145601011717180810, guid: abf2bb032ad6f414f86e6ac6d2937dce, type: 3}
-  _stackSubPanel: {fileID: 939631568863207266, guid: a0f5ed4a706a6c442b5e0e547200b72b, type: 3}
-  defaultToolTip: {fileID: 0}
-  _tooltipPanel: {fileID: 0}
+  _helloPanelAddress: UIPrefab/HelloPanel.prefab
+  _samplePanelAddress: UIPrefab/SamplePanel.prefab
+  _animationCurveTestAddress: UIPrefab/AnimationCurveTestPanel.prefab
+  _numberPanelAddress: UIPrefab/NumberPanel.prefab
+  _buttonPanelAddress: UIPrefab/TButtonPanel.prefab
+  _tweenPanelAddress: UIPrefab/TweenPanel.prefab
+  _stackSampleAddress: UIPrefab/StackSamplePanel.prefab
+  _stackSubAddress: UIPrefab/StackSubPanel.prefab
+  _loadingSampleAddress: UIPrefab/LoadingSamplePanel.prefab
+  _panelLabel: ui_panels
 --- !u!114 &326341227
 MonoBehaviour:
   m_ObjectHideFlags: 0

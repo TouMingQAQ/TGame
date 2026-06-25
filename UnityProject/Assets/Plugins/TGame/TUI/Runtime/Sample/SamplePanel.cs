@@ -1,37 +1,18 @@
+using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
-using UnityEngine;
-using UnityEngine.UI;
 
 namespace TGame.TUI
 {
     public class SamplePanel : BaseUIPanel
     {
-        
-        public void OpenHelloPanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<HelloPanel>();
-        }
+        public void OpenHelloPanel() => OpenAsync<HelloPanel>().Forget();
+        public void OpenAnimationCurvePanel() => OpenAsync<AnimationCurveTestPanel>().Forget();
+        public void OpenNumberPanel() => OpenAsync<NumberPanel>().Forget();
+        public void OpenButtonPanel() => OpenAsync<TButtonPanel>().Forget();
+        public void OpenTweenPanel() => OpenAsync<TweenPanel>().Forget();
+        public void OpenStackPanel() => Game.Instance.GetManager<UIManager>().ShowPanelStackAsync<StackSamplePanel>(destroyCancellationToken).Forget();
 
-        public void OpenAnimationCurvePanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<AnimationCurveTestPanel>();
-        }
-
-        public void OpenNumberPanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<NumberPanel>();
-        }
-        public void OpenButtonPanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<TButtonPanel>();
-        }
-        public void OpenTweenPanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanel<TweenPanel>();
-        }
-        public void OpenStackPanel()
-        {
-            Game.Instance.GetManager<UIManager>().ShowPanelStack<StackSamplePanel>();
-        }
+        private UniTask OpenAsync<T>() where T : BaseUIPanel
+            => Game.Instance.GetManager<UIManager>().ShowPanelAsync<T>(destroyCancellationToken);
     }
 }

@@ -28,8 +28,11 @@ namespace TGame.TUI
         public bool IsVisible => gameObject.activeSelf;
         public bool IsHiding => _animState == AnimState.Hiding;
         public bool IsShowing => _animState == AnimState.Showing;
-        /// <summary>面板注册/运行时层级。UIManager.LoadPanel 时由配置覆盖</summary>
+        /// <summary>面板注册/运行时层级。prefab 上 SerializeField 配置,加载时直接读取</summary>
         public UILayer Layer => _layer;
+
+        /// <summary>所属 UIRoot(由 UILoaderModule 在 Instantiate 时设置,业务方可借此回溯访问 UIRoot)</summary>
+        public UIRoot Root { get; private set; }
 
         private Sequence _showSequence;
         private Sequence _hideSequence;   // null = Hide 沿用 _showSequence 的 SmoothRewind
@@ -37,7 +40,7 @@ namespace TGame.TUI
 
         /// <summary>
         /// Hide 动画完成、gameObject 已 Deactivate 时触发。
-        /// 供 StackPanelModel 监听以实现"顶层被外部关闭时自动恢复上一层"语义。
+        /// 供 UIRoot 监听以实现"顶层被外部关闭时自动恢复上一层"语义。
         /// </summary>
         public event Action<BaseUIPanel> Hidden;
 
@@ -46,8 +49,8 @@ namespace TGame.TUI
             TryGetComponent(out _canvasGroup);
         }
 
-        /// <summary>由 UIManager.LoadPanel 调用,把配置中的 Layer 写入面板运行时字段</summary>
-        internal void SetLayer(UILayer layer) => _layer = layer;
+        /// <summary>由 UILoaderModule 调用,记录面板归属的 UIRoot 以便业务方回溯</summary>
+        internal void SetRoot(UIRoot root) => Root = root;
 
         protected virtual void Awake()
         {
@@ -212,13 +215,13 @@ namespace TGame.TUI
         protected virtual void AfterHide() { }
 
         /// <summary>
-        /// 当面板被 StackPanelModel.Open 推入栈顶时调用,在 Show 动画开始前触发。
+        /// 当面板被 UIRoot.OpenStack 推入栈顶时调用,在 Show 动画开始前触发。
         /// 默认空实现;不需要感知栈的面板可不重写。
         /// </summary>
         public virtual void OnPushed(StackPanelEntry entry) { }
 
         /// <summary>
-        /// 当面板从栈顶被 StackPanelModel.CloseTop/BackTo/PopToRoot 弹出时调用,在 Hide 动画开始前触发。
+        /// 当面板从栈顶被 UIRoot.Back/BackTo/PopToRoot 弹出时调用,在 Hide 动画开始前触发。
         /// 默认空实现;不需要感知栈的面板可不重写。
         /// </summary>
         public virtual void OnPopped(StackPanelEntry entry) { }

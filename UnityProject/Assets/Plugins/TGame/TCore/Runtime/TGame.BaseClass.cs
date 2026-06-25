@@ -5,27 +5,28 @@ using UnityEngine;
 namespace TGame.TCore.Runtime
 {
     [DefaultExecutionOrder(-8000)]
-    public partial class BaseManager : MonoBehaviour
+    public partial class BaseManager : MonoBehaviour,IModuleHost
     {
         protected Game game;
 
         #region Module
 
-        protected Dictionary<Type, BaseModule> _moduleMap = new();
+        private Dictionary<Type, BaseModule> _moduleMap = new();
 
-        protected T AddModule<T>() where T : BaseModule, new()
+        public T AddModule<T>() where T : BaseModule, new()
         {
             var type = typeof(T);
             if (_moduleMap.TryGetValue(type, out var value))
                 return value as T;
             var module = new T();
             module.Init();
+            module.Host = this;
             _moduleMap[type] = module;
             Debug.Log($"<color=#66ccff>[{GetType()}]</color> add module:{type}");
             return module;
         }
 
-        protected T RemoveModule<T>() where T : BaseModule
+        public T RemoveModule<T>() where T : BaseModule,new()
         {
             var type = typeof(T);
             if (_moduleMap.Remove(type, out var value))
@@ -36,7 +37,7 @@ namespace TGame.TCore.Runtime
             return default;
         }
 
-        protected void ClearModule()
+        public void ClearModule()
         {
             foreach (var module in _moduleMap.Values)
             {
@@ -68,49 +69,19 @@ namespace TGame.TCore.Runtime
                     module.Tick(Time.deltaTime);
             }
         }
+    }
 
-        #region EventMethod
-
-        protected Dictionary<Type, Delegate> _eventMap = new();
-
-        public void Call<T>(T value = default)
-        {
-            var eventType = typeof(T);
-            if (_eventMap.TryGetValue(eventType, out var existingDelegate))
-            {
-                var action = existingDelegate as Action<T>;
-                action?.Invoke(value);
-            }
-        }
-
-        protected void Register<T>(Action<T> action)
-        {
-            if (action == null) return;
-            var eventType = typeof(T);
-            if (_eventMap.TryGetValue(eventType, out var existingDelegate))
-                _eventMap[eventType] = Delegate.Combine(existingDelegate, action);
-            else
-                _eventMap[eventType] = action;
-        }
-
-        protected void UnRegister<T>(Action<T> action)
-        {
-            if (action == null) return;
-            var eventType = typeof(T);
-            if (_eventMap.TryGetValue(eventType, out var existingDelegate))
-            {
-                var newDelegate = Delegate.Remove(existingDelegate, action);
-                if (newDelegate == null)
-                    _eventMap.Remove(eventType);
-                else
-                    _eventMap[eventType] = newDelegate;
-            }
-        }
-
-        #endregion
+    public interface IModuleHost
+    {
+        public T AddModule<T>() where T : BaseModule, new();
+        public T RemoveModule<T>() where T : BaseModule, new();
+        public T GetModule<T>() where T : BaseModule, new();
+        public void ClearModule();
     }
     public class BaseModule
     {
+        public IModuleHost Host { get; set; }
+
         private bool _enable = false;
 
         public virtual bool Enable
@@ -123,4 +94,6 @@ namespace TGame.TCore.Runtime
         public virtual void Destroy() { }
         public virtual void Tick(float deltaTime) { }
     }
+
+   
 }

@@ -9,7 +9,7 @@ namespace TGame.TUI
     ///
     /// boundsArea: 指定边界 RectTransform,浮窗限定在该区域内。
     ///            null = 全屏(默认)。
-    /// followMouse: true = PopupModule.Tick 每帧拉鼠标坐标重定位; false = 固定进入点(默认)。
+    /// followMouse: true = UIRoot 每帧拉鼠标坐标重定位; false = 固定进入点(默认)。
     /// </summary>
     public class DefaultToolTipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
@@ -28,13 +28,13 @@ namespace TGame.TUI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            _ui?.ShowPopup<DefaultToolTip>(eventData.position, p => p.SetText(_tooltipText),
+            _ui?.UIRoot.ShowPopup<DefaultToolTip>(eventData.position, p => p.SetText(_tooltipText),
                 boundsArea: _boundsArea, followMouse: _followMouse, flip: _direction, offset: _offset);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            _ui?.HidePopup<DefaultToolTip>();
+            _ui?.UIRoot.HidePopup<DefaultToolTip>();
         }
     }
 }

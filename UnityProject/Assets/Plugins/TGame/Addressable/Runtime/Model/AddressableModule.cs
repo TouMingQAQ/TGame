@@ -37,7 +37,7 @@ namespace TGame.Addressable
     ///   - 取消时通过 linkedCts 联动,await 抛 OperationCanceledException,finally 清理 _loadingMap
     ///   - 并发同一 key 的 LoadAsync 通过 _loadingMap.TryGetValue 查重:后到者在 InFlight.Completed 上等候并重试句柄池
     /// </summary>
-    public sealed class AddressableModel : BaseModule
+    public sealed class AddressableModule : BaseModule
     {
         // 句柄池:key=(Type,string) → handle(存储为 non-generic 的 AsyncOperationHandle)
         // 不存 Handle.Result 强引用,避免阻止 GC 释放资源
@@ -56,19 +56,8 @@ namespace TGame.Addressable
             public readonly UniTaskCompletionSource Completed = new();
         }
 
-        private BaseManager _mgr;
-
-        /// <summary>
-        /// 注入事件广播目标 BaseManager。
-        /// AddressableManager 在 Start() 中调用以订阅自身事件总线;
-        /// 其他 BaseManager(如 UIManager)挂载同一份模型实例时,也通过此方法指定广播出口。
-        /// </summary>
-        public void SetManager(BaseManager mgr) => _mgr = mgr;
 
         public override bool Enable { get; set; } = true;
-
-        /// <summary>事件广播出口</summary>
-        private BaseManager BroadcastTarget => _mgr;
 
         /// <summary>当前句柄池条目数(调试用)</summary>
         public int HandleCount => _handles.Count;
@@ -125,16 +114,66 @@ namespace TGame.Addressable
 
         // ===== 批量预热 =====
 
-        public async UniTask PreloadByLabelAsync<T>(string label,
-            IProgress<float> progress = null,
-            CancellationToken ct = default) where T : UnityEngine.Object
+        // ===== 地址解析(仅元数据,不加载资源) =====
+
+        /// <summary>
+        /// 按 Addressables label 解析出其下所有 typeof(GameObject) 资源的 address(PrimaryKey)列表。
+        /// 不加载资源 —— 仅 LoadResourceLocations + 读取 PrimaryKey,供调用方(如 UIRegistryModule
+        /// 按 label 预热 UI 面板)拿到 address 字符串集合自行编排。
+        /// </summary>
+        public async UniTask<IReadOnlyList<string>> ResolveAddressesByLabelAsync(
+            string label, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(label))
             {
-                Debug.LogError("[AddressableModel] PreloadByLabelAsync label is null or empty");
+                Debug.LogError("[AddressableModel] ResolveAddressesByLabelAsync: label is null or empty");
+                return Array.Empty<string>();
+            }
+
+            var locHandle = Addressables.LoadResourceLocationsAsync(
+                new[] { (object)label }, Addressables.MergeMode.Union, typeof(GameObject));
+            try
+            {
+                await locHandle.ToUniTask(cancellationToken: ct);
+                if (locHandle.Result == null || locHandle.Result.Count == 0)
+                    return Array.Empty<string>();
+
+                var addrs = new List<string>(locHandle.Result.Count);
+                foreach (var loc in locHandle.Result)
+                    if (loc != null && !string.IsNullOrEmpty(loc.PrimaryKey))
+                        addrs.Add(loc.PrimaryKey);
+                return addrs;
+            }
+            finally
+            {
+                if (locHandle.IsValid()) Addressables.Release(locHandle);
+            }
+        }
+
+        public async UniTask PreloadByLabelAsync<T>(IEnumerable<string> labels,
+            IProgress<float> progress = null,
+            CancellationToken ct = default) where T : UnityEngine.Object
+        {
+            if (labels == null)
+            {
+                Debug.LogError("[AddressableModel] PreloadByLabelAsync labels is null");
                 return;
             }
-            await PreloadInternalAsync<T>(new object[] { label }, label, Addressables.MergeMode.Union, progress, ct);
+            var labelArr = new List<object>();
+            var contextParts = new List<string>();
+            foreach (var l in labels)
+            {
+                if (string.IsNullOrEmpty(l)) continue;
+                labelArr.Add(l);
+                contextParts.Add(l);
+            }
+            if (labelArr.Count == 0)
+            {
+                Debug.LogError("[AddressableModel] PreloadByLabelAsync labels is empty after filter");
+                return;
+            }
+            var context = $"labels[{string.Join(",", contextParts)}]";
+            await PreloadInternalAsync<T>(labelArr, context, Addressables.MergeMode.Union, progress, ct);
         }
 
         public async UniTask PreloadByKeysAsync<T>(IEnumerable<string> keys,
@@ -221,7 +260,7 @@ namespace TGame.Addressable
                 {
                     entry.RefCount++;
                     _handles[addrKey] = entry;
-                    BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
+                    Host.GetModule<EventModule>().Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
                     return entry.Handle.Result as T;
                 }
                 _handles.Remove(addrKey);
@@ -237,7 +276,7 @@ namespace TGame.Addressable
                 {
                     joinEntry.RefCount++;
                     _handles[addrKey] = joinEntry;
-                    BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
+                    Host.GetModule<EventModule>().Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, true, 0));
                     return joinEntry.Handle.Result as T;
                 }
                 // 原加载失败/取消后句柄未写入,回退到新加载
@@ -274,7 +313,7 @@ namespace TGame.Addressable
                 if (handle.IsValid())
                     Addressables.Release(handle);
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
+                Host.GetModule<EventModule>().Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
                 throw;
             }
             catch (Exception ex)
@@ -283,7 +322,7 @@ namespace TGame.Addressable
                 if (handle.IsValid())
                     Addressables.Release(handle);
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
+                Host.GetModule<EventModule>().Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, false, elapsed));
                 return default;
             }
             finally
@@ -294,7 +333,7 @@ namespace TGame.Addressable
             }
 
             var totalMs = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-            BroadcastTarget?.Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, result != null, totalMs));
+            Host.GetModule<EventModule>().Call(new AddressableLoadCompletedEvent(addrKey.Key, addrKey.AssetType, result != null, totalMs));
             return result;
         }
 
@@ -313,7 +352,7 @@ namespace TGame.Addressable
                 catch (Exception e) { Debug.LogWarning($"[AddressableModel] Release handle failed: {e.Message}"); }
             }
             _handles.Remove(key);
-            BroadcastTarget?.Call(new AddressableReleasedEvent(key.Key, key.AssetType));
+            Host.GetModule<EventModule>().Call(new AddressableReleasedEvent(key.Key, key.AssetType));
         }
 
         /// <summary>批量预热核心:解析 locations → 并行 LoadInternalAsync → 进度广播。
@@ -332,7 +371,7 @@ namespace TGame.Addressable
             if (locHandle.Result == null || locHandle.Result.Count == 0)
             {
                 Addressables.Release(locHandle);
-                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
+                Host.GetModule<EventModule>().Call(new AddressablePreloadCompletedEvent(context, 0, 0));
                 return;
             }
 
@@ -353,7 +392,7 @@ namespace TGame.Addressable
             if (todoCount == 0)
             {
                 Addressables.Release(locHandle);
-                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, 0, 0));
+                Host.GetModule<EventModule>().Call(new AddressablePreloadCompletedEvent(context, 0, 0));
                 return;
             }
 
@@ -373,20 +412,20 @@ namespace TGame.Addressable
                     await inner;
                     var done = Interlocked.Increment(ref completed);
                     progress?.Report((float)done / totalCount);
-                    BroadcastTarget?.Call(new AddressablePreloadProgressEvent(ctx, done, totalCount));
+                    Host.GetModule<EventModule>().Call(new AddressablePreloadProgressEvent(ctx, done, totalCount));
                 }
             }
             catch (OperationCanceledException)
             {
                 var elapsed = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-                BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, todoCount, elapsed));
+                Host.GetModule<EventModule>().Call(new AddressablePreloadCompletedEvent(context, todoCount, elapsed));
                 Addressables.Release(locHandle);
                 throw;
             }
 
             Addressables.Release(locHandle);
             var totalMs = (float)((Time.realtimeSinceStartupAsDouble - startTime) * 1000);
-            BroadcastTarget?.Call(new AddressablePreloadCompletedEvent(context, todoCount, totalMs));
+            Host.GetModule<EventModule>().Call(new AddressablePreloadCompletedEvent(context, todoCount, totalMs));
         }
     }
 }

@@ -9,128 +9,61 @@ using UnityEngine;
 namespace TGame.TUI
 {
     /// <summary>
-    /// UI 面板加载/缓存 Module。
-    /// 职责:从 UIRegistryModule 拿 PanelConfig(同步 Prefab 模式 或 异步 Addressable 模式) →
-    /// Instantiate 到 UILayerRootModule 的根下 →
-    /// 重置 RectTransform 填充父节点 → 写入运行时 Layer → Init → 缓存(单实例)。
+    /// UI 面板加载 Module,挂载在 UIRoot 上(per-UIRoot)。
+    /// 职责:Addressable 异步加载 + 单实例缓存 + 并发去重 + 卸载时归还引用计数。
     ///
     /// 状态:
-    ///   - <c>Dictionary&lt;Type, BaseUIPanel&gt; _loaded</c>(单例缓存,Type → 已实例化面板)
-    ///   - <c>Dictionary&lt;Type, string&gt; _loadedAddresses</c>(Addressable 模式下记录 address,Unload 时 release)
+    ///   - <c>Dictionary&lt;Type, BaseUIPanel&gt; _loaded</c> — 已加载面板单实例缓存
+    ///   - <c>Dictionary&lt;Type, string&gt; _loadedAddresses</c> — 加载时使用的 address,Unload 时 Release
+    ///   - <c>Dictionary&lt;Type, UniTask&lt;BaseUIPanel&gt;&gt; _loading</c> — 进行中加载去重
     ///
     /// 依赖:
-    ///   - UIRegistryModule:读 PanelConfig
-    ///   - UILayerRootModule:读 layer 根 Transform
-    ///   - AddressableModel(挂在 UIManager 下):Addressable 模式下加载/释放 prefab
+    ///   - UIRoot(由 Bind 注入):跨 host 取 Owner.UIRegistryModule / Owner.AddressableModule,
+    ///     并由调用方传入用于 panel.SetRoot(this)
+    ///   - Owner.UIRegistryModule(全局,挂在 UIManager):查 Type → address
+    ///   - Owner.AddressableModule(共享句柄池,挂在 UIManager):加载/释放资源
+    ///   - Host.GetModule&lt;UILayerRootModule&gt;():查 panel.Layer → 根 Transform
     ///
     /// 调用链:
-    ///   业务方 ShowPanelAsync<T>() → UIManager 转发 → UIVisibilityModule.ShowAsync → 本模块 LoadAsync
-    ///   业务方 LoadPanelAsync<T>() → UIManager 转发 → 本模块 LoadAsync
-    ///   业务方 ShowPanel<T>() → UIManager 转发 → UIVisibilityModule.Show → 本模块 Load (仅 Prefab 模式可用)
-    ///   业务方 GetPanel<T>() / IsPanelLoaded<T>() → UIManager 转发 → 本模块 Get / IsLoaded
-    ///   业务方 UnloadPanel<T>() → UIManager 转发 → 本模块 Unload (Addressable 模式下同时 release)
+    ///   业务方 LoadPanelAsync&lt;T&gt;() → UIManager.LoadPanelAsync(转发) → UIRoot.LoadPanelAsync(转发) → 本模块 LoadAsync
+    ///   业务方 UnloadPanel&lt;T&gt;() → UIManager.UnloadPanel(转发) → UIRoot.UnloadPanel(转发) → 本模块 Unload
+    ///   业务方 GetPanel&lt;T&gt;() / IsPanelLoaded&lt;T&gt;() → UIRoot 转发 → 本模块查询
+    ///   StackPanelModule.OpenAsync → UIRoot.LoadPanelAsync(转发) → 本模块 LoadAsync
+    ///   UIVisibilityModule.ShowAsync → UIRoot.LoadPanelAsync(转发) → 本模块 LoadAsync
     ///
     /// 关键不变量:
-    ///   - Load / LoadAsync 幂等:二次调用直接返回缓存,不重复 Instantiate
-    ///   - Prefab 缺组件 / LayerRoot 未配 / Addressable 加载失败:LogError + return null,不污染缓存
-    ///   - Addressable 模式下,Unload 时同步 release address handle,RefCount 归零触发 Addressables.Release
-    ///   - GO 销毁走三条路:Unload / UIManager.OnDestroy / 业务方外部 Destroy;
-    ///     前两条由调用方清缓存,第三条由 Load/Get/IsLoaded 的假 null 守卫兜底清理。
-    ///     Module.Destroy 只清字典(避免对已被 UIManager.OnDestroy 销毁的 GO 二次 Destroy 触发警告)
+    ///   - 同 Type 同时只存在一个面板实例(单实例语义)
+    ///   - 并发同 Type 的 LoadAsync 共享同一次底层加载,只 Instantiate 一个 Panel
+    ///   - 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新加载
+    ///   - Unload 时先 Destroy GameObject,再调 AddressableModule.Release 归还引用计数
+    ///   - GameObject 销毁由 UIRoot.OnDestroy 统一触发本模块 DestroyAll(不调 Release,避免重复归还)
     /// </summary>
     public sealed class UILoaderModule : BaseModule
     {
-        private UIManager _ui;
+        private UIRoot _root;
+
+        /// <summary>由 UIRoot.Awake 调用,注入宿主以便跨 host 访问 Owner(UIManager) 上的 registry / Addressable 句柄池</summary>
+        internal void Bind(UIRoot root) => _root = root;
+
+        private UIRegistryModule Registry => _root != null ? _root.Registry : null;
+        private AddressableModule Addressables => _root != null ? _root.Owner.GetModule<AddressableModule>() : null;
+
         private readonly Dictionary<Type, BaseUIPanel> _loaded = new();
-        // Addressable 模式:Type → 当前持有引用的 address,Unload 时调 AddressableModel.Release
+        // Type → 加载时使用的 address,Unload 时调 AddressableModule.Release
         private readonly Dictionary<Type, string> _loadedAddresses = new();
-        // 异步加载去重:Type → 进行中的加载任务(Preserve 后可安全多 await)
+        // 异步加载去重:Type → 进行中的加载任务
         private readonly Dictionary<Type, UniTask<BaseUIPanel>> _loading = new();
 
-        /// <summary>由 UIManager.Start 注入自身引用</summary>
-        public void SetUIManager(UIManager ui) => _ui = ui;
+        // ===== 面板加载(异步,统一走 AddressableModule) =====
 
-        // ===== 加载(同步,仅 Prefab 模式) =====
-
-        /// <summary>同步加载(泛型),已加载则直接返回缓存。Addressable 模式请改用 <see cref="LoadAsync{T}"/></summary>
-        public T Load<T>() where T : BaseUIPanel => Load(typeof(T)) as T;
-
-        /// <summary>
-        /// 同步按 Type 加载,已加载则直接返回缓存。
-        /// 未注册 → LogError + return null;Prefab 缺组件 → LogError + Destroy(go) + return null。
-        /// 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新 Instantiate。
-        /// <para>**Addressable 模式下面同步调用必返回 null**(无 prefab 引用可同步取),并 LogError。
-        /// 异步场景请改用 <see cref="LoadAsync(Type, CancellationToken)"/>。</para>
-        /// </summary>
-        public BaseUIPanel Load(Type type)
-        {
-            if (_loaded.TryGetValue(type, out var existing))
-            {
-                // Unity 假 null:C# 引用非 null,但 Object 已被 Destroy
-                if (existing != null && existing.gameObject != null)
-                    return existing;
-                _loaded.Remove(type);
-            }
-
-            if (!_ui.GetModule<UIRegistryModule>().TryGetConfig(type, out var config))
-            {
-                Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered");
-                return null;
-            }
-
-            if (config.Mode == RegisterMode.Addressable)
-            {
-                Debug.LogError($"[UILoaderModule] Panel {type.Name} is registered via Addressables, sync Load returns null; call LoadPanelAsync<{type.Name}>() instead");
-                return null;
-            }
-
-            var root = _ui.GetModule<UILayerRootModule>().GetLayerRoot(config.Layer);
-            if (root == null)
-            {
-                Debug.LogError($"[UILoaderModule] No layer root for {config.Layer}");
-                return null;
-            }
-
-            // 实例化到对应层级的 Transform 下
-            var go = UnityEngine.Object.Instantiate(config.Prefab, root);
-            var panel = go.GetComponent(type) as BaseUIPanel;
-            if (panel == null)
-            {
-                Debug.LogError($"[UILoaderModule] Prefab for {type.Name} missing component {type.Name}");
-                UnityEngine.Object.Destroy(go);
-                return null;
-            }
-
-            // 写入运行时 Layer(取自注册配置),StackPanelModel 守门使用
-            panel.SetLayer(config.Layer);
-
-            // 重置 RectTransform 为填充父节点
-            var rt = go.transform as RectTransform;
-            if (rt != null)
-            {
-                rt.anchorMin = Vector2.zero;
-                rt.anchorMax = Vector2.one;
-                rt.offsetMin = Vector2.zero;
-                rt.offsetMax = Vector2.zero;
-            }
-
-            panel.Init();
-            go.SetActive(false);
-            _loaded[type] = panel;
-            return panel;
-        }
-
-        // ===== 加载(异步,Addressable 模式走 AddressableModel;Prefab 模式回退到同步 Load) =====
-
-        /// <summary>异步加载(泛型),已加载则直接返回缓存。Prefab / Addressable 双模式统一入口</summary>
-        public async UniTask<T> LoadAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => (T)await LoadAsync(typeof(T), ct);
+        /// <summary>异步加载(泛型),已加载则直接返回缓存</summary>
+        public UniTask<T> LoadAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
+            => LoadAsync(typeof(T), ct).ContinueWith(p => (T)p);
 
         /// <summary>
         /// 异步按 Type 加载。已加载则直接返回缓存。
         /// 未注册 → LogError + return null;Addressable 加载失败 → LogError + return null。
         /// 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新加载。
-        /// <para>Prefab 模式为方便起见,内部走同步 Load(无 IO 等待,UniTask 立刻完成)。</para>
         /// <para>并发同 Type 的调用共享同一次底层加载,只 Instantiate 一个 Panel。</para>
         /// </summary>
         public UniTask<BaseUIPanel> LoadAsync(Type type, CancellationToken ct = default)
@@ -142,7 +75,6 @@ namespace TGame.TUI
                 _loaded.Remove(type);
             }
 
-            // in-flight 去重:并发同类型复用同一任务(Preserve 允许多 awaiter)
             if (_loading.TryGetValue(type, out var inflight))
                 return inflight;
 
@@ -151,13 +83,11 @@ namespace TGame.TUI
             return task;
         }
 
-        /// <summary>异步加载核心逻辑,由 <see cref="LoadAsync(Type,CancellationToken)"/> 调用。
-        /// 完成后从 _loading 移除,保证成功/失败/取消都不残留。</summary>
         private async UniTask<BaseUIPanel> LoadCoreAsync(Type type, CancellationToken ct)
         {
             try
             {
-                // 双重检查:进入时可能另一调用刚好完成
+                // 双重检查
                 if (_loaded.TryGetValue(type, out var cached))
                 {
                     if (cached != null && cached.gameObject != null)
@@ -165,46 +95,56 @@ namespace TGame.TUI
                     _loaded.Remove(type);
                 }
 
-                if (!_ui.GetModule<UIRegistryModule>().TryGetConfig(type, out var config))
+                var registry = Registry;
+                if (registry == null)
                 {
-                    Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered");
+                    Debug.LogError("[UILoaderModule] UIRegistryModule not found (UIRoot not bound or UIManager missing registry)");
+                    return null;
+                }
+                if (!registry.TryGetAddress(type, out var address))
+                {
+                    Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered; call UIManager.RegisterPanelAsync<{type.Name}>(\"address\") or PreloadPanelsAsync(\"label\") first");
                     return null;
                 }
 
-                GameObject prefab = config.Prefab;
-                if (config.Mode == RegisterMode.Addressable)
+                var addrModule = Addressables;
+                if (addrModule == null)
                 {
-                    var addrModel = _ui.GetModule<AddressableModel>();
-                    if (addrModel == null)
-                    {
-                        Debug.LogError($"[UILoaderModule] AddressableModel not found on UIManager; ensure UIManager.Start creates it");
-                        return null;
-                    }
-                    prefab = await addrModel.LoadAsync<GameObject>(config.Address, ct);
-                    if (prefab == null)
-                    {
-                        Debug.LogError($"[UILoaderModule] Addressables load returned null for {type.Name} (address={config.Address})");
-                        return null;
-                    }
-                }
-
-                var root = _ui.GetModule<UILayerRootModule>().GetLayerRoot(config.Layer);
-                if (root == null)
-                {
-                    Debug.LogError($"[UILoaderModule] No layer root for {config.Layer}");
+                    Debug.LogError("[UILoaderModule] AddressableModule not found on UIManager");
                     return null;
                 }
 
-                var go = UnityEngine.Object.Instantiate(prefab, root);
-                var panel = go.GetComponent(type) as BaseUIPanel;
-                if (panel == null)
+                var prefab = await addrModule.LoadAsync<GameObject>(address, ct);
+                if (prefab == null)
                 {
-                    Debug.LogError($"[UILoaderModule] Prefab for {type.Name} missing component {type.Name}");
+                    Debug.LogError($"[UILoaderModule] Addressables load returned null for {type.Name} (address={address})");
+                    return null;
+                }
+
+                var go = UnityEngine.Object.Instantiate(prefab);
+                if (go.GetComponent(type) is not BaseUIPanel panel)
+                {
+                    Debug.LogError($"[UILoaderModule] Prefab for {type.Name} (address={address}) missing component {type.Name}");
                     UnityEngine.Object.Destroy(go);
                     return null;
                 }
 
-                panel.SetLayer(config.Layer);
+                var layerRoots = Host.GetModule<UILayerRootModule>();
+                if (layerRoots == null)
+                {
+                    Debug.LogError("[UILoaderModule] UILayerRootModule not found on host");
+                    UnityEngine.Object.Destroy(go);
+                    return null;
+                }
+                var layerRoot = layerRoots.GetLayerRoot(panel.Layer);
+                if (layerRoot == null)
+                {
+                    Debug.LogError($"[UILoaderModule] No layer root for {panel.Layer}; assign on UIRoot");
+                    UnityEngine.Object.Destroy(go);
+                    return null;
+                }
+                go.transform.SetParent(layerRoot, worldPositionStays: false);
+
                 var rt = go.transform as RectTransform;
                 if (rt != null)
                 {
@@ -213,13 +153,11 @@ namespace TGame.TUI
                     rt.offsetMin = Vector2.zero;
                     rt.offsetMax = Vector2.zero;
                 }
+                panel.SetRoot(_root);
                 panel.Init();
                 go.SetActive(false);
                 _loaded[type] = panel;
-                if (config.Mode == RegisterMode.Addressable)
-                {
-                    _loadedAddresses[type] = config.Address;
-                }
+                _loadedAddresses[type] = address;
                 return panel;
             }
             finally
@@ -228,13 +166,9 @@ namespace TGame.TUI
             }
         }
 
-        // ===== 查询 =====
+        // ===== 面板查询 =====
 
-        /// <summary>获取已加载的面板(泛型)</summary>
-        public T Get<T>() where T : BaseUIPanel => Get(typeof(T)) as T;
-
-        /// <summary>获取已加载的面板(Type),未加载返回 null。GameObject 已被外部 Destroy 时清理缓存并返回 null</summary>
-        public BaseUIPanel Get(Type type)
+        public BaseUIPanel GetPanel(Type type)
         {
             if (_loaded.TryGetValue(type, out var p) && (p == null || p.gameObject == null))
             {
@@ -244,11 +178,7 @@ namespace TGame.TUI
             return p;
         }
 
-        /// <summary>是否已加载(泛型)</summary>
-        public bool IsLoaded<T>() where T : BaseUIPanel => IsLoaded(typeof(T));
-
-        /// <summary>是否已加载(Type)。GameObject 已被外部 Destroy 时清理缓存并返回 false</summary>
-        public bool IsLoaded(Type type)
+        public bool IsPanelLoaded(Type type)
         {
             if (!_loaded.TryGetValue(type, out var p)) return false;
             if (p == null || p.gameObject == null)
@@ -259,59 +189,40 @@ namespace TGame.TUI
             return true;
         }
 
-        // ===== 卸载 =====
+        // ===== 面板卸载 =====
 
-        /// <summary>卸载面板(泛型),销毁 GO 并从缓存中移除。Addressable 模式下同时 release address handle</summary>
-        public void Unload<T>() where T : BaseUIPanel => Unload(typeof(T));
-
-        /// <summary>按 Type 卸载面板,销毁 GO 并从缓存中移除。Addressable 模式下同时 release address handle</summary>
         public void Unload(Type type)
         {
             if (!_loaded.TryGetValue(type, out var panel)) return;
             UnityEngine.Object.Destroy(panel.gameObject);
             _loaded.Remove(type);
-            ReleaseAddressIfAny(type);
-        }
 
-        /// <summary>
-        /// Addressable 模式专用:对当前 Type 持有的 address handle 做 Release。
-        /// 找不到/未持有/已是 Prefab 模式 → 无副作用。
-        /// </summary>
-        private void ReleaseAddressIfAny(Type type)
-        {
-            if (!_loadedAddresses.TryGetValue(type, out var addr)) return;
-            _loadedAddresses.Remove(type);
-            var addrModel = _ui?.GetModule<AddressableModel>();
-            if (addrModel != null)
+            if (_loadedAddresses.Remove(type, out var addr))
             {
-                try { addrModel.Release<GameObject>(addr); }
-                catch (Exception e) { Debug.LogWarning($"[UILoaderModule] Release address {addr} failed: {e.Message}"); }
-            }
-        }
-
-        /// <summary>
-        /// 遍历所有已缓存的面板(供 UIManager.OnDestroy 统一销毁用)。
-        /// 注意:返回的是字典 Values 引用,不要长期持有或修改。
-        /// </summary>
-        public IEnumerable<BaseUIPanel> GetAllLoaded() => _loaded.Values;
-
-        /// <summary>
-        /// 清空缓存并释放所有 address handle。
-        /// **不**在这里 Destroy GameObject —— UIManager.OnDestroy 负责,避免双重 Destroy 触发警告。
-        /// </summary>
-        public override void Destroy()
-        {
-            var addrModel = _ui?.GetModule<AddressableModel>();
-            if (addrModel != null)
-            {
-                foreach (var addr in _loadedAddresses.Values)
+                var addrModule = Addressables;
+                if (addrModule != null)
                 {
-                    try { addrModel.Release<GameObject>(addr); }
-                    catch { /* ReleaseAll 由 AddressableModel.Destroy 兜底 */ }
+                    try { addrModule.Release<GameObject>(addr); }
+                    catch (Exception e) { Debug.LogWarning($"[UILoaderModule] Release address {addr} failed: {e.Message}"); }
                 }
             }
-            _loadedAddresses.Clear();
+        }
+
+        // ===== 生命周期 =====
+
+        /// <summary>
+        /// 销毁所有已加载面板 GameObject(由 UIRoot.OnDestroy 调用)。
+        /// 不归还 Addressable 引用计数 —— UIRoot 销毁时 AddressableManager 通常同步销毁,
+        /// 其 AddressableModule.Destroy 会统一 ReleaseAll。
+        /// </summary>
+        public void DestroyAll()
+        {
+            foreach (var panel in _loaded.Values)
+            {
+                if (panel != null) UnityEngine.Object.Destroy(panel.gameObject);
+            }
             _loaded.Clear();
+            _loadedAddresses.Clear();
             _loading.Clear();
         }
     }

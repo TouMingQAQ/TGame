@@ -6,7 +6,7 @@ namespace TGame.TUI
     /// <summary>
     /// 浮窗抽象基类,继承 BaseUIPanel。
     /// Prefab 内部必须有一个"内容 RectTransform"(SerializeField 标记),
-    /// 浮窗的 anchoredPosition / pivot 由 PopupModule 在这个内部 RT 上操作 —
+    /// 浮窗的 anchoredPosition / pivot 由 UIRoot 在这个内部 RT 上操作 —
     /// panel 自身的 RT 会被 UILayer Root 强制填满,不可用。
     ///
     /// 子类必须实现 <see cref="SetData{TData}(TData)"/>,在 setup 回调里被调用以写入数据。
@@ -31,11 +31,11 @@ namespace TGame.TUI
         /// <summary>Prefab 上配置的默认二维偏移量。</summary>
         public Vector2 DefaultTargetOffset => Vector2.one * _defaultOffset;
 
-        /// <summary>由 PopupModule 在 setup 回调里调用,子类用来写入数据。data 为 null 时清空。</summary>
+        /// <summary>由 UIRoot 在 setup 回调里调用,子类用来写入数据。data 为 null 时清空。</summary>
         public abstract void SetData<TData>(TData data) where TData : class;
 
         /// <summary>
-        /// 由 PopupModule 在 Show 之前调用,计算并应用最终位置 + pivot。
+        /// 由 UIRoot 在 Show 之前调用,计算并应用最终位置 + pivot。
         /// 默认实现:取 _content 真实尺寸(layout 失败时回退 sizeDelta),委托 PopupLayoutHelper.Solve。
         /// 子类一般不需要重写,除非有自定义吸附/磁吸逻辑。
         /// </summary>
@@ -45,7 +45,7 @@ namespace TGame.TUI
 
         /// <summary>
         /// 使用指定 Popup Root 做屏幕点到本地坐标的转换。
-        /// PopupModule 会传入实例根节点,确保 CanvasScaler / Camera Canvas 下定位仍正确。
+        /// UIRoot 会传入实例根节点,确保 CanvasScaler / Camera Canvas 下定位仍正确。
         /// </summary>
         public virtual void Anchor(Vector2 screenAnchor, RectTransform popupRoot, RectTransform boundsArea,
                                   PopupFlipDirection flip, float? offsetOverride = null)

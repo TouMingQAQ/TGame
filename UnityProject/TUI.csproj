@@ -67,6 +67,7 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILayer.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIConfig.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILoader.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\HelloPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\BaseMVVMPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TButtonPanel.cs" />
@@ -77,12 +78,17 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\IUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILoaderModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TUISample.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManagerRoot.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\AnimationCurve\AnimationCurveTest.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\LoadingPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIRoot.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIRootManagerModule.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILoaderByReference.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberView.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManager.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationNormal.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\DefaultToolTip.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationTween.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelEntry.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIAnimationMaker.cs" />
@@ -92,7 +98,6 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILayerRootModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\Model\BaseModel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\PopupModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\StackPanelModel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButtonHold.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIEvent.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\ButtonHoldLink.cs" />
@@ -601,6 +606,9 @@
     <Reference Include="NuGetForUnity.PluginAPI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\NuGet\Editor\NuGetForUnity.PluginAPI.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
     </Reference>
@@ -609,9 +617,6 @@
     </Reference>
     <Reference Include="NugetForUnity">
       <HintPath>D:\UnityProject\TGame\UnityProject\Assets\NuGet\Editor\NugetForUnity.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>D:\UnityProject\TGame\UnityProject\Assets\Packages\Newtonsoft.Json.13.0.4\lib\netstandard2.0\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
@@ -1005,6 +1010,9 @@
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Addressables">
+      <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\Unity.Addressables.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>D:\UnityProject\TGame\UnityProject\Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>

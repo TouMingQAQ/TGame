@@ -1,4 +1,4 @@
-using TGame.TCore.Runtime;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,7 +6,7 @@ using UnityEngine.UI;
 namespace TGame.TUI
 {
     /// <summary>
-    /// 栈演示面板 A（栈底入口）。点击按钮 PushPanel<StackSubPanel>()。
+    /// 栈演示面板 A（栈底入口）。点击按钮 ShowPanelStack<StackSubPanel>()。
     /// </summary>
     public class StackSamplePanel : BaseUIPanel
     {
@@ -28,14 +28,13 @@ namespace TGame.TUI
         protected override void AfterShow()
         {
             base.AfterShow();
-            var uimgr = Game.Instance.GetManager<UIManager>();
-            if (uimgr != null && _depthLabel != null)
-                _depthLabel.text = $"StackDepth = {uimgr.GetModule<StackPanelModel>().StackDepth}";
+            if (_depthLabel != null)
+                _depthLabel.text = $"StackDepth = {Root}";
         }
 
         private void OnOpenSub()
         {
-            Game.Instance.GetManager<UIManager>().ShowPanelStack<StackSubPanel>();
+            Root.ShowPanelAsync<StackSubPanel>(destroyCancellationToken).Forget();
         }
     }
 }
