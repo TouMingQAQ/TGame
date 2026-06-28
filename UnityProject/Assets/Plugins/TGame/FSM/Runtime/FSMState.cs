@@ -17,10 +17,16 @@ namespace TGame.FSM
         public void OnExit(IFSMControl control);
 
     }
+
+    internal interface IFSMStateControl
+    {
+        void ClearControl();
+    }
+
     /// <summary>
     /// FSM基础状态
     /// </summary>
-    public class FSMState<T> : IFSMState where T : FSMState<T>, new()
+    public class FSMState<T> : IFSMState, IFSMStateControl where T : FSMState<T>, new()
     {
         public IFSMControl Control { get; internal set; }
 
@@ -37,6 +43,11 @@ namespace TGame.FSM
         protected bool ChangeState<TState>() where TState : FSMState<TState>, new()
         {
             return Control != null && Control.ChangeState<TState>();
+        }
+
+        void IFSMStateControl.ClearControl()
+        {
+            Control = null;
         }
     }
 }

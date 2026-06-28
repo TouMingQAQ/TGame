@@ -239,12 +239,19 @@ namespace TGame.FSM
         public FSMStateHandle<T> RemoveState<T>() where T : FSMState<T>, new()
         {
             var type = typeof(T);
-            if (!states.TryGetValue(typeof(T), out var state))
+            if (!states.TryGetValue(type, out var state))
                 return new FSMStateHandle<T>(this, null);
             // 通知顺序:OnRemove 先于 states.Remove,与 AddState 替换路径一致(语义:"即将被移除")
-            // ClearStates 还会清空 Control,避免被移除 state 继续操作旧控制器
-            bool exitCurrent = ReferenceEquals(currentState, state);
-            ClearStates(exitCurrent: exitCurrent);
+            // 只移除目标 state,保留其他已注册状态
+            if (ReferenceEquals(currentState, state))
+            {
+                currentState.OnExit(this);
+                currentState = null;
+            }
+            state.OnRemove(this);
+            if (state is IFSMStateControl controlState)
+                controlState.ClearControl();
+            states.Remove(type);
             return new FSMStateHandle<T>(this, state);
         }
 
@@ -260,11 +267,12 @@ namespace TGame.FSM
                 currentState.OnExit(this);
                 currentState = null;
             }
-            foreach (var kv in states)
+            var values = new List<IFSMState>(states.Values);
+            foreach (var state in values)
             {
-                kv.Value.OnRemove(this);
-                if (kv.Value is FSMState<TDefault> typedState)
-                    typedState.Control = null;
+                state.OnRemove(this);
+                if (state is IFSMStateControl controlState)
+                    controlState.ClearControl();
             }
             states.Clear();
         }

@@ -48,6 +48,7 @@ namespace TGame.TUI
 
         /// <summary>所属 UIManager,由 Awake 注入。模块借此跨 host 访问全局 registry / Addressable 句柄池</summary>
         internal UIManager Owner { get; private set; }
+        private bool _initialized;
 
         // ===== per-UIRoot 模块快捷访问 =====
 
@@ -73,7 +74,27 @@ namespace TGame.TUI
 
         protected virtual void Awake()
         {
-            Owner = Game.Instance.GetManager<UIManager>();
+            if (_moduleEntity == null)
+                _moduleEntity = GetComponent<ModuleEntity>();
+        }
+
+        internal void Initialize(UIManager owner, UIConfig config)
+        {
+            if (_initialized) return;
+            if (owner == null)
+            {
+                Debug.LogError("[UIRoot] Initialize failed: owner is null");
+                return;
+            }
+            if (_moduleEntity == null)
+                _moduleEntity = GetComponent<ModuleEntity>();
+            if (_moduleEntity == null)
+            {
+                Debug.LogError("[UIRoot] Initialize failed: ModuleEntity is missing");
+                return;
+            }
+
+            Owner = owner;
             Owner.GetModule<UIRootManagerModule>().Register(this);
 
             // per-UIRoot 模块挂载
@@ -81,9 +102,15 @@ namespace TGame.TUI
             var loader = _moduleEntity.AddModule<UILoaderModule>();
             loader.Bind(this);
             _moduleEntity.AddModule<StackPanelModule>();
-            _moduleEntity.AddModule<PopupModule>();
+            var popup = _moduleEntity.AddModule<PopupModule>();
             _moduleEntity.AddModule<UIVisibilityModule>();
 
+            if (config != null)
+            {
+                popup.SetDefaultOffset(config.TooltipOffset);
+                if (config.DefaultTooltip != null)
+                    popup.Register(config.DefaultTooltip);
+            }
 
             var layerRoots = _moduleEntity.GetModule<UILayerRootModule>();
             layerRoots.SetLayerRoot(UILayer.Background, _backgroundRoot);
@@ -93,10 +120,12 @@ namespace TGame.TUI
             layerRoots.SetLayerRoot(UILayer.Overlay, _overlayRoot);
             layerRoots.SetLayerRoot(UILayer.Top, _topRoot);
             layerRoots.SetLayerRoot(UILayer.Tooltip, _tooltipRoot);
+            _initialized = true;
         }
 
         protected virtual void OnDestroy()
         {
+            if (!_initialized || _moduleEntity == null) return;
             // 销毁面板 GameObject + 清理加载状态(不归还 Addressable 引用计数,
             // UIRoot 销毁时 AddressableManager 通常同步销毁,其 Module.Destroy 会统一 ReleaseAll)
             Loader.DestroyAll();
@@ -145,7 +174,18 @@ namespace TGame.TUI
         public UniTask<BaseUIPanel> ShowPanelAsync(Type type, CancellationToken ct = default)
             => Visibility.ShowAsync(this, type, ct);
 
+        public void HidePanel<T>() where T : BaseUIPanel => HidePanel(typeof(T));
+
+        public void HidePanel(Type type)
+        {
+            var panel = GetPanel(type);
+            Visibility.Hide(panel);
+        }
+
         #region Popup
+
+        public void RegisterPopup<T>(T prefab) where T : BaseUIPopup
+            => Popup.Register(prefab);
 
         public T ShowPopup<T>(Vector2 screenAnchor, Action<T> setup = null,
                               RectTransform boundsArea = null,

@@ -40,12 +40,21 @@ namespace TGame.TUI
         /// <summary>全局面板注册表(Type → address),全 UIRoot 共享</summary>
         public UIRegistryModule Registry => GetModule<UIRegistryModule>();
 
-        private void Start()
+        private void Awake()
         {
             game = Game.Instance;
+            if (game == null)
+            {
+                Debug.LogError("[UIManager] Game.Instance is null, ensure Game is in scene");
+                return;
+            }
             game.AddManager(this);
             // 物化全局 registry —— 与 AddressableModule 同 host,资产解析在此闭合
             GetModule<UIRegistryModule>();
+            if (_uiRoot != null)
+                _uiRoot.Initialize(this, _config);
+            else
+                Debug.LogError("[UIManager] Default UIRoot is not assigned");
         }
 
         // ===== UIRootManagerModule 快捷访问 =====
@@ -80,6 +89,12 @@ namespace TGame.TUI
         public UniTask<T> ShowPanelStackAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
             => _uiRoot.ShowPanelStackAsync<T>(ct);
 
+        public void HidePanel<T>() where T : BaseUIPanel
+            => _uiRoot.HidePanel<T>();
+
+        public void HidePanel(Type type)
+            => _uiRoot.HidePanel(type);
+
         // ===== 面板卸载 =====
 
         public void UnloadPanel<T>() where T : BaseUIPanel => _uiRoot.UnloadPanel<T>();
@@ -110,6 +125,45 @@ namespace TGame.TUI
 
         public UniTask PreloadPanelsByKeysAsync<T>(IEnumerable<string> keys, IProgress<float> progress = null, CancellationToken ct = default) where T : UnityEngine.Object
             => GetModule<AddressableModule>().PreloadByKeysAsync<T>(keys, progress, ct);
+
+        // ===== Popup 转发 API =====
+
+        public void RegisterPopup<T>(T prefab) where T : BaseUIPopup
+            => _uiRoot.RegisterPopup(prefab);
+
+        public T ShowPopup<T>(Vector2 screenAnchor, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              bool followMouse = false,
+                              Vector2? offset = null)
+            where T : BaseUIPopup
+            => _uiRoot.ShowPopup(screenAnchor, setup, boundsArea, flip, followMouse, offset);
+
+        public T ShowPopup<T>(Vector2 screenAnchor, Vector2 offset, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              bool followMouse = false)
+            where T : BaseUIPopup
+            => _uiRoot.ShowPopup(screenAnchor, offset, setup, boundsArea, flip, followMouse);
+
+        public T ShowPopup<T>(RectTransform target, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight,
+                              Vector2? offset = null)
+            where T : BaseUIPopup
+            => _uiRoot.ShowPopup(target, setup, boundsArea, flip, offset);
+
+        public T ShowPopup<T>(RectTransform target, Vector2 offset, Action<T> setup = null,
+                              RectTransform boundsArea = null,
+                              PopupFlipDirection flip = PopupFlipDirection.BottomRight)
+            where T : BaseUIPopup
+            => _uiRoot.ShowPopup(target, offset, setup, boundsArea, flip);
+
+        public void HidePopup<T>() where T : BaseUIPopup => _uiRoot.HidePopup<T>();
+        public void HidePopup(Type type) => _uiRoot.HidePopup(type);
+        public void HideAllPopups() => _uiRoot.HideAllPopups();
+        public bool IsPopupVisible<T>() where T : BaseUIPopup => _uiRoot.IsPopupVisible<T>();
+        public bool IsPopupVisible(Type type) => _uiRoot.IsPopupVisible(type);
 
         // ===== 销毁 =====
 

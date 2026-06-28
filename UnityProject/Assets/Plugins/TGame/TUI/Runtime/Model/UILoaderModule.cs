@@ -225,5 +225,10 @@ namespace TGame.TUI
             _loadedAddresses.Clear();
             _loading.Clear();
         }
+
+        public override void Destroy()
+        {
+            DestroyAll();
+        }
     }
 }

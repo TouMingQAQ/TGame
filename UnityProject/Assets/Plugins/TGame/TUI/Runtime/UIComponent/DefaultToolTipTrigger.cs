@@ -1,4 +1,4 @@
-﻿using TGame.TCore.Runtime;
+using TGame.TCore.Runtime;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -28,13 +28,13 @@ namespace TGame.TUI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            _ui?.UIRoot.ShowPopup<DefaultToolTip>(eventData.position, p => p.SetText(_tooltipText),
+            _ui?.ShowPopup<DefaultToolTip>(eventData.position, p => p.SetText(_tooltipText),
                 boundsArea: _boundsArea, followMouse: _followMouse, flip: _direction, offset: _offset);
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            _ui?.UIRoot.HidePopup<DefaultToolTip>();
+            _ui?.HidePopup<DefaultToolTip>();
         }
     }
 }

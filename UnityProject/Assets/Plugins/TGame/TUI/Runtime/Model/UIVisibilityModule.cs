@@ -71,11 +71,9 @@ namespace TGame.TUI
         /// <summary>按 Type 隐藏面板。未加载或不可见时直接返回</summary>
         public void Hide(Type type)
         {
-            // 不强依赖 host:GetPanel 直接拿 panel
-            // Hide 操作只需要拿到 panel 引用,无需走 UIRoot 缓存查询(Host 跨 host 难定位 root)
-            // 这里通过 type 全局查找:遍历 Host 上所有 UIRoot 模块,首个命中的执行 Hide
-            // 简化:UIRoot 内嵌缓存,Hide 必须通过 UIRoot 调用,这里签名改为 Hide(panel)
-            // 暂留空壳:Hide 实际由 UIRoot.HidePanel 走 GetPanel → panel.Hide 路径
+            if (type == null) return;
+            var panel = Host.GetModule<UILoaderModule>().GetPanel(type);
+            Hide(panel);
         }
 
         /// <summary>按 panel 引用隐藏,广播事件</summary>
