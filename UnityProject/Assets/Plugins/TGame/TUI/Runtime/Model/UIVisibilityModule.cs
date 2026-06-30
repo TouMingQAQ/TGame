@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
+using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace TGame.TUI
 {
@@ -30,29 +32,25 @@ namespace TGame.TUI
         // ===== Show(异步,走 UIRoot 内嵌 LoadPanelAsync) =====
 
         /// <summary>异步显示面板(泛型)。LoadPanelAsync + SetAsLastSibling + Show + Call(PanelOpenedEvent)</summary>
-        public async UniTask<T> ShowAsync<T>(UIRoot root, CancellationToken ct = default) where T : BaseUIPanel
-            => (T)await ShowAsync(root, typeof(T), ct);
-
-        /// <summary>异步按 Type 显示面板。已可见时直接返回,无副作用。
-        /// 内部先 await UIRoot.LoadPanelAsync,加载成功后 Show 并广播事件。</summary>
-        public async UniTask<BaseUIPanel> ShowAsync(UIRoot root, Type type, CancellationToken ct = default)
+        public async UniTask<T> ShowAsync<T>(UIRoot root,UILayer layer = UILayer.Normal) where T : BaseUIPanel
         {
-            var panel = await root.LoadPanelAsync(type, ct);
-            if (panel == null) return null;
-            if (panel.IsVisible && !panel.IsHiding) return panel;
+            var panel = await root.LoadPanelAsync<T>(layer); 
+            if (panel == null) 
+                return null;
+            if (panel.IsVisible && !panel.IsHiding) 
+                return panel;
 
             panel.transform.SetAsLastSibling();
             panel.Show();
-            Host.GetModule<EventModule>()?.Call(new PanelOpenedEvent(type.Name));
+            Host.GetModule<EventModule>()?.Call(new PanelOpenedEvent(typeof(T).Name));
             return panel;
         }
+        
 
         /// <summary>同步显示面板(泛型)。仅命中缓存时立即返回,未加载返回 null。
-        /// 异步场景请改用 <see cref="ShowAsync(UIRoot, Type, CancellationToken)"/>。</summary>
         public T Show<T>(UIRoot root) where T : BaseUIPanel => Show(root, typeof(T)) as T;
 
         /// <summary>同步按 Type 显示面板。仅命中缓存时立即返回,未加载返回 null。
-        /// 异步场景请改用 <see cref="ShowAsync(UIRoot, Type, CancellationToken)"/>。</summary>
         public BaseUIPanel Show(UIRoot root, Type type)
         {
             if (!root.IsPanelLoaded(type)) return null;

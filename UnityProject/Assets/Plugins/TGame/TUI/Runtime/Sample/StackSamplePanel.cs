@@ -34,7 +34,7 @@ namespace TGame.TUI
 
         private void OnOpenSub()
         {
-            Root.ShowPanelAsync<StackSubPanel>(destroyCancellationToken).Forget();
+            Root.ShowPanelAsync<StackSubPanel>().Forget();
         }
     }
 }

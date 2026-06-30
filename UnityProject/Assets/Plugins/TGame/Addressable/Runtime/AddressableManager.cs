@@ -47,7 +47,6 @@ namespace TGame.Addressable
                 return;
             }
             game.AddManager(this);
-            // AddressableModel 由 BaseManager.AddModule 创建时自动注入 Manager 字段,无需显式 SetManager
         }
 
         private void OnDestroy()
@@ -55,51 +54,6 @@ namespace TGame.Addressable
             ClearModule();
         }
 
-        // ===== 转发 API(与 Model 同名同参) =====
-
-        /// <summary>按 Addressables address 加载资源</summary>
-        public UniTask<T> LoadAsync<T>(string key, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().LoadAsync<T>(key, ct);
-
-        /// <summary>按任意 object key 加载(IResourceLocation / object-label 等)</summary>
-        public UniTask<T> LoadAsync<T>(object key, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().LoadAsync<T>(key, ct);
-
-        /// <summary>释放引用计数。RefCount 归零时 Addressables.Release</summary>
-        public void Release<T>(string key) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().Release<T>(key);
-
-        /// <summary>按一组 Addressables label 批量预热(并集)</summary>
-        public UniTask PreloadByLabelAsync<T>(IEnumerable<string> labels,
-            IProgress<float> progress = null, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().PreloadByLabelAsync<T>(labels, progress, ct);
-
-        /// <summary>按一组 Addressables address 批量预热</summary>
-        public UniTask PreloadByKeysAsync<T>(IEnumerable<string> keys,
-            IProgress<float> progress = null, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().PreloadByKeysAsync<T>(keys, progress, ct);
-
-        /// <summary>资源是否已加载</summary>
-        public bool IsLoaded<T>(string key) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().IsLoaded<T>(key);
-
-        /// <summary>句柄池中指定 key 的引用计数</summary>
-        public int GetRefCount<T>(string key) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().GetRefCount<T>(key);
-
-        /// <summary>当前句柄池条目数(调试用)</summary>
-        public int HandleCount => GetModule<AddressableModule>().HandleCount;
-
-        /// <summary>当前进行中加载数(调试用)</summary>
-        public int LoadingCount => GetModule<AddressableModule>().LoadingCount;
-
-        /// <summary>取消所有进行中加载(场景切换时使用)</summary>
-        public void CancelAllLoading()
-            => GetModule<AddressableModule>().CancelAllLoading();
-
-        // ---- 快捷静态入口 ----
-
-        public static AddressableManager Instance =>
-            Game.Instance != null ? Game.Instance.GetManager<AddressableManager>() : null;
+ 
     }
 }

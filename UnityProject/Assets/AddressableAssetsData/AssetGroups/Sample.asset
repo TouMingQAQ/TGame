@@ -18,7 +18,9 @@ MonoBehaviour:
   - m_GUID: c91828a229f9b904bb02d293c230f131
     m_Address: UIPrefab
     m_ReadOnly: 0
-    m_SerializedLabels: []
+    m_SerializedLabels:
+    - Sample
+    - UI
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: e5cb7dcb2be133249a6f171c4455325a, type: 2}

@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace TGame.TUI
 {
@@ -30,7 +32,8 @@ namespace TGame.TUI
     /// UIManager 持有一个默认 UIRoot,其面板 API 全部委托给该实例。
     /// 业务方可自定义 UIRoot 子类,通过 UIManager 注册,实现多 UI 上下文隔离。
     /// </summary>
-    public class UIRoot : MonoBehaviour
+    [DefaultExecutionOrder(-10)]
+    public abstract class UIRoot : MonoBehaviour
     {
         #region SerializeField
 
@@ -44,16 +47,14 @@ namespace TGame.TUI
         [SerializeField] private Transform _tooltipRoot;
 
         [SerializeField] private ModuleEntity _moduleEntity;
+        
+        [SerializeField] private List<AssetReference> _preloadUI = new List<AssetReference>();
         #endregion
-
-        /// <summary>所属 UIManager,由 Awake 注入。模块借此跨 host 访问全局 registry / Addressable 句柄池</summary>
-        internal UIManager Owner { get; private set; }
-        private bool _initialized;
 
         // ===== per-UIRoot 模块快捷访问 =====
 
         /// <summary>全局面板注册表(挂在 Owner 上,全 UIRoot 共享)</summary>
-        internal UIRegistryModule Registry => Owner.GetModule<UIRegistryModule>();
+        internal UIRegistryModule Registry => Game.Instance.GetManager<UIManager>().GetModule<UIRegistryModule>();
 
         /// <summary>per-UIRoot:层级根字典</summary>
         internal UILayerRootModule LayerRoots => _moduleEntity.GetModule<UILayerRootModule>();
@@ -70,47 +71,16 @@ namespace TGame.TUI
         /// <summary>per-UIRoot:栈式导航</summary>
         internal StackPanelModule Stack => _moduleEntity.GetModule<StackPanelModule>();
 
-        // ===== 生命周期 =====
-
-        protected virtual void Awake()
+        
+        internal async UniTask Initialize()
         {
-            if (_moduleEntity == null)
-                _moduleEntity = GetComponent<ModuleEntity>();
-        }
-
-        internal void Initialize(UIManager owner, UIConfig config)
-        {
-            if (_initialized) return;
-            if (owner == null)
-            {
-                Debug.LogError("[UIRoot] Initialize failed: owner is null");
-                return;
-            }
-            if (_moduleEntity == null)
-                _moduleEntity = GetComponent<ModuleEntity>();
-            if (_moduleEntity == null)
-            {
-                Debug.LogError("[UIRoot] Initialize failed: ModuleEntity is missing");
-                return;
-            }
-
-            Owner = owner;
-            Owner.GetModule<UIRootManagerModule>().Register(this);
-
             // per-UIRoot 模块挂载
             _moduleEntity.AddModule<UILayerRootModule>();
             var loader = _moduleEntity.AddModule<UILoaderModule>();
-            loader.Bind(this);
+            loader.Root = this;
             _moduleEntity.AddModule<StackPanelModule>();
             var popup = _moduleEntity.AddModule<PopupModule>();
             _moduleEntity.AddModule<UIVisibilityModule>();
-
-            if (config != null)
-            {
-                popup.SetDefaultOffset(config.TooltipOffset);
-                if (config.DefaultTooltip != null)
-                    popup.Register(config.DefaultTooltip);
-            }
 
             var layerRoots = _moduleEntity.GetModule<UILayerRootModule>();
             layerRoots.SetLayerRoot(UILayer.Background, _backgroundRoot);
@@ -120,19 +90,41 @@ namespace TGame.TUI
             layerRoots.SetLayerRoot(UILayer.Overlay, _overlayRoot);
             layerRoots.SetLayerRoot(UILayer.Top, _topRoot);
             layerRoots.SetLayerRoot(UILayer.Tooltip, _tooltipRoot);
-            _initialized = true;
+
+            foreach (var assetReference in _preloadUI)
+            {
+                var handle =  await UIManager.Instance.Addressables.PreLoadAsync(assetReference);
+                var prefab = handle.Prefab;
+                var type = prefab.GetType();
+                var address = handle.Key;
+                Registry.Register(type, address);
+            }
+
+
+        }
+        protected virtual void Awake()
+        {
+        }
+        protected virtual async void Start()
+        {
+            await Initialize();
+        }
+        protected virtual void OnEnable()
+        {
+            Game.Instance.GetManager<UIManager>().GetModule<UIRootManagerModule>().Register(RootType(), this);
+        }
+        
+        protected virtual void OnDisable()
+        {
+            Game.Instance.GetManager<UIManager>().GetModule<UIRootManagerModule>().Unregister(RootType(), this);
         }
 
         protected virtual void OnDestroy()
         {
-            if (!_initialized || _moduleEntity == null) return;
-            // 销毁面板 GameObject + 清理加载状态(不归还 Addressable 引用计数,
-            // UIRoot 销毁时 AddressableManager 通常同步销毁,其 Module.Destroy 会统一 ReleaseAll)
-            Loader.DestroyAll();
-
-            // 销毁所有模块
             _moduleEntity.ClearModule();
         }
+        
+        
 
         // ===== 面板注册(转交全局 UIManager.Registry) =====
 
@@ -142,14 +134,9 @@ namespace TGame.TUI
         // ===== 面板加载(委托 UILoaderModule) =====
 
         /// <summary>异步加载(泛型),已加载则直接返回缓存</summary>
-        public UniTask<T> LoadPanelAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => Loader.LoadAsync<T>(ct);
-
-        /// <summary>异步按 Type 加载。已加载则直接返回缓存。
-        /// 未注册 → LogError + return null;Addressable 加载失败 → LogError + return null。
-        /// 并发同 Type 的调用共享同一次底层加载,只 Instantiate 一个 Panel。</summary>
-        public UniTask<BaseUIPanel> LoadPanelAsync(Type type, CancellationToken ct = default)
-            => Loader.LoadAsync(type, ct);
+        public UniTask<T> LoadPanelAsync<T>(UILayer layer = UILayer.Normal) where T : BaseUIPanel
+            => Loader.LoadAsync<T>(layer);
+        
 
         // ===== 面板查询 =====
 
@@ -169,10 +156,8 @@ namespace TGame.TUI
 
         // ===== 面板显隐 =====
 
-        public UniTask<T> ShowPanelAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => Visibility.ShowAsync<T>(this, ct);
-        public UniTask<BaseUIPanel> ShowPanelAsync(Type type, CancellationToken ct = default)
-            => Visibility.ShowAsync(this, type, ct);
+        public UniTask<T> ShowPanelAsync<T>(UILayer layer = UILayer.Normal) where T : BaseUIPanel
+            => Visibility.ShowAsync<T>(this,layer);
 
         public void HidePanel<T>() where T : BaseUIPanel => HidePanel(typeof(T));
 
@@ -226,8 +211,8 @@ namespace TGame.TUI
         #region Stack
 
         public int StackDepth => Stack.StackDepth;
-        public UniTask<T> ShowPanelStackAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => Stack.OpenAsync<T>(ct);
+        public UniTask<T> ShowPanelStackAsync<T>() where T : BaseUIPanel
+            => Stack.OpenAsync<T>();
         public Type GetStackTop() => Stack.GetStackTop();
         public bool IsStackTop<T>() where T : BaseUIPanel => Stack.IsStackTop<T>();
         public bool IsInStack<T>() where T : BaseUIPanel => Stack.IsInStack<T>();
@@ -238,5 +223,7 @@ namespace TGame.TUI
         public void ClearStack() => Stack.ClearStack();
 
         #endregion
+        
+        public abstract Type RootType();
     }
 }

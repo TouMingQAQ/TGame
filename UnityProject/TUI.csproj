@@ -105,6 +105,7 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIVisibilityModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSamplePanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimation.cs" />
+    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\SampleUIRoot.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButton.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\SamplePanel.cs" />
     <None Include="Assets\Plugins\TGame\TUI\Runtime\TUI.asmdef" />

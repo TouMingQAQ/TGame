@@ -26,22 +26,26 @@ namespace TGame.TUI
     /// 面板加载:打开 UI 时 UIRoot 查 UIManager.UIRegistryModule 拿 address → 调 UIManager.AddressableModule 拿 prefab → Instantiate → 缓存。
     /// registry 与 Addressable 均挂在 UIManager 上,资产解析在 UIManager 内闭合,不再需要 per-UIRoot 重复注册。
     /// </summary>
+    [DefaultExecutionOrder(-7900)]
     public sealed class UIManager : BaseManager
     {
         [SerializeField] private UIConfig _config;
-        [SerializeField] private UIRoot _uiRoot;
+        [SerializeField] private UIManagerRoot _uiRoot;
+
+        public static UIManager Instance { get; private set; }
 
         /// <summary>默认 UIRoot</summary>
         public UIRoot UIRoot => _uiRoot;
 
         /// <summary>共享 Addressable 句柄池</summary>
-        public AddressableModule Addressables => GetModule<AddressableModule>();
+        public AddressableModule<BaseUIPanel> Addressables => GetModule<AddressableModule<BaseUIPanel>>();
 
         /// <summary>全局面板注册表(Type → address),全 UIRoot 共享</summary>
         public UIRegistryModule Registry => GetModule<UIRegistryModule>();
 
         private void Awake()
         {
+            Instance = this;
             game = Game.Instance;
             if (game == null)
             {
@@ -51,10 +55,6 @@ namespace TGame.TUI
             game.AddManager(this);
             // 物化全局 registry —— 与 AddressableModule 同 host,资产解析在此闭合
             GetModule<UIRegistryModule>();
-            if (_uiRoot != null)
-                _uiRoot.Initialize(this, _config);
-            else
-                Debug.LogError("[UIManager] Default UIRoot is not assigned");
         }
 
         // ===== UIRootManagerModule 快捷访问 =====
@@ -72,22 +72,17 @@ namespace TGame.TUI
 
         // ===== 面板加载 =====
 
-        public UniTask<T> LoadPanelAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => _uiRoot.LoadPanelAsync<T>(ct);
-
-        public UniTask<BaseUIPanel> LoadPanelAsync(Type type, CancellationToken ct = default)
-            => _uiRoot.LoadPanelAsync(type, ct);
+        public UniTask<T> LoadPanelAsync<T>() where T : BaseUIPanel
+            => _uiRoot.LoadPanelAsync<T>();
 
         // ===== 面板显隐 =====
 
-        public UniTask<T> ShowPanelAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => _uiRoot.ShowPanelAsync<T>(ct);
+        public UniTask<T> ShowPanelAsync<T>() where T : BaseUIPanel
+            => _uiRoot.ShowPanelAsync<T>();
+        
 
-        public UniTask<BaseUIPanel> ShowPanelAsync(Type type, CancellationToken ct = default)
-            => _uiRoot.ShowPanelAsync(type, ct);
-
-        public UniTask<T> ShowPanelStackAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => _uiRoot.ShowPanelStackAsync<T>(ct);
+        public UniTask<T> ShowPanelStackAsync<T>() where T : BaseUIPanel
+            => _uiRoot.ShowPanelStackAsync<T>();
 
         public void HidePanel<T>() where T : BaseUIPanel
             => _uiRoot.HidePanel<T>();
@@ -112,20 +107,7 @@ namespace TGame.TUI
 
         // ===== 批量预热 =====
 
-        /// <summary>
-        /// 按 Addressables label 预热 UI 面板:暖热 Addressable 句柄池,
-        /// 并从 prefab 反查 BaseUIPanel 具体子类,自动把 (Type, address) 写入全局 Registry。
-        /// 预热完成后,业务方 ShowPanelAsync&lt;T&gt; 一步命中句柄池 + 注册表,无需逐面板手动注册。
-        /// </summary>
-        public UniTask PreloadPanelsAsync(string label, IProgress<float> progress = null, CancellationToken ct = default)
-            => Registry.PreloadByLabelAsync(label, Addressables, progress, ct);
-
-        public UniTask PreloadPanelsByLabelsAsync<T>(IEnumerable<string> labels, IProgress<float> progress = null, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().PreloadByLabelAsync<T>(labels, progress, ct);
-
-        public UniTask PreloadPanelsByKeysAsync<T>(IEnumerable<string> keys, IProgress<float> progress = null, CancellationToken ct = default) where T : UnityEngine.Object
-            => GetModule<AddressableModule>().PreloadByKeysAsync<T>(keys, progress, ct);
-
+        
         // ===== Popup 转发 API =====
 
         public void RegisterPopup<T>(T prefab) where T : BaseUIPopup
@@ -171,6 +153,8 @@ namespace TGame.TUI
         {
             // 销毁面板 GameObject + 模块清理由 UIRoot 自身 OnDestroy 处理
             // (UIRoot 也是这个 GameObject 上的组件,Unity 会按顺序触发 OnDestroy)
+            if (Instance == this)
+                Instance = null;
             ClearModule();
         }
     }

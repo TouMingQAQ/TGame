@@ -84,8 +84,7 @@ namespace TGame.TUI
         {
             _showSequence = BuildShowAnimation();
             _hideSequence = BuildHideAnimation();
-            if(_showSequence == null)
-                _showSequence = this.BuildShowAnimation();//保证Show不为空
+            _showSequence ??= this.BuildShowAnimation();
             _showSequence.SetAutoKill(false);
             _showSequence.Pause();
             _showSequence.SetLink(gameObject);

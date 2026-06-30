@@ -40,133 +40,33 @@ namespace TGame.TUI
     /// </summary>
     public sealed class UILoaderModule : BaseModule
     {
-        private UIRoot _root;
 
-        /// <summary>由 UIRoot.Awake 调用,注入宿主以便跨 host 访问 Owner(UIManager) 上的 registry / Addressable 句柄池</summary>
-        internal void Bind(UIRoot root) => _root = root;
-
-        private UIRegistryModule Registry => _root != null ? _root.Registry : null;
-        private AddressableModule Addressables => _root != null ? _root.Owner.GetModule<AddressableModule>() : null;
+        private UIRegistryModule Registry => UIManager.Instance.Registry;
+        private AddressableModule<BaseUIPanel> Addressables =>UIManager.Instance.GetModule<AddressableModule<BaseUIPanel>>();
 
         private readonly Dictionary<Type, BaseUIPanel> _loaded = new();
-        // Type → 加载时使用的 address,Unload 时调 AddressableModule.Release
-        private readonly Dictionary<Type, string> _loadedAddresses = new();
-        // 异步加载去重:Type → 进行中的加载任务
-        private readonly Dictionary<Type, UniTask<BaseUIPanel>> _loading = new();
-
-        // ===== 面板加载(异步,统一走 AddressableModule) =====
+        
+        public UIRoot Root { get; set; }
 
         /// <summary>异步加载(泛型),已加载则直接返回缓存</summary>
-        public UniTask<T> LoadAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => LoadAsync(typeof(T), ct).ContinueWith(p => (T)p);
-
-        /// <summary>
-        /// 异步按 Type 加载。已加载则直接返回缓存。
-        /// 未注册 → LogError + return null;Addressable 加载失败 → LogError + return null。
-        /// 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新加载。
-        /// <para>并发同 Type 的调用共享同一次底层加载,只 Instantiate 一个 Panel。</para>
-        /// </summary>
-        public UniTask<BaseUIPanel> LoadAsync(Type type, CancellationToken ct = default)
+        public async UniTask<T> LoadAsync<T>(UILayer layer = UILayer.Normal) where T : BaseUIPanel
         {
-            if (_loaded.TryGetValue(type, out var existing))
-            {
-                if (existing != null && existing.gameObject != null)
-                    return UniTask.FromResult(existing);
-                _loaded.Remove(type);
-            }
-
-            if (_loading.TryGetValue(type, out var inflight))
-                return inflight;
-
-            var task = LoadCoreAsync(type, ct).Preserve();
-            _loading[type] = task;
-            return task;
+            var type = typeof(T);
+            if(_loaded.TryGetValue(type, out var panel))
+                return panel as T;
+            if (!Registry.TryGetAddress<T>(out var address) || string.IsNullOrEmpty(address))
+                return null;
+            var ui = await Addressables.LoadByKeyAsync(address);
+            ui = UnityEngine.Object.Instantiate(ui,Root.LayerRoots.GetLayerRoot(layer));
+            ui.SetRoot(Root);
+            _loaded[type] = ui;
+            return ui as T;
         }
 
-        private async UniTask<BaseUIPanel> LoadCoreAsync(Type type, CancellationToken ct)
-        {
-            try
-            {
-                // 双重检查
-                if (_loaded.TryGetValue(type, out var cached))
-                {
-                    if (cached != null && cached.gameObject != null)
-                        return cached;
-                    _loaded.Remove(type);
-                }
-
-                var registry = Registry;
-                if (registry == null)
-                {
-                    Debug.LogError("[UILoaderModule] UIRegistryModule not found (UIRoot not bound or UIManager missing registry)");
-                    return null;
-                }
-                if (!registry.TryGetAddress(type, out var address))
-                {
-                    Debug.LogError($"[UILoaderModule] Panel {type.Name} not registered; call UIManager.RegisterPanelAsync<{type.Name}>(\"address\") or PreloadPanelsAsync(\"label\") first");
-                    return null;
-                }
-
-                var addrModule = Addressables;
-                if (addrModule == null)
-                {
-                    Debug.LogError("[UILoaderModule] AddressableModule not found on UIManager");
-                    return null;
-                }
-
-                var prefab = await addrModule.LoadAsync<GameObject>(address, ct);
-                if (prefab == null)
-                {
-                    Debug.LogError($"[UILoaderModule] Addressables load returned null for {type.Name} (address={address})");
-                    return null;
-                }
-
-                var go = UnityEngine.Object.Instantiate(prefab);
-                if (go.GetComponent(type) is not BaseUIPanel panel)
-                {
-                    Debug.LogError($"[UILoaderModule] Prefab for {type.Name} (address={address}) missing component {type.Name}");
-                    UnityEngine.Object.Destroy(go);
-                    return null;
-                }
-
-                var layerRoots = Host.GetModule<UILayerRootModule>();
-                if (layerRoots == null)
-                {
-                    Debug.LogError("[UILoaderModule] UILayerRootModule not found on host");
-                    UnityEngine.Object.Destroy(go);
-                    return null;
-                }
-                var layerRoot = layerRoots.GetLayerRoot(panel.Layer);
-                if (layerRoot == null)
-                {
-                    Debug.LogError($"[UILoaderModule] No layer root for {panel.Layer}; assign on UIRoot");
-                    UnityEngine.Object.Destroy(go);
-                    return null;
-                }
-                go.transform.SetParent(layerRoot, worldPositionStays: false);
-
-                var rt = go.transform as RectTransform;
-                if (rt != null)
-                {
-                    rt.anchorMin = Vector2.zero;
-                    rt.anchorMax = Vector2.one;
-                    rt.offsetMin = Vector2.zero;
-                    rt.offsetMax = Vector2.zero;
-                }
-                panel.SetRoot(_root);
-                panel.Init();
-                go.SetActive(false);
-                _loaded[type] = panel;
-                _loadedAddresses[type] = address;
-                return panel;
-            }
-            finally
-            {
-                _loading.Remove(type);
-            }
-        }
-
+      
         // ===== 面板查询 =====
+
+        public BaseUIPanel GetPanel<T>()=>GetPanel(typeof(T));
 
         public BaseUIPanel GetPanel(Type type)
         {
@@ -177,6 +77,8 @@ namespace TGame.TUI
             }
             return p;
         }
+
+        public bool IsPanelLoaded<T>() where  T : BaseUIPanel =>IsPanelLoaded(typeof(T));
 
         public bool IsPanelLoaded(Type type)
         {
@@ -189,46 +91,17 @@ namespace TGame.TUI
             return true;
         }
 
-        // ===== 面板卸载 =====
 
         public void Unload(Type type)
         {
-            if (!_loaded.TryGetValue(type, out var panel)) return;
-            UnityEngine.Object.Destroy(panel.gameObject);
             _loaded.Remove(type);
-
-            if (_loadedAddresses.Remove(type, out var addr))
-            {
-                var addrModule = Addressables;
-                if (addrModule != null)
-                {
-                    try { addrModule.Release<GameObject>(addr); }
-                    catch (Exception e) { Debug.LogWarning($"[UILoaderModule] Release address {addr} failed: {e.Message}"); }
-                }
-            }
         }
 
-        // ===== 生命周期 =====
-
-        /// <summary>
-        /// 销毁所有已加载面板 GameObject(由 UIRoot.OnDestroy 调用)。
-        /// 不归还 Addressable 引用计数 —— UIRoot 销毁时 AddressableManager 通常同步销毁,
-        /// 其 AddressableModule.Destroy 会统一 ReleaseAll。
-        /// </summary>
-        public void DestroyAll()
-        {
-            foreach (var panel in _loaded.Values)
-            {
-                if (panel != null) UnityEngine.Object.Destroy(panel.gameObject);
-            }
-            _loaded.Clear();
-            _loadedAddresses.Clear();
-            _loading.Clear();
-        }
+        
 
         public override void Destroy()
         {
-            DestroyAll();
+            _loaded.Clear();
         }
     }
 }

@@ -61,10 +61,8 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\Addressable\Runtime\Model\AddressableKey.cs" />
     <Compile Include="Assets\Plugins\TGame\Addressable\Runtime\Model\AddressableModule.cs" />
     <Compile Include="Assets\Plugins\TGame\Addressable\Runtime\AddressableManager.cs" />
-    <Compile Include="Assets\Plugins\TGame\Addressable\Runtime\Model\AddressableEvent.cs" />
     <Compile Include="Assets\Plugins\TGame\Addressable\Runtime\AssetsLoader.cs" />
     <None Include="Assets\Plugins\TGame\Addressable\Runtime\TGame.Addressable.Runtime.asmdef" />
     <Reference Include="UnityEngine">

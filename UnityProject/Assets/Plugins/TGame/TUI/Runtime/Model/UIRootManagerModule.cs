@@ -6,12 +6,11 @@ using UnityEngine;
 namespace TGame.TUI
 {
     /// <summary>
-    /// UIRoot 管理 Module。挂在 UIManager 下,管理所有自定义 UIRoot 实例(按 Type 键索引)。
-    /// 默认 UIRoot 通过 RegisterDefault 注入,不参与 Type 键字典。
+    /// UIRoot 管理 Module。挂在 UIManager 下,管理所有启用中的 UIRoot 实例(按运行时 Type 键索引)。
     ///
     /// 使用方式:
-    ///   1. 业务方在启动时创建自定义 UIRoot 子类实例,调用 Init(UIManager) 初始化
-    ///   2. 通过 Register&lt;T&gt;(root) 注册到本 Module
+    ///   1. 自定义 UIRoot 子类 OnEnable 时自动按运行时类型注册
+    ///   2. OnDisable 时自动注销自身
     ///   3. 其他组件通过 Get&lt;T&gt;() 按类型查找 UIRoot 并调用其面板 API
     /// </summary>
     public sealed class UIRootManagerModule : BaseModule
@@ -24,22 +23,19 @@ namespace TGame.TUI
         /// </summary>
         public void Register<T>(T root) where T : UIRoot
         {
-            var type = typeof(T);
-            if (_roots.ContainsKey(type))
-            {
-                Debug.LogWarning($"[UIRootManagerModule] UIRoot {type.Name} already registered, skipping");
-                return;
-            }
-            _roots[type] = root;
+            if (root == null) return;
+            Register(root.GetType(), root);
         }
 
         /// <summary>
-        /// 以任意 Type 为键注册自定义 UIRoot。
+        /// 以任意 Type 为键注册 UIRoot。
         /// </summary>
         public void Register(Type key, UIRoot root)
         {
-            if (_roots.ContainsKey(key))
+            if (key == null || root == null) return;
+            if (_roots.TryGetValue(key, out var existing))
             {
+                if (ReferenceEquals(existing, root)) return;
                 Debug.LogWarning($"[UIRootManagerModule] UIRoot key {key.Name} already registered, skipping");
                 return;
             }
@@ -66,6 +62,15 @@ namespace TGame.TUI
 
         /// <summary>注销自定义 UIRoot(按 Type 键)</summary>
         public bool Unregister(Type key) => _roots.Remove(key);
+
+        /// <summary>仅当 key 当前指向指定 root 时注销,避免禁用旧实例误删新实例。</summary>
+        public bool Unregister(Type key, UIRoot root)
+        {
+            if (key == null || root == null) return false;
+            if (!_roots.TryGetValue(key, out var existing) || !ReferenceEquals(existing, root))
+                return false;
+            return _roots.Remove(key);
+        }
 
         /// <summary>所有已注册的自定义 UIRoot(只读快照,调试用)</summary>
         public IReadOnlyDictionary<Type, UIRoot> GetAll() => _roots;

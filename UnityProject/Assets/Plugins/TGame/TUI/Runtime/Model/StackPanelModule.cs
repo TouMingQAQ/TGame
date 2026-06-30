@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
 using UnityEngine;
@@ -53,18 +52,16 @@ namespace TGame.TUI
         /// 同面板已在栈中时拒绝重复 Open。
         /// 校验新 Panel.Layer >= 当前栈顶.Layer,不满足则 LogError 并拒绝。
         /// </summary>
-        public async UniTask<T> OpenAsync<T>(CancellationToken ct = default) where T : BaseUIPanel
-            => (T)await OpenAsync(typeof(T), ct);
-
-        public async UniTask<BaseUIPanel> OpenAsync(Type panelType, CancellationToken ct = default)
+        public async UniTask<T> OpenAsync<T>() where T : BaseUIPanel
         {
+            var panelType = typeof(T);
             if (IsInStack(panelType))
             {
                 Debug.LogWarning($"[StackPanelModel] Panel {panelType.Name} is already in stack, refusing to open");
-                return Host.GetModule<UILoaderModule>().GetPanel(panelType);
+                return Host.GetModule<UILoaderModule>().GetPanel<T>() as T;
             }
 
-            var panel = await Host.GetModule<UILoaderModule>().LoadAsync(panelType, ct);
+            var panel = await Host.GetModule<UILoaderModule>().LoadAsync<T>();
             if (panel == null) return null;
 
             // 层级守门
@@ -120,10 +117,9 @@ namespace TGame.TUI
             return true;
         }
 
-        public bool BackTo<T>() where T : BaseUIPanel => BackTo(typeof(T));
-
-        public bool BackTo(Type panelType)
+        public bool BackTo<T>() where T : BaseUIPanel
         {
+            var panelType = typeof(T);
             int targetIndex = -1;
             for (int i = _stack.Count - 1; i >= 0; i--)
             {
@@ -135,7 +131,7 @@ namespace TGame.TUI
             {
                 if (!Back()) break;
             }
-            EnsureVisible(panelType);
+            EnsureVisible<T>();
             return true;
         }
 
@@ -198,12 +194,14 @@ namespace TGame.TUI
             }
         }
 
-        private void EnsureVisible(Type panelType)
+        private void EnsureVisible<T>() where T : BaseUIPanel => EnsureVisible(typeof(T));
+
+        private void EnsureVisible(Type type)
         {
             var loader = Host.GetModule<UILoaderModule>();
-            if (loader.IsPanelLoaded(panelType))
+            if (loader.IsPanelLoaded(type))
             {
-                var p = loader.GetPanel(panelType);
+                var p = loader.GetPanel(type);
                 if (p != null && (!p.IsVisible || p.IsHiding)) p.Show();
             }
         }

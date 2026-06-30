@@ -219,8 +219,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5985252363424168050}
-  - component: {fileID: 2726679758454283578}
   - component: {fileID: 6229363021973208867}
+  - component: {fileID: 7408197396180360114}
+  - component: {fileID: 1046467180716547713}
   m_Layer: 0
   m_Name: UIRoot
   m_TagString: Untagged
@@ -254,25 +255,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &2726679758454283578
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7235708730240531731}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e5303385869a39343ae865b10f938088, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: TUI::TGame.TUI.UIRoot
-  _backgroundRoot: {fileID: 5985252363424168050}
-  _sceneRoot: {fileID: 5395754931483508357}
-  _normalRoot: {fileID: 1411370355171710656}
-  _popupRoot: {fileID: 5951009586105885385}
-  _overlayRoot: {fileID: 824675073260950636}
-  _topRoot: {fileID: 6002276006444015861}
-  _tooltipRoot: {fileID: 4548536812809813339}
 --- !u!114 &6229363021973208867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -304,6 +286,39 @@ MonoBehaviour:
     y: 0
     width: 2560
     height: 1440
+--- !u!114 &7408197396180360114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7235708730240531731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de8779fc35074314aff41390fc15c73f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame::TGame.TCore.Runtime.ModuleEntity
+--- !u!114 &1046467180716547713
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7235708730240531731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74cb8ff8746b43c5a90fc1cd85bd6cd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TUI::TGame.TUI.UIManagerRoot
+  _backgroundRoot: {fileID: 1661366454113926197}
+  _sceneRoot: {fileID: 5395754931483508357}
+  _normalRoot: {fileID: 1411370355171710656}
+  _popupRoot: {fileID: 5951009586105885385}
+  _overlayRoot: {fileID: 824675073260950636}
+  _topRoot: {fileID: 6002276006444015861}
+  _tooltipRoot: {fileID: 4548536812809813339}
+  _moduleEntity: {fileID: 7408197396180360114}
+  _preloadUI: []
 --- !u!1 &7354293033193386352
 GameObject:
   m_ObjectHideFlags: 0
