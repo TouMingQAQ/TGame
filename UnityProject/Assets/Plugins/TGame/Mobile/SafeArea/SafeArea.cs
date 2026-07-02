@@ -27,22 +27,27 @@ namespace TFramework.Mobile
                 UpdateArea();
             }
 #endif
-            ExecuteRect();
+            
         }
 
+        private Rect screenAreaCache = default;
         void UpdateArea()
         {
-            screenArea = new Rect(0, 0, Screen.width, Screen.height);
-            safeArea = Screen.safeArea;
-            var dis = new Vector2(screenArea.width - safeArea.width, screenArea.height - safeArea.height);
-            resultSafeArea = safeArea;
-            resultSafeArea.width -= dis.x;
-            resultSafeArea.height -= dis.y;
-            if (resultSafeArea.x <= 0)
-                resultSafeArea.x += dis.x;
-            if (resultSafeArea.y <= 0)
-                resultSafeArea.y += dis.y;
-            
+            screenAreaCache = new Rect(0, 0, Screen.width, Screen.height);
+            if (screenArea != screenAreaCache)
+            {
+                screenAreaCache = screenArea;
+                safeArea = Screen.safeArea;
+                var dis = new Vector2(screenArea.width - safeArea.width, screenArea.height - safeArea.height);
+                resultSafeArea = safeArea;
+                resultSafeArea.width -= dis.x;
+                resultSafeArea.height -= dis.y;
+                if (resultSafeArea.x <= 0)
+                    resultSafeArea.x += dis.x;
+                if (resultSafeArea.y <= 0)
+                    resultSafeArea.y += dis.y;
+                ExecuteRect();
+            }
         }
 
         void ExecuteRect()
@@ -62,9 +67,6 @@ namespace TFramework.Mobile
             rect.offsetMin = Vector2.zero;
             rect.offsetMax = Vector2.zero;
             rect.localScale = Vector3.one;
-#if UNITY_EDITOR
-            UnityEditor.EditorUtility.SetDirty(rect);
-#endif
         }
     }
 }
