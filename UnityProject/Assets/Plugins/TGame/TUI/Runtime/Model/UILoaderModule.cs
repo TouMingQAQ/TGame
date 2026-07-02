@@ -58,6 +58,7 @@ namespace TGame.TUI
                 return null;
             var ui = await Addressables.LoadByKeyAsync(address);
             ui = UnityEngine.Object.Instantiate(ui,Root.LayerRoots.GetLayerRoot(layer));
+            ui.gameObject.SetActive(false);
             ui.SetRoot(Root);
             _loaded[type] = ui;
             return ui as T;

@@ -62,7 +62,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Samples\Addressables\3.0.0\Addressables Utility\AddressablesUtility.cs" />
     <None Include="Assets\Packages\Microsoft.Extensions.FileProviders.Abstractions.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Abstractions.xml" />
     <None Include="Assets\Packages\Microsoft.Extensions.Configuration.Json.8.0.1\useSharedDesignerContext.txt" />
     <None Include="Assets\Packages\Microsoft.Extensions.FileSystemGlobbing.8.0.0\lib\netstandard2.0\Microsoft.Extensions.FileSystemGlobbing.xml" />
