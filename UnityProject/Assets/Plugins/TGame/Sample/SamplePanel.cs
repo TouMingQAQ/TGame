@@ -10,6 +10,7 @@ namespace TGame.TUI
         public void OpenNumberPanel() => OpenAsync<NumberPanel>().Forget();
         public void OpenButtonPanel() => OpenAsync<TButtonPanel>().Forget();
         public void OpenTweenPanel() => OpenAsync<TweenPanel>().Forget();
+        public void OpenTimePanel() => OpenAsync<TimePanel>().Forget();
         public void OpenStackPanel() => Root.ShowPanelStackAsync<StackSamplePanel>().Forget();
 
         private UniTask OpenAsync<T>() where T : BaseUIPanel

@@ -61,30 +61,21 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\AnimationCurve\AnimationCurveTestPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\View\BaseView.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TweenPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILayer.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIConfig.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILoader.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\HelloPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\MVVM\BaseMVVMPanel.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TButtonPanel.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSubPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\BaseUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\PopupLayoutHelper.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIRegistryModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\IUIPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UILoaderModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\TUISample.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManagerRoot.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\AnimationCurve\AnimationCurveTest.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\LoadingPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIRoot.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIRootManagerModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UILoaderByReference.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\NumberPanel\NumberView.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIManager.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimationNormal.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\DefaultToolTip.cs" />
@@ -100,14 +91,9 @@
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\PopupModule.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButtonHold.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIEvent.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\ButtonHoldLink.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\LoadingSamplePanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Model\UIVisibilityModule.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\StackSamplePanel.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\Animation\TButtonAnimation.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\SampleUIRoot.cs" />
     <Compile Include="Assets\Plugins\TGame\TUI\Runtime\UIComponent\Button\TButton.cs" />
-    <Compile Include="Assets\Plugins\TGame\TUI\Runtime\Sample\SamplePanel.cs" />
     <None Include="Assets\Plugins\TGame\TUI\Runtime\TUI.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>G:\Unity Editor\6000.3.2f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

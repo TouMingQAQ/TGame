@@ -41,7 +41,6 @@ namespace TGame.TUI
         protected override void Awake()
         {
             base.Awake();
-            _model = new NumberModel();
             BindModel(_model);
             addBtn.onClick.AddListener(Add);
             reduceBtn.onClick.AddListener(Reduce);

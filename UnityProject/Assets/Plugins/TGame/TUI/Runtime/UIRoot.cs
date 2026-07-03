@@ -72,7 +72,7 @@ namespace TGame.TUI
         internal StackPanelModule Stack => _moduleEntity.GetModule<StackPanelModule>();
 
         
-        internal async UniTask Initialize()
+        protected async UniTask Initialize()
         {
             // per-UIRoot 模块挂载
             _moduleEntity.AddModule<UILayerRootModule>();

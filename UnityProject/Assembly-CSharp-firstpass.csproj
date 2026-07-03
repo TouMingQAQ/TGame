@@ -61,8 +61,26 @@
     <Analyzer Include="G:\Unity Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Plugins\TGame\Sample\NumberPanel\NumberPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\FSM\Runtime\FSMState.cs" />
+    <Compile Include="Assets\Plugins\TGame\GameSystem\GameSystemManager.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\AnimationCurve\AnimationCurveTest.cs" />
+    <Compile Include="Assets\Plugins\TGame\GameSystem\GameTimeSystem.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\SamplePanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\AnimationCurve\AnimationCurveTestPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\FSM\Runtime\FSMControl.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\SampleUIRoot.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\HelloPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\LoadingSamplePanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\TimePanel\TimePanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\StackSamplePanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\ButtonHoldLink.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\NumberPanel\NumberView.cs" />
+    <Compile Include="Assets\Plugins\TGame\Common\LargeNumber.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\StackSubPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\TButtonPanel.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\TimePanel\TimeView.cs" />
+    <Compile Include="Assets\Plugins\TGame\Sample\TweenPanel.cs" />
     <Compile Include="Assets\Plugins\TGame\Mobile\SafeArea\SafeArea.cs" />
     <None Include="Assets\Plugins\UniTask\package.json" />
     <None Include="Assets\Plugins\TGame\Font\7000常用字优化版.txt" />

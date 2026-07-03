@@ -1,14 +1,18 @@
 using System;
+using TGame.GameSystem;
+using TGame.TCore.Runtime;
 using UnityEngine;
 
 namespace TGame.TUI
 {
     public class SampleUIRoot : UIRoot
     {
+        
         protected override async void Start()
         {
             await Initialize();
             await ShowPanelAsync<SamplePanel>();
+            Game.Instance.GetManager<GameSystemManager>().GetGameSystem<GameTimeSystem>().SetCurrentTime(DateTime.Now);
         }
 
         public override Type RootType()
