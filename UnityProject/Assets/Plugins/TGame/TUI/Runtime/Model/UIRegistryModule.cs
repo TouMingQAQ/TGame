@@ -50,11 +50,26 @@ namespace TGame.TUI
 
        
 
+        public bool TryGetAddress(Type panelType, out string address)
+        {
+            if (panelType == null)
+            {
+                address = null;
+                return false;
+            }
+            return _addresses.TryGetValue(panelType, out address);
+        }
+
         public bool TryGetAddress<T>(out string address) where T : BaseUIPanel
-            => _addresses.TryGetValue(typeof(T), out address);        
+            => TryGetAddress(typeof(T), out address);
+
         /// <summary>某 Type 是否已注册(调试/校验用)</summary>
-        public bool IsRegistered<T>(Type type) where T : BaseUIPanel 
+        public bool IsRegistered<T>() where T : BaseUIPanel
             => _addresses.ContainsKey(typeof(T));
+
+        /// <summary>某 Type 是否已注册(调试/校验用)</summary>
+        public bool IsRegistered(Type type)
+            => type != null && _addresses.ContainsKey(type);
 
         /// <summary>已注册条目数(调试用)</summary>
         public int Count => _addresses.Count;

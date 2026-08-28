@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using TGame.GameSystem;
 using TGame.TCore.Runtime;
 using UnityEngine;
@@ -8,7 +9,12 @@ namespace TGame.TUI
     public class SampleUIRoot : UIRoot
     {
         
-        protected override async void Start()
+        protected override void Start()
+        {
+            StartAsync().Forget();
+        }
+
+        private async UniTask StartAsync()
         {
             await Initialize();
             await ShowPanelAsync<SamplePanel>();

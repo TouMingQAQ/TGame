@@ -4,124 +4,197 @@ using Cysharp.Threading.Tasks;
 using TGame.TCore.Runtime;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using Object = UnityEngine.Object;
 
 namespace TGame.Addressable
 {
-    public struct AssetHandle<T>  where T : Object
+    public struct AssetHandle<T> where T : Object
     {
         public string Key;
         public T Prefab;
-        public void Release()
-        {
-            if(Prefab != null)
-                Object.Destroy(Prefab);
-        }
+        public AsyncOperationHandle OpHandle;
+        public int RefCount;
     }
+
     public sealed class AddressableModule<T> : BaseModule where T : Object
     {
-        private Dictionary<string, AssetHandle<T>> handles = new Dictionary<string, AssetHandle<T>>();
+        private readonly Dictionary<string, AssetHandle<T>> _handles = new();
 
         #region Preload
 
-        public async void PreLoadAsync(IEnumerable<string> labels)
-        {
-            //Todo::通过扫描labels来预加载，记得加载目标类型必须为T
-        }
-
-        public async void PreLoadAsync(string addressableKey)
-        {
-            //Todo::通过扫描addressableKey来预加载，记得加载目标类型必须为T
-        }
-        
         /// <summary>
-        /// 预加载资源
+        /// 预加载资源 (AssetReference)
         /// </summary>
-        /// <param name="reference"></param>
+        /// <param name="reference">Addressable 资产引用</param>
         public async UniTask<AssetHandle<T>> PreLoadAsync(AssetReference reference)
         {
+            if (reference == null)
+                return default;
+
             var key = reference.RuntimeKey.ToString();
-            if(handles.TryGetValue(key, out var handle))
-                return handle;
+            if (_handles.TryGetValue(key, out var existingHandle))
+            {
+                existingHandle.RefCount++;
+                _handles[key] = existingHandle;
+                return existingHandle;
+            }
+
             if (typeof(MonoBehaviour).IsAssignableFrom(typeof(T)))
             {
                 var loadHandle = reference.LoadAssetAsync<GameObject>();
-                if(!loadHandle.IsValid())
+                if (!loadHandle.IsValid())
                     return default;
-                await loadHandle;
-                var result =  await loadHandle;
-                if (result.TryGetComponent<T>(out var prefab))
+
+                var result = await loadHandle;
+                if (result != null && result.TryGetComponent<T>(out var prefab))
                 {
-                    handle = OnLoad(key, prefab);
+                    return OnLoad(key, prefab, loadHandle);
                 }
-                else
-                {
-                    loadHandle.Release();
-                    return default;
-                }
-                loadHandle.Release();
+
+                if (loadHandle.IsValid())
+                    Addressables.Release(loadHandle);
+                return default;
             }
             else
             {
                 var loadHandle = reference.LoadAssetAsync<T>();
-                if(!loadHandle.IsValid())
+                if (!loadHandle.IsValid())
                     return default;
-                await loadHandle;
-                handle = OnLoad(key,loadHandle.Result);
-                loadHandle.Release();
+
+                var result = await loadHandle;
+                if (result != null)
+                {
+                    return OnLoad(key, result, loadHandle);
+                }
+
+                if (loadHandle.IsValid())
+                    Addressables.Release(loadHandle);
+                return default;
             }
-            return handle;
-           
         }
-        
+
         #endregion
 
         #region Load
 
-        AssetHandle<T> OnLoad(string key,T prefab)
+        private AssetHandle<T> OnLoad(string key, T prefab, AsyncOperationHandle opHandle)
         {
+            if (_handles.TryGetValue(key, out var existing))
+            {
+                existing.RefCount++;
+                _handles[key] = existing;
+                return existing;
+            }
+
             var handle = new AssetHandle<T>
             {
                 Prefab = prefab,
-                Key = key
+                Key = key,
+                OpHandle = opHandle,
+                RefCount = 1
             };
-            handles[key] = handle;
+            _handles[key] = handle;
             return handle;
         }
-        public async void LoadByKey(string key,Action<T> onLoaded)
+
+        public async void LoadByKey(string key, Action<T> onLoaded)
         {
-            if(handles.TryGetValue(key, out var handle))
-                onLoaded?.Invoke(handle.Prefab);
-            var loadHandle = Addressables.LoadAssetAsync<T>(key);
-            await loadHandle;
-            OnLoad(key,loadHandle.Result);
-            loadHandle.Release();
-            onLoaded?.Invoke(handle.Prefab);
+            var prefab = await LoadByKeyAsync(key);
+            onLoaded?.Invoke(prefab);
         }
 
         public async UniTask<T> LoadByKeyAsync(string key)
         {
-            if(handles.TryGetValue(key, out var handle))
+            if (string.IsNullOrEmpty(key))
+                return null;
+
+            if (_handles.TryGetValue(key, out var handle))
+            {
+                handle.RefCount++;
+                _handles[key] = handle;
                 return handle.Prefab;
-            var loadHandle = Addressables.LoadAssetAsync<T>(key);
-            await loadHandle;
-            OnLoad(key,loadHandle.Result);
-            loadHandle.Release();
-            return handle.Prefab;
+            }
+
+            if (typeof(MonoBehaviour).IsAssignableFrom(typeof(T)))
+            {
+                var loadHandle = Addressables.LoadAssetAsync<GameObject>(key);
+                if (!loadHandle.IsValid())
+                    return null;
+
+                var go = await loadHandle;
+                if (go != null && go.TryGetComponent<T>(out var comp))
+                {
+                    var newHandle = OnLoad(key, comp, loadHandle);
+                    return newHandle.Prefab;
+                }
+
+                if (loadHandle.IsValid())
+                    Addressables.Release(loadHandle);
+                return null;
+            }
+            else
+            {
+                var loadHandle = Addressables.LoadAssetAsync<T>(key);
+                if (!loadHandle.IsValid())
+                    return null;
+
+                var res = await loadHandle;
+                if (res != null)
+                {
+                    var newHandle = OnLoad(key, res, loadHandle);
+                    return newHandle.Prefab;
+                }
+
+                if (loadHandle.IsValid())
+                    Addressables.Release(loadHandle);
+                return null;
+            }
         }
+
         #endregion
+
         #region Release
+
+        public void Release(string key)
+        {
+            if (string.IsNullOrEmpty(key)) return;
+
+            if (_handles.TryGetValue(key, out var handle))
+            {
+                handle.RefCount--;
+                if (handle.RefCount <= 0)
+                {
+                    if (handle.OpHandle.IsValid())
+                    {
+                        Addressables.Release(handle.OpHandle);
+                    }
+                    _handles.Remove(key);
+                }
+                else
+                {
+                    _handles[key] = handle;
+                }
+            }
+        }
 
         public void ReleaseAll()
         {
-            foreach (var handle in handles.Values)
+            foreach (var handle in _handles.Values)
             {
-                handle.Release();
+                if (handle.OpHandle.IsValid())
+                {
+                    Addressables.Release(handle.OpHandle);
+                }
             }
-            handles.Clear();
+            _handles.Clear();
+        }
+
+        public override void Destroy()
+        {
+            ReleaseAll();
         }
 
         #endregion
-   
     }
 }

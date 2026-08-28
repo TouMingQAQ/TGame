@@ -105,9 +105,9 @@ namespace TGame.TUI
         protected virtual void Awake()
         {
         }
-        protected virtual async void Start()
+        protected virtual void Start()
         {
-            await Initialize();
+            Initialize().Forget();
         }
         protected virtual void OnEnable()
         {

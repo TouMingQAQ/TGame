@@ -40,34 +40,68 @@ namespace TGame.TUI
     /// </summary>
     public sealed class UILoaderModule : BaseModule
     {
-
         private UIRegistryModule Registry => UIManager.Instance.Registry;
-        private AddressableModule<BaseUIPanel> Addressables =>UIManager.Instance.GetModule<AddressableModule<BaseUIPanel>>();
+        private AddressableModule<BaseUIPanel> Addressables => UIManager.Instance.GetModule<AddressableModule<BaseUIPanel>>();
 
         private readonly Dictionary<Type, BaseUIPanel> _loaded = new();
-        
+        private readonly Dictionary<Type, UniTask<BaseUIPanel>> _loading = new();
+
         public UIRoot Root { get; set; }
 
-        /// <summary>异步加载(泛型),已加载则直接返回缓存</summary>
+        /// <summary>异步加载(泛型),已加载则直接返回缓存,并发加载自动去重</summary>
         public async UniTask<T> LoadAsync<T>(UILayer layer = UILayer.Normal) where T : BaseUIPanel
         {
             var type = typeof(T);
-            if(_loaded.TryGetValue(type, out var panel))
+            if (_loaded.TryGetValue(type, out var panel) && panel != null && panel.gameObject != null)
                 return panel as T;
+
+            if (_loading.TryGetValue(type, out var loadingTask))
+            {
+                var result = await loadingTask;
+                return result as T;
+            }
+
             if (!Registry.TryGetAddress<T>(out var address) || string.IsNullOrEmpty(address))
+            {
+                Debug.LogError($"[UILoaderModule] Panel {type.Name} address not found in UIRegistryModule");
                 return null;
-            var ui = await Addressables.LoadByKeyAsync(address);
-            ui = UnityEngine.Object.Instantiate(ui,Root.LayerRoots.GetLayerRoot(layer));
-            ui.gameObject.SetActive(false);
-            ui.SetRoot(Root);
-            _loaded[type] = ui;
-            return ui as T;
+            }
+
+            var task = LoadInternalAsync<T>(address, layer);
+            _loading[type] = task;
+            try
+            {
+                var result = await task;
+                return result as T;
+            }
+            finally
+            {
+                _loading.Remove(type);
+            }
         }
 
-      
+        private async UniTask<BaseUIPanel> LoadInternalAsync<T>(string address, UILayer layer) where T : BaseUIPanel
+        {
+            var type = typeof(T);
+            var ui = await Addressables.LoadByKeyAsync(address);
+            if (ui == null)
+            {
+                Debug.LogError($"[UILoaderModule] Failed to load prefab for {type.Name} from address '{address}'");
+                return null;
+            }
+
+            var layerRoot = Root != null && Root.LayerRoots != null ? Root.LayerRoots.GetLayerRoot(layer) : null;
+            var instance = UnityEngine.Object.Instantiate(ui, layerRoot);
+            instance.gameObject.SetActive(false);
+            instance.SetRoot(Root);
+            instance.Init();
+            _loaded[type] = instance;
+            return instance;
+        }
+
         // ===== 面板查询 =====
 
-        public BaseUIPanel GetPanel<T>()=>GetPanel(typeof(T));
+        public BaseUIPanel GetPanel<T>() where T : BaseUIPanel => GetPanel(typeof(T));
 
         public BaseUIPanel GetPanel(Type type)
         {
@@ -79,7 +113,7 @@ namespace TGame.TUI
             return p;
         }
 
-        public bool IsPanelLoaded<T>() where  T : BaseUIPanel =>IsPanelLoaded(typeof(T));
+        public bool IsPanelLoaded<T>() where T : BaseUIPanel => IsPanelLoaded(typeof(T));
 
         public bool IsPanelLoaded(Type type)
         {
@@ -92,17 +126,38 @@ namespace TGame.TUI
             return true;
         }
 
-
         public void Unload(Type type)
         {
-            _loaded.Remove(type);
+            if (type == null) return;
+            if (_loaded.TryGetValue(type, out var panel))
+            {
+                _loaded.Remove(type);
+                if (panel != null && panel.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(panel.gameObject);
+                }
+                if (Registry.TryGetAddress(type, out var address))
+                {
+                    Addressables.Release(address);
+                }
+            }
         }
-
-        
 
         public override void Destroy()
         {
+            foreach (var kv in _loaded)
+            {
+                if (kv.Value != null && kv.Value.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(kv.Value.gameObject);
+                }
+                if (Registry.TryGetAddress(kv.Key, out var address))
+                {
+                    Addressables.Release(address);
+                }
+            }
             _loaded.Clear();
+            _loading.Clear();
         }
     }
 }

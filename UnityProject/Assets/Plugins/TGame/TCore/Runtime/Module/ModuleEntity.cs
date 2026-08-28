@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -22,6 +22,7 @@ namespace TGame.TCore.Runtime
     public class ModuleEntity : MonoBehaviour,IModuleHost
     {
         private readonly Dictionary<Type, BaseModule> _moduleMap = new();
+        private readonly List<Type> _keyList = new();
 
         #region Module
 
@@ -70,11 +71,15 @@ namespace TGame.TCore.Runtime
 
         protected virtual void Update()
         {
-            // 拷贝 keys,防止模块在 Tick 内增减导致枚举异常
-            var keys = new List<Type>(_moduleMap.Keys);
-            for (int i = 0; i < keys.Count; i++)
+            _keyList.Clear();
+            foreach (var key in _moduleMap.Keys)
             {
-                if (_moduleMap.TryGetValue(keys[i], out var module) && module.Enable)
+                _keyList.Add(key);
+            }
+
+            for (int i = 0; i < _keyList.Count; i++)
+            {
+                if (_moduleMap.TryGetValue(_keyList[i], out var module) && module.Enable)
                 {
                     module.Tick(Time.unscaledDeltaTime);
                 }
