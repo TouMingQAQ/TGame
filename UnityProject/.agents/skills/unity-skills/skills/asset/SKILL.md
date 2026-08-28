@@ -1,7 +1,16 @@
 ---
 name: unity-asset
-description: Manage the Unity AssetDatabase — import, delete, move/rename, duplicate, find, get info, and create assets. Use when organizing project assets, importing or relocating files, querying asset metadata, or scripting AssetDatabase operations, even if the user just says "资源" or "资产". 管理 Unity AssetDatabase(导入、删除、移动/重命名、复制、查找、获取信息、创建资源);当用户要整理工程资源、导入或移动文件、查询资源元数据时使用。
+description: Manage Unity AssetDatabase operations
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Organizing project assets
+- Importing or relocating files
+- Querying asset metadata
+- Scripting AssetDatabase operations
+- 整理工程资源、导入或移动文件、查询资源元数据、脚本化 AssetDatabase 操作
 
 # Unity Asset Skills
 
@@ -9,9 +18,9 @@ description: Manage the Unity AssetDatabase — import, delete, move/rename, dup
 
 ## Operating Mode
 
-- **Approval**：本模块 Mixed —— `asset_find` / `asset_get_info` / `asset_get_labels` 标 `SkillMode.SemiAuto`，可直接执行；写类 skill (`asset_move` / `asset_move_batch` / `asset_duplicate` / `asset_create_folder` / `asset_refresh` / `asset_reimport*` / `asset_set_labels`) 走默认 `SkillMode.FullAuto`，需 grant。
+- **Approval**：本模块 Mixed —— `asset_find` / `asset_get_info` / `asset_get_labels` 标 `SkillMode.SemiAuto`，可直接执行；写类 skill (`asset_move` / `asset_move_batch` / `asset_duplicate` / `asset_create_folder` / `asset_create_folder_batch` / `asset_refresh` / `asset_reimport*` / `asset_set_labels`) 走默认 `SkillMode.FullAuto`，需 grant。
 - **Auto / Bypass**：FullAuto 直接执行。
-- **含 NeverInSemi 高危 skill**：`asset_import` (标 `RiskLevel = "high"` —— 写入项目)；`asset_delete` / `asset_delete_batch` (Operation.Delete)。这些在 Approval/Auto 下返 `MODE_FORBIDDEN`，仅 Bypass 或 Allowlist 命中可调。
+- **含 NeverInSemi 高危 skill**：`asset_import` / `asset_import_batch` (标 `RiskLevel = "high"` —— 写入项目)；`asset_delete` / `asset_delete_batch` (Operation.Delete)。这些在 Approval/Auto 下返 `MODE_FORBIDDEN`，仅 Bypass 或 Allowlist 命中可调。
 
 **DO NOT** (common hallucinations):
 - `asset_create` does not exist → use `asset_create_folder` (folders), `material_create` (materials), `script_create` (scripts)
@@ -31,11 +40,11 @@ description: Manage the Unity AssetDatabase — import, delete, move/rename, dup
 | `asset_import` | `asset_import_batch` | Importing 2+ files |
 | `asset_delete` | `asset_delete_batch` | Deleting 2+ assets |
 | `asset_move` | `asset_move_batch` | Moving 2+ assets |
+| `asset_create_folder` | `asset_create_folder_batch` | Creating 2+ folders |
 
 **No batch needed**:
 - `asset_duplicate` - Duplicate single asset
 - `asset_find` - Search assets (returns list)
-- `asset_create_folder` - Create folder
 - `asset_refresh` - Refresh AssetDatabase
 - `asset_get_info` - Get asset information
 - `asset_reimport` - Force reimport asset
@@ -160,6 +169,26 @@ Create a folder in the project.
 |-----------|------|----------|-------------|
 | `folderPath` | string | Yes | Full folder path |
 
+### asset_create_folder_batch
+Create multiple folders.
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `items` | json string | Yes | - | JSON array of per-item objects (see example below) |
+
+
+`items` currently expects a JSON string, not a native array. The parent folder of each entry must already exist, so order nested folders outermost-first within one call.
+
+**Returns**: `{success, totalItems, successCount, failCount, results: [{target, success, path, guid}]}`
+
+```python
+import json
+
+unity_skills.call_skill("asset_create_folder_batch", items=json.dumps([
+    {"folderPath": "Assets/Art"},
+    {"folderPath": "Assets/Art/Textures"}
+]))
+```
+
 ### asset_refresh
 Refresh the AssetDatabase after external changes.
 
@@ -235,3 +264,14 @@ unity_skills.call_skill("asset_move_batch", items=[
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `TARGET_NOT_FOUND` | The source file, asset path, or target asset could not be found. | Verify the path with `asset_find` / `asset_get_info`, ensure the file exists, and retry with the exact project-relative path. |
+| `MISSING_PARAM` | A required path parameter is empty or not provided (caught by path validation). | Provide the required `assetPath`, `sourcePath`, `destinationPath`, or `folderPath`. |
+| `SEMANTIC_INVALID` | The path is invalid (e.g., contains `..`, does not start with `Assets/`/`Packages/`, or the folder already exists). | Use a normalized project-relative path under `Assets/` or `Packages/`; choose a different folder name if it already exists. |
+| `SKILL_ERROR` | A low-level AssetDatabase or filesystem operation failed, such as `Failed to delete asset`, `AssetDatabase.MoveAsset` returned an error, or folder creation failed. | Resolve the issue described in the message (e.g., close locked files, fix parent path) and retry. |

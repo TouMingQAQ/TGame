@@ -1,7 +1,16 @@
 ---
 name: unity-script
-description: Create, read, and analyze C# scripts — create, read, replace, append, search, rename, move, and delete scripts, plus compile feedback. Use when authoring or editing C# code, searching across scripts, refactoring file layout, or checking compile errors, even if the user just says "写个脚本" or "改代码". 对 C# 脚本进行增删改查与分析(创建、读取、替换、追加、搜索、重命名、移动、删除脚本,以及编译反馈);当用户要编写或编辑 C# 代码、跨脚本搜索、重构文件布局、或检查编译错误时使用。
+description: Create, read and analyze C# scripts
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Authoring or editing C# code
+- Searching across scripts
+- Refactoring file layout
+- Checking compile errors
+- 编写或编辑 C# 代码、跨脚本搜索、重构文件布局、检查编译错误
 
 # Unity Script Skills
 
@@ -10,9 +19,9 @@ description: Create, read, and analyze C# scripts — create, read, replace, app
 
 ## Operating Mode
 
-- **Approval**: 只读类 skill（`script_read` / `script_list` / `script_find_in_file` / `script_get_info` / `script_get_compile_feedback`，标 `SkillMode.SemiAuto`）直接执行；写型 skill（`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_rename` / `script_move` / `script_delete`，默认 `SkillMode.FullAuto`）需用户 grant，grant 后服务端一步执行返结果。
-- **Auto / Bypass**: 直接执行。
-- **本模块含 Delete / Reload 类高危 skill**：`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_delete` 会触发 Domain Reload（且多标 `RiskLevel=high`），`script_delete` 同时是 Delete 操作 —— 这些 skill 在 Approval / Auto 下被 `IsForbiddenInSemi` 自动拦截，**仅 Bypass 或 Allowlist 命中可执行**。
+- **Approval**: 只读类 skill（`script_read` / `script_list` / `script_find_in_file` / `script_get_info` / `script_get_compile_feedback`，标 `SkillMode.SemiAuto`）直接执行；本模块**没有可 grant 的写型 skill** —— 每一个写型 skill 都命中下一条的自动拦截，grant 只会再返一次 `MODE_FORBIDDEN`。
+- **Auto / Bypass**: SemiAuto 与（Bypass 下的）写型 skill 直接执行。
+- **本模块全部 7 个写型 skill 都是 Delete / Reload 类高危**：`script_create` / `script_create_batch` / `script_replace` / `script_append` / `script_rename` / `script_move` / `script_delete` 均标 `MayTriggerReload = true` + `RiskLevel = "high"`（落盘 .cs 必然触发 Domain Reload），`script_delete` 另标 `SkillOperation.Delete` —— 这些 skill 被 `IsForbiddenInSemi` 静态拦截，在 Approval **和** Auto 下都返 `MODE_FORBIDDEN`，**仅 Bypass 或 Allowlist 命中可执行**，不要尝试 grant 流程。
 
 **DO NOT** (common hallucinations):
 - `script_edit` / `script_update` do not exist → use `script_replace` for find-and-replace
@@ -34,9 +43,14 @@ description: Create, read, and analyze C# scripts — create, read, replace, app
 
 **No batch needed**:
 - `script_read` - Read script content
+- `script_list` - List C# script files under a folder
+- `script_get_info` - Read class name, base class, public methods/fields
 - `script_delete` - Delete script
 - `script_find_in_file` - Search in scripts
 - `script_append` - Append content to script
+- `script_replace` - Find and replace inside one script (plain text or regex)
+- `script_rename` - Rename a script file in place
+- `script_move` - Move a script to another folder; a missing destination folder is created automatically
 - `script_get_compile_feedback` - Check compile errors for one script after Unity finishes compiling
 - `create_script()` in `scripts/unity_skills.py` now waits for Unity to come back once and refreshes compile feedback automatically after script creation.
 
@@ -53,6 +67,8 @@ Create a C# script from template.
 | `folder` | string | No | "Assets/Scripts" | Save folder |
 | `template` | string | No | "MonoBehaviour" | Template type |
 | `namespaceName` | string | No | null | Optional namespace |
+| `checkCompile` | bool | No | true | Check compilation after create |
+| `diagnosticLimit` | int | No | 20 | Max compile diagnostics |
 
 **Templates**: MonoBehaviour, ScriptableObject, Editor, EditorWindow
 
@@ -116,6 +132,8 @@ Append content to a script.
 | `scriptPath` | string | Yes | - | Script path |
 | `content` | string | Yes | - | Content to append |
 | `atLine` | int | No | end | Line number to insert at |
+| `checkCompile` | bool | No | true | Check compilation after append |
+| `diagnosticLimit` | int | No | 20 | Max compile diagnostics |
 
 ### script_get_compile_feedback
 Get compile diagnostics related to one script.
@@ -235,7 +253,7 @@ Move a script to a new folder.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | `scriptPath` | string | Yes | - | Script asset path |
-| `newFolder` | string | Yes | - | Destination folder. Must already exist. |
+| `newFolder` | string | Yes | - | Destination folder. Created (and registered in AssetDatabase) automatically if missing. |
 | `checkCompile` | bool | No | true | Check compilation after move |
 | `diagnosticLimit` | int | No | 20 | Max compile diagnostics |
 
@@ -245,3 +263,14 @@ Move a script to a new folder.
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `MISSING_PARAM` | A required parameter is missing, such as `scriptName` in `script_create` or `pattern` in `script_find_in_file`. | Supply the parameter named in the error; use `mode=dryRun` to see the schema. |
+| `SEMANTIC_INVALID` | The input violates a naming/path rule, such as `scriptName must not contain path separators`, `newName must not contain path separators`, or the script already exists. | Remove path separators, choose a unique name, or rename/move the existing file first. |
+| `TARGET_NOT_FOUND` | The script file, MonoScript, or target directory could not be found. | Verify the path with `asset_find` or `script_list`, then retry with the correct `scriptPath`. |
+| `SKILL_ERROR` | A filesystem operation failed, such as `Failed to delete script` or an AssetDatabase move/rename error. | Read the error details, resolve the underlying file/AssetDatabase issue, and retry. |

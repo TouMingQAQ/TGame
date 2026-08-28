@@ -1,7 +1,15 @@
 ---
 name: unity-optimization
-description: Optimize project assets and scenes — batch texture/mesh/audio compression and analyze poly/material counts. Use when reducing build size, batch-compressing assets, or analyzing scene poly and material usage for optimization, even if the user just says "优化资源" or "包体太大". 优化工程资源与场景(批量压缩 texture/mesh/audio、分析面数/材质数);当用户要缩减包体、批量压缩资源、或分析场景面数与材质用量以优化时使用。
+description: Optimize project assets and scenes
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Reducing build size
+- Batch-compressing assets
+- Analyzing scene poly/material usage
+- 缩减包体、批量压缩资源、分析场景面数与材质用量
 
 # Optimization Skills
 
@@ -70,14 +78,16 @@ Find assets exceeding a size threshold (in KB).
 **Returns:** `{ success, threshold, count, assets }`
 
 ### `optimize_set_static_flags`
-Set static flags on GameObjects. flags: Everything/Nothing/BatchingStatic/OccludeeStatic/OccluderStatic/NavigationStatic/ReflectionProbeStatic
+Set static flags on GameObjects. `flags` is comma-separated, drawn from `ContributeGI`, `OccluderStatic`, `OccludeeStatic`, `BatchingStatic`, `ReflectionProbeStatic`, plus the two deprecated members `NavigationStatic` and `OffMeshLinkGeneration`.
+
+> **`Everything` means the five non-deprecated flags, not literally everything.** `StaticEditorFlags` declares neither `Everything` nor `Nothing`, so both are aliases this API adds: `Nothing` clears all bits, and `Everything` is the OR of the members Unity's own Static dropdown still offers — numerically `87`, not the full `127`. `NavigationStatic` and `OffMeshLinkGeneration` are deprecated and excluded, so **name them explicitly if you want them**. Every listed part must resolve: one unknown name fails the whole call rather than silently applying the subset that parsed, and a raw number carrying bits outside the enum's declared mask (`"999"`) is rejected too.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | name | string | No | null | GameObject name |
 | instanceId | int | No | 0 | GameObject instance ID |
 | path | string | No | null | GameObject hierarchy path |
-| flags | string | No | "Everything" | Static flags to set |
+| flags | string | No | "Everything" | Comma-separated static flags, or the `Everything` / `Nothing` aliases (see above) |
 | includeChildren | bool | No | false | Apply to all children recursively |
 
 **Returns:** `{ success, gameObject, flags, affectedCount }`

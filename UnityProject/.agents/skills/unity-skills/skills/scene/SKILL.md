@@ -1,7 +1,16 @@
 ---
 name: unity-scene
-description: Manage Unity scenes — create, load (single/additive), save, unload, switch the active scene, and get scene info/hierarchy. Use when opening or saving scenes, loading additively, switching the active scene, or querying scene contents, even if the user just says "打开场景" or "切场景". 管理 Unity 场景(创建、加载、叠加加载、保存、卸载、切换活动场景、获取场景信息与层级);当用户要打开或保存场景、叠加加载、切换活动场景、或查询场景内容时使用。
+description: Manage Unity scenes
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Opening or saving scenes
+- Loading additively
+- Switching active scene
+- Querying scene contents
+- 打开或保存场景、叠加加载、切换活动场景、查询场景内容
 
 # Unity Scene Skills
 
@@ -16,7 +25,7 @@ Control Unity scenes - the containers that hold all your GameObjects.
 **DO NOT** (common hallucinations):
 - `scene_delete` / `scene_rename` do not exist → delete scene files via `asset_delete`, rename via `asset_move`
 - `scene_list` does not exist → use `scene_get_loaded` (loaded scenes) or `asset_find` with `t:Scene` (all scene assets)
-- `scene_find_objects` is a simple name/tag/component filter; for regex/layer/path search use `gameobject_find` (SkillMode.FullAuto)
+- `scene_find_objects` is a simple name/tag/component filter; for regex/layer/path search use `gameobject_find` (SkillMode.SemiAuto, 只读，任何模式可直接调用)
 
 **Routing**:
 - For detailed hierarchy tree → use `perception` module's `hierarchy_describe`
@@ -69,16 +78,26 @@ Get current scene information.
 
 No parameters.
 
-**Returns**: `{success, name, path, isDirty, rootObjectCount, rootObjects: [name]}`
+**Returns**: `{sceneName, scenePath, isDirty, rootObjectCount, rootObjects: [{name, entityId, instanceId, childCount}]}` — root entries carry `childCount`, so you can tell which roots are worth descending into before paying for a hierarchy call.
 
 ### scene_get_hierarchy
-Get full scene hierarchy tree.
+Get the scene hierarchy tree, depth-limited.
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `maxDepth` | int | No | 10 | Maximum hierarchy depth |
+| `maxDepth` | int | No | 3 | Maximum hierarchy depth to expand |
 
-**Returns**: `{success, hierarchy: [{name, instanceId, children: [...]}]}`
+**Returns**: `{sceneName, hierarchy: [node, ...]}` where each node is `{name, entityId, instanceId, components: [type, ...], childCount, children}`.
+
+> **`childCount` vs `children` — how to tell a leaf from a truncation.** `childCount` is always the node's *real* number of children, independent of `maxDepth`; `children` is `null` once the depth limit is reached. So:
+>
+> | `childCount` | `children` | Meaning |
+> |---|---|---|
+> | `0` | `null` | Genuine leaf — nothing below it. |
+> | `> 0` | `null` | **Clipped by `maxDepth`** — there are children you have not been shown. |
+> | `> 0` | array | Fully expanded at this level. |
+>
+> Never read `children: null` as "empty". When you see `childCount > 0` with `children: null` and you need what is below it, re-call with a larger `maxDepth` — the default is only `3`, so deep hierarchies are truncated by default — or query that subtree directly (`gameobject_find`, `hierarchy_describe` in the `perception` module).
 
 ### scene_screenshot
 Capture a screenshot of the **Game View** — the final composited frame of all cameras + UI. In Play mode this is the live runtime image, **not** the Scene/editor view. For a single Game Camera's render use `camera_screenshot` instead.
@@ -88,10 +107,14 @@ Capture a screenshot of the **Game View** — the final composited frame of all 
 | `filename` | string | No | "screenshot.png" | Bare filename only (no path separators); saved under `Assets/Screenshots/` |
 | `width` | int | No | 1920 | Image width |
 | `height` | int | No | 1080 | Image height |
+| `returnImage` | bool | No | false | Also return a PNG as base64 in the response (`imageBase64`), for clients without filesystem access |
+| `maxDimension` | int | No | 1280 | Only used when `returnImage=true`; downscales the returned image (not the saved file) so its longer edge is ≤ this value. Clamped to 256–4096 |
 
-**Returns**: `{success, path, width, height, isPlaying, note}`. `isPlaying` indicates whether the frame is a live runtime image (Play mode) or a static Edit-mode frame.
+**Returns**: `{success, path, width, height, isPlaying, note}`. `isPlaying` indicates whether the frame is a live runtime image (Play mode) or a static Edit-mode frame. Adds `{imageBase64, imageWidth, imageHeight, imageBytes}` when `returnImage=true`. If the base64 payload would exceed 8MB, the skill returns an error asking for a smaller `maxDimension` — the file at `path` is still saved.
 
-**Async**: `ScreenCapture.CaptureScreenshot` writes the PNG ~1 frame later. If reading `path` immediately fails, wait ~200ms and retry.
+**Async**: `ScreenCapture.CaptureScreenshot` writes the PNG ~1 frame later. If reading `path` immediately fails, wait ~200ms and retry. `returnImage` does **not** read that file back — since it isn't written yet — it instead does a separate synchronous capture of the Game View's current backbuffer (`ScreenCapture.CaptureScreenshotAsTexture`), so the returned image may be a moment older than the file eventually written to `path`.
+
+**returnImage usage tip:** a local agent that can read files (e.g. Claude Code against a local Unity Editor) should generally omit `returnImage` and just read the PNG at `path` once it's written — it's cheaper on tokens. Use `returnImage=true` for remote/MCP clients that have no filesystem access to the Unity project.
 
 ### scene_get_loaded
 Get list of all currently loaded scenes.
@@ -167,3 +190,14 @@ unity_skills.call_skill("scene_screenshot", filename="preview.png", width=1920, 
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `TARGET_NOT_FOUND` | The requested scene is not found or not currently loaded (e.g., `Scene not found`, `Scene is not loaded`). | Verify the scene path with `asset_find` or list loaded scenes with `scene_get_loaded`, then retry. |
+| `MISSING_PARAM` | A required parameter is missing, such as `scenePath` for `scene_create`, or the current scene has no save path. | Provide `scenePath` or save the scene once before the operation. |
+| `SEMANTIC_INVALID` | An invalid tag or component type was passed to `scene_find_objects`. | Use a valid tag or component type name, and consider `gameobject_find` for more complex filters. |
+| `SKILL_ERROR` | A state constraint blocked the operation, such as attempting to unload the only loaded scene. | Adjust the request to a valid editor state (e.g., keep at least one scene loaded). |

@@ -1,7 +1,16 @@
 ---
 name: unity-package
-description: Manage Unity Package Manager (UPM) — install, remove, refresh, search, inspect, and list packages. Use when adding or removing UPM packages, checking installed versions, searching the registry, or scripting package operations, even if the user just says "装个包" or "UPM". 管理 Unity Package Manager(UPM:安装、移除、刷新、搜索、查看、列出包);当用户要添加或移除 UPM 包、检查已装版本、搜索 registry、或脚本化包操作时使用。
+description: Manage Unity Package Manager (UPM) packages
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Adding or removing UPM packages
+- Checking installed versions
+- Searching the registry
+- Scripting package operations
+- 添加或移除 UPM 包、检查已装版本、搜索 registry、脚本化包操作
 
 # Package Skills
 
@@ -10,16 +19,16 @@ Manage installed Unity packages and package-related helper flows such as Cinemac
 ## Guardrails
 
 **Operating Mode** (v1.9 three-tier):
-- **Approval** (default): query skills (`package_list`, `package_check`, `package_search`, `package_get_dependencies`, `package_get_versions`, `package_get_cinemachine_status`) run directly. Mutators (`package_install`, `package_remove`, `package_install_cinemachine`, `package_install_splines`, `package_refresh`) are FullAuto — on `MODE_RESTRICTED`, run the grant protocol.
+- **Approval** (default): query skills (`package_list`, `package_check`, `package_search`, `package_get_dependencies`, `package_get_versions`, `package_get_cinemachine_status`) run directly. `package_refresh` is the only FullAuto mutator — on `MODE_RESTRICTED`, run the grant protocol for it. Every other mutator is auto-forbidden (next bullet) and grant does **not** unlock it.
 - **Auto** / **Bypass**: SemiAuto and FullAuto run directly.
-- Auto-forbidden in this module: `package_install` and `package_remove` (`MayTriggerReload = true`, `RiskLevel = "high"`; `package_remove` also carries `SkillOperation.Delete`). They are reachable only under Bypass mode or via a user-managed Allowlist entry; the grant flow returns `MODE_FORBIDDEN`.
+- Auto-forbidden in this module: `package_install`, `package_remove`, `package_install_cinemachine`, `package_install_splines` (all `MayTriggerReload = true`, `RiskLevel = "high"`; `package_remove` also carries `SkillOperation.Delete`). They return `MODE_FORBIDDEN` under **both** Approval and Auto, and are reachable only under Bypass mode or via a user-managed Allowlist entry; the grant flow returns `MODE_FORBIDDEN` too, so do not attempt it.
 - Install/remove/refresh jobs return immediately with a `jobId`; the actual package import + Domain Reload happens asynchronously and may make the REST server transiently unavailable. Poll with `job_status` / `job_wait`.
 
 **DO NOT** (common hallucinations):
 - `package_add` / `package_update` do not exist -> use `package_install`
 - `package_get_info` does not exist -> use `package_list`, `package_check`, `package_get_dependencies`, or `package_get_versions`
 - `package_search` searches the installed package cache only; it does not query the Unity Registry
-- `package_list`, `package_search`, `package_get_dependencies`, and `package_get_versions` can return "Package list not ready" until `package_refresh` completes
+- Package query skills initialize their cache automatically after Domain Reload. During the short cold-start window they return `{ success: false, status: "refreshing", cacheReady: false, retryStrategy: "wait_and_retry", retryAfterSeconds: 2 }`; retry instead of treating this as `installed=false`.
 - Package install/remove/refresh jobs can trigger package import and Domain Reload; expect transient server unavailability and use returned job IDs
 
 **Routing**:

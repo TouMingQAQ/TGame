@@ -1,7 +1,15 @@
 ---
 name: unity-gameobject
-description: Create and manipulate GameObjects — create, delete, move, rotate, scale, parent, find, rename, batch-edit. Use when building or restructuring a scene hierarchy, spawning or removing objects, or adjusting transforms, even if the user doesn't say "GameObject". 创建与操控 GameObject(增删、移动、旋转、缩放、父子、查找、重命名、批量编辑);当用户要搭建或调整场景层级、新建或删除物体、修改 Transform 时使用。
+description: Create and manipulate GameObjects
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Building or restructuring scene hierarchy
+- Spawning or removing objects
+- Adjusting transforms
+- 搭建或调整场景层级、新建或删除物体、修改 Transform
 
 # Unity GameObject Skills
 
@@ -39,6 +47,7 @@ description: Create and manipulate GameObjects — create, delete, move, rotate,
 | `gameobject_set_parent` | `gameobject_set_parent_batch` | Parenting 2+ objects |
 | - | `gameobject_set_layer_batch` | Setting layer on 2+ objects |
 | - | `gameobject_set_tag_batch` | Setting tag on 2+ objects |
+| `gameobject_set_sibling_index` | - | No batch variant — reorder one object at a time |
 
 **Query Skills** (no batch needed):
 - `gameobject_find` - Find objects by name/tag/layer/component
@@ -95,6 +104,7 @@ Rename a GameObject.
 | `entityId` | string | No* | Entity ID (Unity 6000.4+, preferred) |
 | `name` | string | No* | Current object name |
 | `instanceId` | int | No* | Instance ID |
+| `path` | string | No* | Hierarchy path |
 | `newName` | string | Yes | New name |
 
 **Returns**: `{success, oldName, newName, entityId, instanceId}`
@@ -179,6 +189,21 @@ Enable or disable a GameObject.
 *At least one identifier required
 
 **Returns**: `{success, name, entityId, active}`
+
+### gameobject_set_sibling_index
+Set a GameObject's sibling index — its position among its parent's children, or among the scene's root objects when unparented. `index` is clamped into the valid range (`clamped: true` reports it).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `entityId` | string | No* | Entity ID (Unity 6000.4+, preferred) |
+| `name` | string | No* | Object name |
+| `instanceId` | int | No* | Instance ID |
+| `path` | string | No* | Hierarchy path |
+| `index` | int | Yes | Target sibling index (0 = first) |
+
+*At least one identifier required
+
+**Returns**: `{success, name, entityId, path, parent, previousIndex, index, clamped}`
 
 ---
 
@@ -376,3 +401,13 @@ unity_skills.call_skill("gameobject_set_tag_batch", items=[
 ## Exact Signatures
 
 Exact names, parameters, defaults, and returns are defined by `GET /skills/schema` or `unity_skills.get_skill_schema()`, not by this file.
+
+## Common Errors
+
+Full transport-level codes (COMPILING/RATE_LIMIT etc.) → ../../references/protocol-error-codes.md
+
+| Error | Trigger | Fix |
+|---|---|---|
+| `TARGET_NOT_FOUND` | The requested GameObject, parent, child, or layer could not be found (e.g., `GameObject not found`, `Parent not found`, `Layer not found`). | Use `gameobject_find` or `scene_get_hierarchy` to verify the exact name/path/entityId, then retry with the identifier it returns. |
+| `MISSING_PARAM` | A required parameter is missing, such as `newName` in `gameobject_rename` or `items` in batch skills. | Supply the parameter named in the error; use `mode=dryRun` to see the full parameter schema. |
+| `SEMANTIC_INVALID` | An invalid value was supplied, such as an unknown `primitiveType` or a name/path that does not match Unity conventions. | Correct the value using the allowed set listed in the error message (e.g., `Cube`, `Sphere`, `Empty/None`). |

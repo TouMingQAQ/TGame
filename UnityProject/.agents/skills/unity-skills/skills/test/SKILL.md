@@ -1,7 +1,16 @@
 ---
 name: unity-test
-description: Run Unity Test Runner operations asynchronously — run/discover/list/cancel tests, poll job results, and create test templates. Use when running EditMode/PlayMode tests, discovering or listing tests, polling async test results, or scaffolding test files, even if the user just says "跑测试" or "单元测试". 异步执行 Unity Test Runner 操作(运行/发现/列出/取消测试、轮询任务结果、创建测试模板);当用户要运行 EditMode/PlayMode 测试、发现或列出测试、轮询异步测试结果、或生成测试文件时使用。
+description: Run Unity Test Runner operations asynchronously
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Running EditMode/PlayMode tests
+- Discovering or listing tests
+- Polling async test results
+- Scaffolding test files
+- 运行 EditMode/PlayMode 测试、发现或列出测试、轮询异步测试结果、生成测试文件
 
 # Test Skills
 
@@ -39,7 +48,7 @@ List available tests via Unity Test Runner async discovery. **Returns `pendingDi
 - `testMode` (string, optional): EditMode or PlayMode. Default: EditMode.
 - `limit` (int, optional): Max tests to list. Default: 100.
 
-**Returns:** `{ success, testMode, count, tests, pendingDiscovery, discoveryJobId, discoveryStatus }`
+**Returns:** `{ success, testMode, count, total, truncated, tests, pendingDiscovery, discoveryJobId, discoveryStatus }` — here `count` is how many came back and `total` is how many were discovered, `truncated: true` means raise `limit`. (`test_discover_get_result` uses `count` for the total instead — see the warning there.)
 
 ### `test_run`
 Run Unity tests asynchronously. Returns a `jobId` immediately; poll with `test_get_result(jobId)`.
@@ -52,7 +61,7 @@ Get the result of a test run.
 **Parameters:**
 - `jobId` (string, required): Job ID from `test_run` / `test_run_by_name`.
 
-**Returns:** `{ success, jobId, status, totalTests, passedTests, failedTests, skippedTests, inconclusiveTests, otherTests, failedTestNames, elapsedSeconds, resultSummary, error }`
+**Returns:** `{ success, jobId, status, totalTests, passedTests, failedTests, skippedTests, inconclusiveTests, otherTests, failedTestNames, failedTestDetails, elapsedSeconds, resultSummary, error }` — each failure detail includes `name`, `resultState`, `message`, `stackTrace`, `durationSeconds`, and `output`.
 
 ### `test_cancel`
 Cancel a running test job if supported (Unity TestRunner has no hard cancel — best-effort).
@@ -76,9 +85,13 @@ Get the result of an asynchronous Unity Test Runner discovery job.
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
 | jobId | string | Yes | - | Discovery job ID |
-| limit | int | No | 100 | Max tests to return |
+| limit | int | No | 100 | Max tests in the response; **the default silently caps a larger suite** |
 
-**Returns:** `{ success, jobId, status, testMode, discoveryMode, count, tests, error }`
+**Returns:** `{ success, jobId, status, testMode, discoveryMode, count, returned, truncated, tests, error }`
+
+> **Here `count` is the total and `returned` is what you got.** `count` is how many tests the discovery found, `returned` is how many are in `tests` after `limit` was applied, `truncated: true` says the two differ — raise `limit` to see the rest. A project with 300 tests answers `count: 300, returned: 100, truncated: true` under the default. Never derive the suite size from `len(tests)`.
+>
+> ⚠️ **`count` means the opposite thing in `test_list`.** There `count` is the *returned* length and `total` is the discovered size; here `count` is the *discovered* size and `returned` is the returned length. The two skills were shipped that way and each one's `count` is frozen for wire compatibility, so do not assume symmetry — read `truncated` (present on both) to know whether you are looking at a partial list, and take the total from `total` in `test_list` but from `count` here.
 
 ### `test_run_by_name`
 Run specific tests by class or method name.

@@ -1,7 +1,15 @@
 ---
 name: unity-history
-description: Manage undo/redo history over the Unity Editor native undo stack — inspect, step through, and control recorded operations. Use when reviewing or navigating the undo history, stepping undo/redo, or auditing what changed, even if the user just says "撤销历史" or "回退操作". 管理 Unity 编辑器原生撤销栈上的撤销/重做历史(查看、逐步遍历、控制已记录的操作);当用户要查看或浏览撤销历史、逐步撤销/重做、或审查改动时使用。
+description: Manage undo/redo history over the native undo stack
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Reviewing or navigating undo history
+- Stepping undo/redo
+- Auditing what changed
+- 查看或浏览撤销历史、逐步撤销/重做、审查改动
 
 # History Skills
 
@@ -9,7 +17,9 @@ Manage Unity Editor undo/redo history.
 
 ## Operating Mode
 
-本模块全部 3 个 skill (`history_undo` / `history_redo` / `history_get_current`) 均标 `SkillMode.SemiAuto`，Approval / Auto / Bypass 三档下都可直接执行。**不含 NeverInSemi 高危 skill**。
+本模块 `history_get_current`（纯读）标 `SkillMode.SemiAuto`，三档下均可直接执行；`history_undo` / `history_redo` 会改变场景状态，为默认 `SkillMode.FullAuto`（Operation=Execute），Approval 模式下需 grant。**不含 NeverInSemi 高危 skill**。
+
+`history_undo` / `history_redo` replay Unity's own native Undo/Redo stack, whose contents cannot be classified by write category the way `workflow` module's task snapshots can, so unlike `workflow_undo_task` / `workflow_session_undo` they carry no payload-level `SURFACE_EXCLUDED` check.
 
 **DO NOT** (common hallucinations):
 - `history_list` / `history_get` do not exist → use `history_get_current` for current undo group
@@ -24,18 +34,29 @@ Manage Unity Editor undo/redo history.
 ## Skills
 
 ### `history_undo`
-Undo the last operation.
-**Parameters:**
-- `steps` (int, optional, default 1): Number of operations to undo.
+Undo the last operation (or multiple steps).
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| steps | int | No | 1 | Number of undo steps to perform |
+
+**Returns:** `{ success, undoneSteps }`
 
 ### `history_redo`
-Redo the last undone operation.
-**Parameters:**
-- `steps` (int, optional, default 1): Number of operations to redo.
+Redo the last undone operation (or multiple steps).
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| steps | int | No | 1 | Number of redo steps to perform |
+
+**Returns:** `{ success, redoneSteps }`
 
 ### `history_get_current`
-Get current undo history state.
-**Parameters:** None.
+Get the name of the current undo group.
+
+No parameters.
+
+**Returns:** `{ success, currentGroup, groupIndex }`
 
 ## Exact Signatures
 

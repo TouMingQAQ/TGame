@@ -1,7 +1,15 @@
 ---
 name: unity-cinemachine
-description: Set up Cinemachine Virtual Cameras — VCam/FreeLook/ClearShot/StateDriven cameras and the Body/Aim/Noise pipeline. Use when creating or tuning Cinemachine cameras, configuring follow/look-at or noise, or building cinematic camera behavior, even if the user just says "虚拟相机" or "运镜". 配置 Cinemachine 虚拟相机(VCam/FreeLook/ClearShot/StateDriven 及 Body/Aim/Noise 管线);当用户要创建或调校 Cinemachine 相机、设置跟随/注视或噪声、或构建运镜效果时使用。
+description: Set up Cinemachine Virtual Cameras
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Creating or tuning Cinemachine cameras
+- Configuring follow/look-at/noise
+- Building cinematic camera behavior
+- 创建或调校 Cinemachine 相机、设置跟随/注视/噪声、构建运镜效果
 
 # Cinemachine Skills
 
@@ -72,6 +80,8 @@ Set Follow and LookAt targets.
 Switch VCam pipeline component (Body/Aim/Noise).
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 - `stage` (string): "Body", "Aim", or "Noise".
 - `componentType` (string): Type name (e.g. "OrbitalFollow", "Composer") or "None" to remove.
 
@@ -85,13 +95,18 @@ Add a Cinemachine component (legacy, supports CM2 and CM3).
 - `componentType` (string): Type name (e.g., "OrbitalFollow").
 
 ### `cinemachine_set_lens`
-Quickly configure Lens settings (FOV, Near, Far, OrthoSize).
+Quickly configure Lens settings (FOV, Near, Far, OrthoSize) and the projection ModeOverride.
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 - `fov` (float, optional): Field of View.
 - `nearClip` (float, optional): Near Clip Plane.
 - `farClip` (float, optional): Far Clip Plane.
 - `orthoSize` (float, optional): Orthographic Size.
+- `mode` (string, optional): Writes the lens `ModeOverride`, i.e. the projection mode this VCam pushes to the Unity Camera when it goes live. Case-insensitive; valid values are `None` (leave the Camera's own projection alone), `Orthographic`, `Perspective` and `Physical`. Omitting it leaves the existing `ModeOverride` untouched.
+
+At least one of `fov` / `nearClip` / `farClip` / `orthoSize` / `mode` must be supplied; passing none returns `No values provided to update.` An invalid `mode` rejects the whole call with `SEMANTIC_INVALID` + `validValues` before anything is written, so the other parameters are not applied either.
 
 ### `cinemachine_list_components`
 List all available Cinemachine component names.
@@ -117,7 +132,11 @@ Create a CinemachineTargetGroup.
 Add or update a member in a TargetGroup.
 **Parameters:**
 - `groupName` (string): Name of the TargetGroup.
+- `groupInstanceId` (int, optional): TargetGroup instance ID.
+- `groupPath` (string, optional): TargetGroup hierarchy path.
 - `targetName` (string): Name of the member GameObject.
+- `targetInstanceId` (int, optional): Member GameObject instance ID.
+- `targetPath` (string, optional): Member GameObject hierarchy path.
 - `weight` (float): Member weight (default 1).
 - `radius` (float): Member radius (default 1).
 
@@ -125,30 +144,44 @@ Add or update a member in a TargetGroup.
 Remove a member from a TargetGroup.
 **Parameters:**
 - `groupName` (string): Name of the TargetGroup.
+- `groupInstanceId` (int, optional): TargetGroup instance ID.
+- `groupPath` (string, optional): TargetGroup hierarchy path.
 - `targetName` (string): Name of the member GameObject.
+- `targetInstanceId` (int, optional): Member GameObject instance ID.
+- `targetPath` (string, optional): Member GameObject hierarchy path.
 
 ### `cinemachine_set_spline`
 Assign a SplineContainer to a VCam's SplineDolly component (Body stage).
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `vcamInstanceId` (int, optional): VCam instance ID.
+- `vcamPath` (string, optional): VCam hierarchy path.
 - `splineName` (string): Name of the GameObject with SplineContainer.
+- `splineInstanceId` (int, optional): SplineContainer GameObject instance ID.
+- `splinePath` (string, optional): SplineContainer GameObject hierarchy path.
 
 ### `cinemachine_add_extension`
 Add a CinemachineExtension to a VCam.
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 - `extensionName` (string): Type name of the extension (e.g., "CinemachineStoryboard", "CinemachineImpulseListener").
 
 ### `cinemachine_remove_extension`
 Remove a CinemachineExtension from a VCam.
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 - `extensionName` (string): Type name of the extension.
 
 ### `cinemachine_set_active`
 Force activation of a VCam (SOLO) by setting highest priority.
 **Parameters:**
 - `vcamName` (string): Name of the VCam to activate.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 
 ### `cinemachine_create_mixing_camera`
 Create a Cinemachine Mixing Camera.
@@ -198,6 +231,8 @@ Add a state mapping instruction to a State Driven Camera.
 Configure Noise settings (Basic Multi Channel Perlin).
 **Parameters:**
 - `vcamName` (string): Name of the VCam.
+- `instanceId` (int, optional): VCam Instance ID.
+- `path` (string, optional): VCam hierarchy path.
 - `amplitudeGain` (float): Noise Amplitude.
 - `frequencyGain` (float): Noise Frequency.
 

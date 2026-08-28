@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.Addressable.Runtime",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SceneNavigator.Runtime", "SceneNavigator.Runtime.csproj", "{dca23936-8eb1-c5f6-8149-61e03f34451c}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGame.SeeThrough", "TGame.SeeThrough.csproj", "{e32c45a7-99a9-9f86-d041-cb3c1713f10b}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniTask.Editor", "UniTask.Editor.csproj", "{7af71ee9-3887-ab8e-77b0-224245b4f887}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{2106585b-b409-cb68-b5f4-5b9dd210a60f}"
@@ -70,6 +72,8 @@ Global
 		{0899a735-54b5-9ec2-086c-16fba914b34f}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{dca23936-8eb1-c5f6-8149-61e03f34451c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{dca23936-8eb1-c5f6-8149-61e03f34451c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{e32c45a7-99a9-9f86-d041-cb3c1713f10b}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{e32c45a7-99a9-9f86-d041-cb3c1713f10b}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7af71ee9-3887-ab8e-77b0-224245b4f887}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7af71ee9-3887-ab8e-77b0-224245b4f887}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2106585b-b409-cb68-b5f4-5b9dd210a60f}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

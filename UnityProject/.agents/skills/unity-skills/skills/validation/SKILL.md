@@ -1,7 +1,15 @@
 ---
 name: unity-validation
-description: Validate project and scene health plus cleanup — find broken references, missing scripts, and other integrity issues. Use when checking for broken or missing references, validating scene/project integrity, or cleaning up issues before a build, even if the user just says "检查引用" or "有没有丢失". 校验项目与场景健康度并清理(查找断裂引用、丢失脚本及其他完整性问题);当用户要检查断裂或丢失引用、校验场景/项目完整性、或在构建前清理问题时使用。
+description: Validate project and scene health plus cleanup
 ---
+
+> **Before calling any skill in this module:** if you are about to call a skill with parameters guessed from its name or description, STOP — read this file (or fetch its schema via `GET /skills/recommend?includeSchema=true`) first. If you already have the parameter definitions from recommend/schema, you may proceed straight to dryRun.
+
+## Triggers
+- Checking broken or missing references
+- Validating scene/project integrity
+- Cleaning up before a build
+- 检查断裂或丢失引用、校验场景/项目完整性、构建前清理
 
 # Unity Validation Skills
 
@@ -38,6 +46,17 @@ Maintain project health - find problems, clean up, and validate your Unity proje
 | `validate_missing_references` | Find null/missing object references on components |
 | `validate_mesh_collider_convex` | Find non-convex MeshColliders |
 | `validate_shader_errors` | Find shaders with compilation errors |
+
+Six more skills carry `SkillCategory.Validation` but are implemented and documented in the **`batch`** module, so `GET /skills/recommend?category=validation` returns them alongside the ten above. Their parameters live in [../batch/SKILL.md](../batch/SKILL.md); each is a preview that you commit with `batch_execute(confirmToken)`, except `batch_validate_scene_objects`, which is a plain read-only report.
+
+| Skill | Description |
+|-------|-------------|
+| `batch_validate_scene_objects` | Analyze scene objects for missing scripts, missing references, duplicate names, and empty objects |
+| `batch_fix_missing_scripts` | Preview batch removal of missing scripts |
+| `batch_cleanup_temp_objects` | Preview deleting temporary helper objects by common temp-name patterns |
+| `batch_standardize_naming` | Preview standardizing names by trimming whitespace and normalizing separators |
+| `batch_set_render_layer` | Preview setting GameObject layers in batch |
+| `batch_replace_material` | Preview replacing materials in batch |
 
 ---
 
