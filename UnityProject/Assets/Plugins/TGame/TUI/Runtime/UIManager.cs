@@ -55,6 +55,7 @@ namespace TGame.TUI
             game.AddManager(this);
             // 物化全局 registry —— 与 AddressableModule 同 host,资产解析在此闭合
             GetModule<UIRegistryModule>();
+            RegisterPopup(_config.DefaultTooltip);
         }
 
         // ===== UIRootManagerModule 快捷访问 =====

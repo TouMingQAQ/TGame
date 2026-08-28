@@ -222,7 +222,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: TUI::TGame.TUI.UIManager
   _config: {fileID: 11400000, guid: 9bbe27e53733b4042b1b95890426ecfe, type: 2}
-  _uiRoot: {fileID: 0}
+  _uiRoot: {fileID: 5766962719712120927}
 --- !u!223 &8365732325256637574
 Canvas:
   m_ObjectHideFlags: 0
@@ -244,7 +244,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 0
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 999
   m_TargetDisplay: 0
 --- !u!114 &4936505643738450156
 MonoBehaviour:
@@ -388,3 +388,14 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5985252363424168050, guid: 171fbca78e628914ebcd9eb2d08dde5d, type: 3}
   m_PrefabInstance: {fileID: 6813262695570755294}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &5766962719712120927 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1046467180716547713, guid: 171fbca78e628914ebcd9eb2d08dde5d, type: 3}
+  m_PrefabInstance: {fileID: 6813262695570755294}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74cb8ff8746b43c5a90fc1cd85bd6cd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TUI::TGame.TUI.UIManagerRoot

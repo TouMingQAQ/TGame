@@ -8,8 +8,11 @@ namespace TGame.TUI
         {
             base.Awake();
         }
+
         protected override void Start()
-        {}
+        {
+            base.Start();
+        }
 
         public override Type RootType()
         {
