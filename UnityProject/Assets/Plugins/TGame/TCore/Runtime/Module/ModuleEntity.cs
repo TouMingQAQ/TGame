@@ -71,6 +71,15 @@ namespace TGame.TCore.Runtime
 
         protected virtual void Update()
         {
+            // 不确定：UI/展示层模块（面板动画、浮窗跟随）希望不受 Time.timeScale 影响
+            TickModules(Time.unscaledDeltaTime);
+        }
+
+        /// <summary>
+        /// 推进本实体下所有已启用模块的 Tick。子类可重写以接入其它驱动源（如联机固定 tick）。
+        /// </summary>
+        /// <param name="deltaTime">本帧时长（秒），默认使用不受 timeScale 影响的 unscaledDeltaTime</param>
+        protected virtual void TickModules(float deltaTime)        {
             _keyList.Clear();
             foreach (var key in _moduleMap.Keys)
             {
@@ -79,9 +88,9 @@ namespace TGame.TCore.Runtime
 
             for (int i = 0; i < _keyList.Count; i++)
             {
-                if (_moduleMap.TryGetValue(_keyList[i], out var module) && module.Enable)
+                if (_moduleMap.TryGetValue(_keyList[i], out var module) && module != null && module.Enable)
                 {
-                    module.Tick(Time.unscaledDeltaTime);
+                    module.Tick(deltaTime);
                 }
             }
         }
