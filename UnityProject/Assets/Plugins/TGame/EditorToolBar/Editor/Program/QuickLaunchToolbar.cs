@@ -1,22 +1,18 @@
 // QuickLaunchToolbar.cs
-// Unity 6000 官方 MainToolbarElement API:用 [MainToolbarElement] 静态方法向主工具栏注册 element。
-// 本类暴露 4 个独立 element:InitScene 设置 / 目标场景选择 / 启动 / 运行。
+// Unity 6000 官方 MainToolbarElement API：用 [MainToolbarElement] 静态方法向主工具栏注册 element。
 //
-//   InitScene  → "TGame/QuickLaunch/InitScene"  MainToolbarButton,点击弹 InitScenePickerWindow,
-//                                              选完场景后按钮文字变为 "Init: <场景名>"
-//   场景       → "TGame/QuickLaunch/Scene"      MainToolbarDropdown,列出 SceneNavigatorProfile.scenes
-//   启动       → "TGame/QuickLaunch/Boot"       MainToolbarButton "▶ 启动",playModeStartScene=InitScene
-//   运行       → "TGame/QuickLaunch/Run"        MainToolbarButton "▶ 运行",playModeStartScene=目标场景
+// 现暴露 5 个 element：
+//   InitScene  → "TGame/QuickLaunch/InitScene"   显示当前初始化场景，点击弹 InitScenePickerWindow
+//   测试        → "TGame/QuickLaunch/Boot"        playModeStartScene = 初始化场景
+//   场景        → "TGame/QuickLaunch/Scene"       下拉选目标场景（来源 SceneNavigatorProfile）
+//   运行        → "TGame/QuickLaunch/Run"         playModeStartScene = 目标场景
+//   设置        → "TGame/QuickLaunch/Settings"    打开 ToolbarSettingsWindow
 //
-// 启动语义:把当前 ActiveScene 路径存到 EditorPrefs[GameBootstrapper.TargetSceneKey],
-// playModeStartScene=InitScene → Play,运行时 GameBootstrapper 读 TargetScene 跳回。
-// 运行语义:playModeStartScene=目标场景 → Play(不跳回)。
-//
-// 退出 Play 时清理 playModeStartScene 和 TargetSceneKey(从 SceneNavigatorBox 抄来,保持一致)。
+// 配置来源：Assets/Resources/ToolbarConfig.asset（ScriptableObject）。
+// 早先版本把状态放在 EditorPrefs 里，现在统一走配置文件，便于随工程提交与版本管理；
+// 读取时若配置文件里没有值，会回退读一次旧的 EditorPrefs 键，做无痛迁移。
 
 using System.IO;
-using TGame.SceneNavigator;
-using TGame.TCore.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditor.Toolbars;
@@ -27,58 +23,97 @@ namespace TGame.EditorToolBar.BuiltIn
 {
     public static class QuickLaunchToolbar
     {
-        // ── 路径常量 ──
-        private const string InitSceneElementPath  = "TGame/QuickLaunch/InitScene";
-        private const string SceneElementPath      = "TGame/QuickLaunch/Scene";
-        private const string BootElementPath       = "TGame/QuickLaunch/Boot";
-        private const string RunElementPath        = "TGame/QuickLaunch/Run";
+        // ── Element 路径 ──
+        private const string InitSceneElementPath = "TGame/QuickLaunch/InitScene";
+        private const string SceneElementPath = "TGame/QuickLaunch/Scene";
+        private const string BootElementPath = "TGame/QuickLaunch/Boot";
+        private const string RunElementPath = "TGame/QuickLaunch/Run";
+        private const string SettingsElementPath = "TGame/QuickLaunch/Settings";
 
-        private const string InitScenePrefKey      = "SceneNavigator.InitScenePath";
-        private const string TargetScenePathKey    = "TGame/QuickLaunch.TargetScenePath";
+        // ── 旧版 EditorPrefs 键，仅用于迁移 ──
+        private const string LegacyInitScenePrefKey = "SceneNavigator.InitScenePath";
+        private const string LegacyTargetScenePrefKey = "TGame/QuickLaunch.TargetScenePath";
 
-        private const string ProfileResName        = "SceneNavigatorProfile";
-        private const string ProfileResFolder      = "Assets/Plugins/TGame/SceneNavigator/Resources";
-        private const string ProfileFullPath       = ProfileResFolder + "/" + ProfileResName + ".asset";
+        private const string ProfileResName = "SceneNavigatorProfile";
 
-        // ── 状态(静态 — 因为 MainToolbarElement 是静态方法,无法持有实例字段) ──
-        private static string _initScenePath = LoadInitScenePath();
-        private static string _targetScenePath = EditorPrefs.GetString(TargetScenePathKey, "");
+        private static ToolbarConfig Config => ToolbarConfig.Load();
 
-        // ── Profile 加载 ──
-        private static SceneNavigatorProfile LoadProfile()
+        /// <summary>
+        /// 读取初始化场景：配置文件优先，否则回退旧 EditorPrefs 并迁移进配置。
+        /// </summary>
+        private static string GetInitScenePath()
         {
-            var profile = Resources.Load<SceneNavigatorProfile>(ProfileResName);
-            if (profile != null) return profile;
-            EnsureProfileExists();
-            return Resources.Load<SceneNavigatorProfile>(ProfileResName);
-        }
+            var config = Config;
+            if (config != null && !string.IsNullOrEmpty(config.initScenePath))
+                return config.initScenePath;
 
-        private static void EnsureProfileExists()
-        {
-            if (AssetDatabase.LoadAssetAtPath<SceneNavigatorProfile>(ProfileFullPath) != null) return;
-            if (!AssetDatabase.IsValidFolder(ProfileResFolder))
+            // 迁移：旧数据还在 EditorPrefs 里
+            string legacy = EditorPrefs.GetString(LegacyInitScenePrefKey, "");
+            if (!string.IsNullOrEmpty(legacy) && config != null)
             {
-                const string parent = "Assets/Plugins/TGame/SceneNavigator";
-                if (!AssetDatabase.IsValidFolder(parent))
-                    AssetDatabase.CreateFolder("Assets/Plugins/TGame", "SceneNavigator");
-                AssetDatabase.CreateFolder(parent, "Resources");
+                config.initScenePath = legacy;
+                ToolbarConfigStore.Save(config);
+                EditorPrefs.DeleteKey(LegacyInitScenePrefKey);
             }
-            var profile = ScriptableObject.CreateInstance<SceneNavigatorProfile>();
-            AssetDatabase.CreateAsset(profile, ProfileFullPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            return config != null ? config.initScenePath : legacy;
+        }
+
+        /// <summary>
+        /// 读取目标场景：配置文件优先，否则回退旧 EditorPrefs。
+        /// </summary>
+        private static string GetTargetScenePath()
+        {
+            var config = Config;
+            if (config != null && !string.IsNullOrEmpty(config.targetScenePath))
+                return config.targetScenePath;
+
+            string legacy = EditorPrefs.GetString(LegacyTargetScenePrefKey, "");
+            if (!string.IsNullOrEmpty(legacy) && config != null)
+            {
+                config.targetScenePath = legacy;
+                ToolbarConfigStore.Save(config);
+                EditorPrefs.DeleteKey(LegacyTargetScenePrefKey);
+            }
+            return config != null ? config.targetScenePath : legacy;
+        }
+
+        private static void SetInitScenePath(string path)
+        {
+            var config = ToolbarConfigStore.LoadOrCreate();
+            if (config == null)
+                return;
+            config.initScenePath = path ?? "";
+            ToolbarConfigStore.Save(config);
+        }
+
+        private static void SetTargetScenePath(string path)
+        {
+            var config = ToolbarConfigStore.LoadOrCreate();
+            if (config == null)
+                return;
+            config.targetScenePath = path ?? "";
+            ToolbarConfigStore.Save(config);
+        }
+
+        /// <summary>
+        /// 外部（设置窗口 / 场景选择器）改完配置后刷新所有按钮。
+        /// </summary>
+        public static void RefreshAll()
+        {
+            MainToolbar.Refresh(InitSceneElementPath);
+            MainToolbar.Refresh(SceneElementPath);
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  1. InitScene 按钮 — 点击弹 InitScenePickerWindow
+        //  1. 初始化场景按钮
         // ══════════════════════════════════════════════════════════════
-        [MainToolbarElement(InitSceneElementPath, defaultDockPosition = MainToolbarDockPosition.Middle,defaultDockIndex = 2)]
+        [MainToolbarElement(InitSceneElementPath, defaultDockPosition = MainToolbarDockPosition.Middle, defaultDockIndex = 0)]
         public static MainToolbarElement CreateInitSceneButton()
         {
             var content = new MainToolbarContent(
                 GetInitSceneButtonText(),
                 EditorGUIUtility.IconContent("SceneAsset Icon")?.image as Texture2D,
-                "点击设置初始场景(用于「启动」按钮)");
+                "初始化场景：Build Settings 的启动场景，「测试」按钮用它进入 Play");
             return new MainToolbarButton(content, OpenInitScenePicker);
         }
 
@@ -87,134 +122,166 @@ namespace TGame.EditorToolBar.BuiltIn
             InitScenePickerWindow.ShowWindow();
         }
 
-        /// <summary>外部(InitScenePickerWindow)选完场景后回调:更新状态 + 持久化 + 通知 Unity 重建按钮。</summary>
+        /// <summary>场景选择器回调。</summary>
         internal static void OnInitSceneChanged(string newPath)
         {
-            _initScenePath = newPath ?? "";
-            if (string.IsNullOrEmpty(_initScenePath))
-            {
-                EditorPrefs.DeleteKey(InitScenePrefKey);
-            }
-            else
-            {
-                EditorPrefs.SetString(InitScenePrefKey, _initScenePath);
-            }
+            SetInitScenePath(newPath);
             MainToolbar.Refresh(InitSceneElementPath);
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  2. 目标场景 下拉
+        //  2. 测试按钮
         // ══════════════════════════════════════════════════════════════
-        [MainToolbarElement(SceneElementPath, defaultDockPosition = MainToolbarDockPosition.Middle,defaultDockIndex = 3)]
+        [MainToolbarElement(BootElementPath, defaultDockPosition = MainToolbarDockPosition.Middle, defaultDockIndex = 1)]
+        public static MainToolbarElement CreateBootButton()
+        {
+            var content = new MainToolbarContent(
+                "测试",
+                EditorGUIUtility.IconContent("d_Play")?.image as Texture2D,
+                "以初始化场景启动，启动后由业务代码跳回原场景，用于测试需要框架的场景");
+            return new MainToolbarButton(content, RunBoot);
+        }
+
+        private static void RunBoot()
+        {
+            string initPath = GetInitScenePath();
+            if (string.IsNullOrEmpty(initPath))
+            {
+                Debug.LogWarning("[EditorToolBar] 请先在「InitScene」按钮或「设置」里指定初始化场景。");
+                return;
+            }
+
+            var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(initPath);
+            if (asset == null)
+            {
+                Debug.LogError($"[EditorToolBar] 初始化场景文件不存在: {initPath}");
+                return;
+            }
+
+            // 记住当前打开的场景，运行时由 GameBootstrapper 跳回
+            var currentScenePath = SceneManager.GetActiveScene().path;
+            if (!string.IsNullOrEmpty(currentScenePath))
+                EditorPrefs.SetString(TGame.TCore.Runtime.GameBootstrapper.TargetSceneKey, currentScenePath);
+
+            EditorSceneManager.playModeStartScene = asset;
+            RegisterPlayModeCleanup();
+            EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
+        }
+
+        // ══════════════════════════════════════════════════════════════
+        //  3. 目标场景下拉
+        // ══════════════════════════════════════════════════════════════
+        [MainToolbarElement(SceneElementPath, defaultDockPosition = MainToolbarDockPosition.Middle, defaultDockIndex = 2)]
         public static MainToolbarElement CreateSceneDropdown()
         {
             var content = new MainToolbarContent(
                 GetTargetSceneButtonText(),
                 null,
-                "目标场景:用于「运行」按钮");
+                "目标场景：「运行」按钮使用");
             return new MainToolbarDropdown(content, ShowTargetSceneMenu);
         }
 
         private static void ShowTargetSceneMenu(Rect dropDownRect)
         {
             var menu = new GenericMenu();
-            var profile = LoadProfile();
-            if (profile == null || profile.scenes == null || profile.scenes.Count == 0)
+            string current = GetTargetScenePath();
+            var profile = Resources.Load<TGame.SceneNavigator.SceneNavigatorProfile>(ProfileResName);
+
+            bool any = false;
+            if (profile != null && profile.scenes != null)
             {
-                menu.AddDisabledItem(new GUIContent("<Profile 为空,请先添加场景>"));
-            }
-            else
-            {
-                for (int i = 0; i < profile.scenes.Count; i++)
+                foreach (var entry in profile.scenes)
                 {
-                    var entry = profile.scenes[i];
-                    if (entry == null || string.IsNullOrEmpty(entry.scenePath)) continue;
-                    var displayName = string.IsNullOrEmpty(entry.alias)
+                    if (entry == null || string.IsNullOrEmpty(entry.scenePath))
+                        continue;
+
+                    any = true;
+                    string displayName = string.IsNullOrEmpty(entry.alias)
                         ? Path.GetFileNameWithoutExtension(entry.scenePath)
                         : entry.alias;
-                    var isCurrent = entry.scenePath == _targetScenePath;
-                    var capturedPath = entry.scenePath;
-                    menu.AddItem(new GUIContent(displayName), isCurrent, () =>
+                    string capturedPath = entry.scenePath;
+                    menu.AddItem(new GUIContent(displayName), capturedPath == current, () =>
                     {
-                        _targetScenePath = capturedPath;
-                        EditorPrefs.SetString(TargetScenePathKey, capturedPath);
+                        SetTargetScenePath(capturedPath);
                         MainToolbar.Refresh(SceneElementPath);
                     });
                 }
             }
+
+            if (!any)
+            {
+                menu.AddDisabledItem(new GUIContent("<SceneNavigatorProfile 为空>"));
+                menu.AddSeparator("");
+                string openPath = OpenScenePath();
+                if (!string.IsNullOrEmpty(openPath))
+                {
+                    menu.AddItem(new GUIContent("使用当前打开的场景"), false, () =>
+                    {
+                        SetTargetScenePath(openPath);
+                        MainToolbar.Refresh(SceneElementPath);
+                    });
+                }
+            }
+
+            menu.AddSeparator("");
+            menu.AddItem(new GUIContent("打开设置..."), false, ToolbarSettingsWindow.ShowWindow);
             menu.DropDown(dropDownRect);
         }
 
-        // ══════════════════════════════════════════════════════════════
-        //  3. 启动 按钮
-        // ══════════════════════════════════════════════════════════════
-        [MainToolbarElement(BootElementPath, defaultDockPosition = MainToolbarDockPosition.Middle,defaultDockIndex = 1)]
-        public static MainToolbarElement CreateBootButton()
+        private static string OpenScenePath()
         {
-            var content = new MainToolbarContent(
-                "测试",
-                EditorGUIUtility.IconContent("d_Play")?.image as Texture2D,
-                "用 InitScene 作为 playModeStartScene 启动,启动后由业务代码跳回原场景，主要用于测试需要框架的场景");
-            return new MainToolbarButton(content, RunBoot);
-        }
-
-        private static void RunBoot()
-        {
-            if (string.IsNullOrEmpty(_initScenePath))
-            {
-                Debug.LogWarning("[EditorToolBar] 请先在「InitScene」按钮中设置初始场景。");
-                return;
-            }
-            var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(_initScenePath);
-            if (asset == null)
-            {
-                Debug.LogError($"[EditorToolBar] 初始场景文件不存在: {_initScenePath}");
-                return;
-            }
-
-            // 保存当前场景路径,运行时 GameBootstrapper 读它跳回
-            var currentScenePath = SceneManager.GetActiveScene().path;
-            if (!string.IsNullOrEmpty(currentScenePath))
-            {
-                EditorPrefs.SetString(GameBootstrapper.TargetSceneKey, currentScenePath);
-            }
-            EditorSceneManager.playModeStartScene = asset;
-            RegisterPlayModeCleanup();
-            EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
+            var active = SceneManager.GetActiveScene();
+            return active.IsValid() ? active.path : "";
         }
 
         // ══════════════════════════════════════════════════════════════
-        //  4. 运行 按钮
+        //  4. 运行按钮
         // ══════════════════════════════════════════════════════════════
-        [MainToolbarElement(RunElementPath, defaultDockPosition = MainToolbarDockPosition.Middle,defaultDockIndex = 3)]
+        [MainToolbarElement(RunElementPath, defaultDockPosition = MainToolbarDockPosition.Middle, defaultDockIndex = 3)]
         public static MainToolbarElement CreateRunButton()
         {
             var content = new MainToolbarContent(
                 "运行",
                 EditorGUIUtility.IconContent("d_Play")?.image as Texture2D,
-                "直接运行目标场景(不跳回)");
+                "直接运行目标场景（不做跳转）");
             return new MainToolbarButton(content, RunSelected);
         }
 
         private static void RunSelected()
         {
-            if (string.IsNullOrEmpty(_targetScenePath))
+            string targetPath = GetTargetScenePath();
+            if (string.IsNullOrEmpty(targetPath))
             {
-                Debug.LogWarning("[EditorToolBar] 请先在「场景」下拉中选择目标场景。");
+                Debug.LogWarning("[EditorToolBar] 请先在「场景」下拉或「设置」里选择目标场景。");
                 return;
             }
-            var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(_targetScenePath);
+
+            var asset = AssetDatabase.LoadAssetAtPath<SceneAsset>(targetPath);
             if (asset == null)
             {
-                Debug.LogError($"[EditorToolBar] 场景文件不存在: {_targetScenePath}");
+                Debug.LogError($"[EditorToolBar] 场景文件不存在: {targetPath}");
                 return;
             }
+
             EditorSceneManager.playModeStartScene = asset;
             RegisterPlayModeCleanup();
             EditorApplication.delayCall += () => EditorApplication.isPlaying = true;
         }
 
-        // ── PlayMode 退出清理(从 SceneNavigatorBox.OnPlayModeStateChanged 抄来,保持一致) ──
+        // ══════════════════════════════════════════════════════════════
+        //  5. 设置按钮
+        // ══════════════════════════════════════════════════════════════
+        [MainToolbarElement(SettingsElementPath, defaultDockPosition = MainToolbarDockPosition.Middle, defaultDockIndex = 4)]
+        public static MainToolbarElement CreateSettingsButton()
+        {
+            var content = new MainToolbarContent(
+                "",
+                EditorGUIUtility.IconContent("Settings")?.image as Texture2D,
+                "导航栏设置：初始化场景 / 目标场景 / 按钮说明");
+            return new MainToolbarButton(content, ToolbarSettingsWindow.ShowWindow);
+        }
+
+        // ── PlayMode 退出清理 ──
         private static void RegisterPlayModeCleanup()
         {
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -226,27 +293,26 @@ namespace TGame.EditorToolBar.BuiltIn
             if (state == PlayModeStateChange.EnteredEditMode)
             {
                 EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-                EditorPrefs.DeleteKey(GameBootstrapper.TargetSceneKey);
+                EditorPrefs.DeleteKey(TGame.TCore.Runtime.GameBootstrapper.TargetSceneKey);
                 EditorSceneManager.playModeStartScene = null;
             }
         }
 
-        // ── 按钮文字辅助 ──
+        // ── 按钮文字 ──
         private static string GetInitSceneButtonText()
         {
-            if (string.IsNullOrEmpty(_initScenePath)) return "Init: <未设置>";
-            return "Init: " + Path.GetFileNameWithoutExtension(_initScenePath);
+            string path = GetInitScenePath();
+            if (string.IsNullOrEmpty(path))
+                return "Init: <未设置>";
+            return "Init: " + Path.GetFileNameWithoutExtension(path);
         }
 
         private static string GetTargetSceneButtonText()
         {
-            if (string.IsNullOrEmpty(_targetScenePath)) return "场景: <未选择>";
-            return "场景: " + Path.GetFileNameWithoutExtension(_targetScenePath);
-        }
-
-        private static string LoadInitScenePath()
-        {
-            return EditorPrefs.GetString(InitScenePrefKey, "");
+            string path = GetTargetScenePath();
+            if (string.IsNullOrEmpty(path))
+                return "场景: <未选择>";
+            return "场景: " + Path.GetFileNameWithoutExtension(path);
         }
     }
 }

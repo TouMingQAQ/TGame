@@ -3,7 +3,8 @@
     "rootNamespace": "TGame.EditorToolBar",
     "references": [
         "GUID:bb594cc2fdbcb4e4fa268fccdc7e5e9e",
-        "GUID:fdd566e303b577841905c151dd32fa26"
+        "GUID:fdd566e303b577841905c151dd32fa26",
+        "GUID:18378637448d4e75a631d73f3a1d21ec"
     ],
     "includePlatforms": [
         "Editor"

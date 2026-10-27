@@ -15,7 +15,7 @@ namespace TGame.EditorToolBar.BuiltIn
 {
     public class InitScenePickerWindow : EditorWindow
     {
-        private const string PrefKey = "SceneNavigator.InitScenePath";
+        
 
         private ObjectField _sceneField;
 
@@ -97,7 +97,7 @@ namespace TGame.EditorToolBar.BuiltIn
 
         private static SceneAsset LoadCurrentAsset()
         {
-            var path = EditorPrefs.GetString(PrefKey, "");
+            var path = TGame.EditorToolBar.ToolbarConfig.Load()?.initScenePath ?? "";
             if (string.IsNullOrEmpty(path)) return null;
             return AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
         }
