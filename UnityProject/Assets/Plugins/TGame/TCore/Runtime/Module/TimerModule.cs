@@ -41,7 +41,7 @@ namespace TGame.TCore.Runtime
             if (_timerEventMap.Count == 0)
                 return;
 
-            // 遍历所有 TimerEvent 并进行计时，达到目标时间则执行回调并标记回收
+            // 遍历所有 TimerEvent 并进行计时，达到目标时间则执行回调
             foreach (var pair in _timerEventMap)
             {
                 var timerEvent = pair.Value;
@@ -52,12 +52,36 @@ namespace TGame.TCore.Runtime
                 if (timerEvent.Timer < timerEvent.TargetTime)
                     continue;
 
-                // 一次性定时器：触发后标记为 -1，等待本帧结束后回收槽位
-                timerEvent.Timer = -1;
-                timerEvent.CallBack?.Invoke();
+                if (timerEvent.RepeatCount == TimerEvent.InfiniteRepeat)
+                {
+                    // 无限循环：按周期推进，避免长时间运行后 Timer 累加过大
+                    timerEvent.Timer -= timerEvent.TargetTime;
+                    timerEvent.CallBack?.Invoke();
+                }
+                else if (timerEvent.RepeatCount > 0)
+                {
+                    // 有限循环：本帧内可能跨过多个周期
+                    timerEvent.Timer -= timerEvent.TargetTime;
+                    timerEvent.RepeatCount--;
+                    timerEvent.TotalRepeatTriggered++;
+                    if (timerEvent.RepeatCount == 0)
+                        timerEvent.Timer = -1;
+                    timerEvent.CallBack?.Invoke();
+                    if (timerEvent.RepeatCount == 0)
+                    {
+                        _removeCache.Add(pair.Key);
+                        _releaseCache.Add(timerEvent);
+                    }
+                }
+                else
+                {
+                    // 一次性定时器：触发后标记为 -1，等待本帧结束后回收槽位
+                    timerEvent.Timer = -1;
+                    timerEvent.CallBack?.Invoke();
 
-                _removeCache.Add(pair.Key);
-                _releaseCache.Add(timerEvent);
+                    _removeCache.Add(pair.Key);
+                    _releaseCache.Add(timerEvent);
+                }
             }
 
             // 统一回收，避免回调里再次 Register 同名定时器时被这里覆盖
@@ -148,18 +172,44 @@ namespace TGame.TCore.Runtime
         }
 
         /// <summary>
-        /// 创建TimerEvent（从本模块的实例池中取）
+        /// 创建 TimerEvent（从本模块的实例池中取）。
         /// </summary>
-        /// <param name="name"></param>
-        /// <param name="time"></param>
-        /// <param name="callBack"></param>
+        /// <param name="name">定时器名字，同名字重复注册需 cover</param>
+        /// <param name="time">间隔秒数，需大于 0</param>
+        /// <param name="callBack">触发回调</param>
+        /// <param name="repeatCount">循环次数：默认 0 表示一次性；<see cref="TimerEvent.InfiniteRepeat"/> 表示无限循环</param>
         /// <returns></returns>
-        public TimerEvent Create(string name, float time, Action callBack)
+        public TimerEvent Create(string name, float time, Action callBack, int repeatCount = 0)
         {
             var timerEvent = _timerEventPool.Get();
             timerEvent.Name = name;
             timerEvent.TargetTime = time;
             timerEvent.CallBack = callBack;
+            timerEvent.RepeatCount = repeatCount;
+            timerEvent.TotalRepeatTriggered = 0;
+            return timerEvent;
+        }
+
+        /// <summary>
+        /// 快捷注册一个一次性定时器。
+        /// </summary>
+        public TimerEvent RegisterOnce(string name, float time, Action callBack, bool cover = false)
+        {
+            var timerEvent = Create(name, time, callBack);
+            Register(timerEvent, cover);
+            return timerEvent;
+        }
+
+        /// <summary>
+        /// 快捷注册一个每 <paramref name="interval"/> 秒触发一次的循环定时器。
+        /// </summary>
+        /// <param name="interval">间隔秒数，需大于 0</param>
+        /// <param name="repeatCount">循环次数，默认无限</param>
+        public TimerEvent RegisterInterval(string name, float interval, Action callBack,
+            int repeatCount = TimerEvent.InfiniteRepeat, bool cover = false)
+        {
+            var timerEvent = Create(name, interval, callBack, repeatCount);
+            Register(timerEvent, cover);
             return timerEvent;
         }
 
@@ -181,6 +231,7 @@ namespace TGame.TCore.Runtime
                 return;
             timerEvent.CallBack = null;
             timerEvent.Timer = -1;
+            timerEvent.RepeatCount = 0;
             _timerEventPool.Release(timerEvent);
         }
 
@@ -190,15 +241,32 @@ namespace TGame.TCore.Runtime
             timerEvent.Timer = -1;
             timerEvent.TargetTime = 0;
             timerEvent.CallBack = null;
+            timerEvent.RepeatCount = 0;
+            timerEvent.TotalRepeatTriggered = 0;
         }
 
         [Serializable]
         public class TimerEvent
         {
+            /// <summary>
+            /// 无限循环标记
+            /// </summary>
+            public const int InfiniteRepeat = -1;
+
             public string Name;
             public float Timer;
             public float TargetTime;
             public Action CallBack;
+
+            /// <summary>
+            /// 剩余循环次数。0 = 一次性；&gt;0 = 剩余触发次数；-1 = 无限循环。
+            /// </summary>
+            public int RepeatCount;
+
+            /// <summary>
+            /// 已触发的循环次数（含一次性定时器的 1 次）。
+            /// </summary>
+            public int TotalRepeatTriggered;
         }
     }
 }
