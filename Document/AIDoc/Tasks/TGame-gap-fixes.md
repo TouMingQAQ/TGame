@@ -16,7 +16,7 @@
 | G6 | 无运行时场景加载（`SceneNavigator` 只有数据类） | ✅ 已修 | `152c1b4` |
 | G1 | 事件总线无实例作用域 | ✅ 已修 | `ce84835` |
 | G8 | 无 `NetworkBehaviour` 生命周期接入点 | ⏸ 待做（依赖 FishNet） | — |
-| G9 | TUI Addressable 层 P0 缺陷 | ⏸ 待做（需 Unity 环境验证） | — |
+| G9 | TUI Addressable 层 P0 缺陷 | 🟡 部分修复（退出 Play 销毁 NRE / Release 恰一次）；Unload 复位、并发去重仍待 Editor 实测 | `18f0bfd` |
 | G10 | asmdef 靠 GUID 引用 | 📌 已知约束 | — |
 
 ---
@@ -173,9 +173,43 @@ bus.ClearScope(playerId);
 
 ---
 
+## G9（部分）— TUI 退出 Play 销毁 NRE
+
+**实测证据**（2026-11-03T02:07:21Z 退出 Play，各 1 次 NRE）：
+`UILoaderModule.get_Registry()`（`TUI/Runtime/Model/UILoaderModule.cs:43`）
+→ `Destroy()`（:154）→ `ModuleEntity.ClearModule()`（:56）→ `UIRoot.OnDestroy()`（:124）；
+以及 `ModuleEntity.OnDestroy()`（:100）。
+
+**根因**：
+1. 退出 Play 时 Unity 销毁顺序不定，`UIManager.OnDestroy` 可能先执行并把 `UIManager.Instance` 置 null；
+   `UILoaderModule.Destroy` 仍通过 `UIManager.Instance.Registry` / `GetModule<AddressableModule<...>>()`
+   解析依赖 → 空单例 NRE。
+2. 该异常打断 `ModuleEntity.ClearModule` 的 `foreach`，`_moduleMap.Clear()` 未执行，map 仍满；
+   随后 `ModuleEntity.OnDestroy` 再次 `ClearModule`，对同一批模块重复 `Destroy` → 第二条 NRE。
+   属"依赖静态单例 + 清理非幂等"，**不是**靠 catch 吞异常能解决的问题。
+
+**改动**（提交 `18f0bfd`，仅 2 个 TUI 文件，保留全部公开 API，未改 TCore / Addressables 包）：
+- `UILoaderModule.cs`：依赖改为 `Bind(UIRegistryModule, AddressableModule<BaseUIPanel>)` 注入缓存，
+  销毁阶段不再访问静态单例；新增 `_loadedAddresses` 在加载期记录 address，`Unload`/`Destroy`
+  按缓存 address `Release`（引用计数恰一次）；`Destroy` 增加 `_destroyed` 幂等 + 快照遍历；
+  加载返回后若宿主已销毁则归还刚取引用。`Bind` 内复位 `_destroyed`，不因复用永久失效。
+- `UIRoot.cs`：`Initialize` 注入依赖；`OnDestroy` 增加 `_moduleEntity` 空判兜底（无异常时二次
+  `ClearModule` 面对空表天然幂等）。
+
+**验证**：`dotnet build TUI.csproj -nologo` → 0 error / 0 warning(CS)；真源 = EFProject 部署（逐文件 SHA256）。
+**尚未验证**：Unity Editor 退出 Play 的实际 NRE 消除（需集成者实测）；G9 的 Unload 状态复位、
+并发去重、句柄引用计数运行时语义仍未实测，**不宣称 G9 全部完成**。
+
+**边界**：`AddressablesImpl.Dispose invalid operation handle` 归属 Boot 侧（`SceneRouter.Dispose` 直接
+Release scene handle 与 `SceneUnloaded` 自动释放叠加，`m_SceneInstances` 残留），由 Boot 作者单独只读诊断，
+不属于本 TUI 修复范围，本修复不保证消除该条。
+
+---
+
 ## 待办
 
 - **G8**：`NetworkBehaviour` 生命周期接入点 —— 需要先引入 FishNet，再写 `TGameNetworkBridge`
   （`OnStartNetwork` 注册到 TGame、`OnStopNetwork` 注销 + `ClearScope`）。
-- **G9**：TUI Addressable 层 P0 缺陷 —— 需要在 Unity Editor 里实测句柄引用计数，`dotnet build` 无法验证运行时行为。
+- **G9**：TUI Addressable 层 P0 缺陷 —— 退出 Play 销毁 NRE 与 Release 恰一次已修（`18f0bfd`）；
+  余下 Unload 状态复位、并发去重、句柄引用计数仍需在 Unity Editor 实测，`dotnet build` 无法验证运行时行为。
 - **G10**：asmdef GUID 约束 —— 已在 `AGENTS.md` 记录为新建模块的强制检查项。
