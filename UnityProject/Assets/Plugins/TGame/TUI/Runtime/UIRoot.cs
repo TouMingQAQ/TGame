@@ -78,6 +78,11 @@ namespace TGame.TUI
             _moduleEntity.AddModule<UILayerRootModule>();
             var loader = _moduleEntity.AddModule<UILoaderModule>();
             loader.Root = this;
+            // 缓存全局依赖(Registry/AddressableModule),退出 Play 销毁阶段不再经 UIManager.Instance
+            // 静态单例解析 —— 销毁顺序不定,Instance 可能已置 null 导致 NRE。
+            var uiManager = UIManager.Instance;
+            if (uiManager != null)
+                loader.Bind(uiManager.Registry, uiManager.Addressables);
             _moduleEntity.AddModule<StackPanelModule>();
             var popup = _moduleEntity.AddModule<PopupModule>();
             _moduleEntity.AddModule<UIVisibilityModule>();
@@ -121,7 +126,10 @@ namespace TGame.TUI
 
         protected virtual void OnDestroy()
         {
-            _moduleEntity.ClearModule();
+            // ModuleEntity 自身 OnDestroy 也会 ClearModule;此处显式清理作为兜底。
+            // 无异常时第二次 ClearModule 面对空模块表天然幂等,不会重复 Destroy。
+            if (_moduleEntity != null)
+                _moduleEntity.ClearModule();
         }
         
         

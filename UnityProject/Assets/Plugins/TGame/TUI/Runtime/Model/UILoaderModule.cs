@@ -35,18 +35,55 @@ namespace TGame.TUI
     ///   - 同 Type 同时只存在一个面板实例(单实例语义)
     ///   - 并发同 Type 的 LoadAsync 共享同一次底层加载,只 Instantiate 一个 Panel
     ///   - 缓存命中时若 GameObject 已被外部 Destroy(Unity 假 null),清理死引用并重新加载
-    ///   - Unload 时先 Destroy GameObject,再调 AddressableModule.Release 归还引用计数
-    ///   - GameObject 销毁由 UIRoot.OnDestroy 统一触发本模块 DestroyAll(不调 Release,避免重复归还)
+    ///   - Unload 时先 Destroy GameObject,再按加载期缓存的 address 调 AddressableModule.Release 归还引用计数(恰一次)
+    ///   - UIRoot/ModuleEntity 销毁时由本模块 Destroy 统一销毁实例并按缓存 address 归还各自引用一次,幂等
+    ///   - 销毁阶段不再访问 UIManager.Instance 静态单例(依赖在 Bind 时缓存),规避退出 Play 顺序不定的 NRE
     /// </summary>
     public sealed class UILoaderModule : BaseModule
     {
-        private UIRegistryModule Registry => UIManager.Instance.Registry;
-        private AddressableModule<BaseUIPanel> Addressables => UIManager.Instance.GetModule<AddressableModule<BaseUIPanel>>();
+        // 依赖在 Bind 时缓存,销毁阶段不再访问 UIManager.Instance 静态单例
+        // (退出 Play 时 UIManager.OnDestroy 可能已把 Instance 置 null)。
+        private UIRegistryModule _registry;
+        private AddressableModule<BaseUIPanel> _addressables;
+        private bool _destroyed;
+
+        // 运行时首次访问的兜底解析;销毁阶段只使用缓存字段,不走此路径。
+        private UIRegistryModule Registry
+        {
+            get
+            {
+                if (_registry == null && UIManager.Instance != null)
+                    _registry = UIManager.Instance.Registry;
+                return _registry;
+            }
+        }
+
+        private AddressableModule<BaseUIPanel> Addressables
+        {
+            get
+            {
+                if (_addressables == null && UIManager.Instance != null)
+                    _addressables = UIManager.Instance.GetModule<AddressableModule<BaseUIPanel>>();
+                return _addressables;
+            }
+        }
 
         private readonly Dictionary<Type, BaseUIPanel> _loaded = new();
+        private readonly Dictionary<Type, string> _loadedAddresses = new();
         private readonly Dictionary<Type, UniTask<BaseUIPanel>> _loading = new();
 
         public UIRoot Root { get; set; }
+
+        /// <summary>由 UIRoot.Initialize 注入全局依赖,避免销毁时再经静态单例解析。</summary>
+        public void Bind(UIRegistryModule registry, AddressableModule<BaseUIPanel> addressables)
+        {
+            _registry = registry;
+            _addressables = addressables;
+            // 复位销毁标记:UIRoot 若被重新 Initialize(同一 ModuleEntity 未清理而复用本实例)时,
+            // 不会因上一次的销毁标记导致模块永久失效。正常销毁路径下 ModuleEntity.ClearModule
+            // 会清空模块表,重新 Initialize 的 AddModule 会创建全新实例。
+            _destroyed = false;
+        }
 
         /// <summary>异步加载(泛型),已加载则直接返回缓存,并发加载自动去重</summary>
         public async UniTask<T> LoadAsync<T>(UILayer layer = UILayer.Normal) where T : BaseUIPanel
@@ -84,6 +121,14 @@ namespace TGame.TUI
         {
             var type = typeof(T);
             var ui = await Addressables.LoadByKeyAsync(address);
+
+            // 加载期间宿主已被销毁:归还刚取得的引用,避免句柄泄漏或把实例写回已清空的缓存
+            if (_destroyed)
+            {
+                _addressables?.Release(address);
+                return null;
+            }
+
             if (ui == null)
             {
                 Debug.LogError($"[UILoaderModule] Failed to load prefab for {type.Name} from address '{address}'");
@@ -96,6 +141,7 @@ namespace TGame.TUI
             instance.SetRoot(Root);
             instance.Init();
             _loaded[type] = instance;
+            _loadedAddresses[type] = address;
             return instance;
         }
 
@@ -136,27 +182,37 @@ namespace TGame.TUI
                 {
                     UnityEngine.Object.Destroy(panel.gameObject);
                 }
-                if (Registry.TryGetAddress(type, out var address))
+                // address 取自加载期缓存,不依赖销毁/卸载时的注册表快照;ReferenceCount 只归还一次。
+                if (_loadedAddresses.TryGetValue(type, out var address))
                 {
-                    Addressables.Release(address);
+                    _loadedAddresses.Remove(type);
+                    _addressables?.Release(address);
                 }
             }
         }
 
         public override void Destroy()
         {
-            foreach (var kv in _loaded)
+            // 幂等:防止重复清理导致同一面板 GameObject 被二次 Destroy、同一 address 被二次 Release。
+            if (_destroyed) return;
+            _destroyed = true;
+
+            // 快照遍历,销毁回调期间集合变动也不会抛"集合已修改"异常。
+            foreach (var kv in new List<KeyValuePair<Type, BaseUIPanel>>(_loaded))
             {
                 if (kv.Value != null && kv.Value.gameObject != null)
                 {
                     UnityEngine.Object.Destroy(kv.Value.gameObject);
                 }
-                if (Registry.TryGetAddress(kv.Key, out var address))
+                if (_loadedAddresses.TryGetValue(kv.Key, out var address))
                 {
-                    Addressables.Release(address);
+                    // 只归还本模块加载时取得的那一份引用(恰一次);AddressableModule 已先被清理时,
+                    // 其内部 _handles 已空,Release 为安全的空操作,不会重复释放底层句柄。
+                    _addressables?.Release(address);
                 }
             }
             _loaded.Clear();
+            _loadedAddresses.Clear();
             _loading.Clear();
         }
     }
