@@ -206,6 +206,25 @@ Release scene handle 与 `SceneUnloaded` 自动释放叠加，`m_SceneInstances`
 
 ---
 
+## 附 — SafeArea 实时归一化修复（`bf567cc`）
+
+**问题**：`Mobile/SafeArea/SafeArea.cs` 的 `UpdateArea` 用序列化 `screenArea`（prefab 写死 2560×1440）
+与实际屏幕比较，却仍以旧值算差量；编辑器 Game 视图 1920×1080 时 UIRoot 被算成
+`anchorMin(0.333,0.333) max(1,1)`，导致 UI 缩到右上 2/3。
+
+**改动**（提交 `bf567cc`，仅 `SafeArea.cs`）：改用实时 `Screen.width/height` 归一化 `Screen.safeArea`，
+四边分别归一化并 clamp 0..1（保留刘海四边裁切语义）；`width/height<=0` 守卫、安全区宽/高<=0 退化整屏、
+屏幕或安全区变化才刷新；保留原 `[SerializeField]` 字段与组件形态以兼容现有预制体序列化。
+
+**验证**：`Assembly-CSharp-firstpass.csproj` → 0 error / 0 warning CS（仅 MSB3277 包版本冲突）；纯数学模拟
+（无裁切/左右上下四边裁切/横竖切换/零安全区/零屏幕守卫）10 项 PASS；真源=EFProject 部署逐字节一致。
+**Unity 运行时实际表现待集成者导入复测。**
+
+**OverlayRoot**：`UIRoot.prefab` 中 OverlayRoot 为 `(0.5,0.5)` 锚点、sizeDelta 100×100（唯一非拉伸层）。
+不改插件 prefab（不手写 YAML），由集成代理在游戏侧 Single 实例 override 拉伸为目标全屏。
+
+---
+
 ## 待办
 
 - **G8**：`NetworkBehaviour` 生命周期接入点 —— 需要先引入 FishNet，再写 `TGameNetworkBridge`
