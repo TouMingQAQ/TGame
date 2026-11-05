@@ -1,3 +1,4 @@
+#if FISHNET
 using System;
 using System.Collections.Generic;
 using FishNet.Connection;
@@ -148,3 +149,4 @@ namespace GameNet.FishNet
         }
     }
 }
+#endif

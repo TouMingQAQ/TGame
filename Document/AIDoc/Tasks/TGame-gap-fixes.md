@@ -15,7 +15,7 @@
 | G2 | `Tick` 走 `FixedUpdate` 却传 `Time.deltaTime` | ✅ 已修 | `39e1535` |
 | G6 | 无运行时场景加载（`SceneNavigator` 只有数据类） | ✅ 已修 | `152c1b4` |
 | G1 | 事件总线无实例作用域 | ✅ 已修 | `ce84835` |
-| G8 | 无 `NetworkBehaviour` 生命周期接入点 | ⏸ 待做（依赖 FishNet） | — |
+| G8 | 无 `NetworkBehaviour` 生命周期接入点 | ✅ 已修（另加 `FISHNET` 宏隔离） | `6f8d366` / 本次 |
 | G9 | TUI Addressable 层 P0 缺陷 | 🟡 部分修复（退出 Play 销毁 NRE / Release 恰一次）；Unload 复位、并发去重仍待 Editor 实测 | `18f0bfd` |
 | G10 | asmdef 靠 GUID 引用 | 📌 已知约束 | — |
 
@@ -225,10 +225,25 @@ Release scene handle 与 `SceneUnloaded` 自动释放叠加，`m_SceneInstances`
 
 ---
 
+## G8 — FishNet 桥接层与 `FISHNET` 宏隔离
+
+- 位置：`Assets/Plugins/TGame/FishNet/`（`TGameNetworkBridge` / `NetEventHub` / `TGEntityRegistry`）。
+- 初版提交 `6f8d366`：补 `NetworkBehaviour` 生命周期接入点。
+- 本次改造：桥接代码整体用 `#if FISHNET ... #endif` 包裹；`TGame.FishNet.asmdef` 增加
+  `defineConstraints: ["FISHNET"]`。`FISHNET` 由 FishNet 安装后经 `ScriptingDefines.cs`
+  自动写入 Player Settings（同时可能带 `FISHNET_V{n}`），因此不需要新增自定义宏。
+- 效果：未安装 FishNet 的工程（如本 TGame 源码仓）不编译该程序集、不产生 FishNet 引用缺失错误；
+  已安装 FishNet 的工程自动启用桥接。
+- 验证：在 Exam_Fight（已定义 `FISHNET`）重导入后，`TGame.FishNet.dll` / `Game.FishNet.dll`
+  重新生成，FishNet 相关编译错误 0；`dotnet build TGame.csproj` → 0 error / 0 warning。
+- 工程侧同步：`Assets/Plugins/TGame/FishNet/`（部署副本）与 `Assets/Code/Game.FishNet/`
+  （游戏侧桥接层 + `NetworkDebugHud.cs`）加同样的 `#if FISHNET` 与 `defineConstraints`。
+
+---
+
 ## 待办
 
-- **G8**：`NetworkBehaviour` 生命周期接入点 —— 需要先引入 FishNet，再写 `TGameNetworkBridge`
-  （`OnStartNetwork` 注册到 TGame、`OnStopNetwork` 注销 + `ClearScope`）。
+- **G8**：✅ 已完成，见上「G8 — FishNet 桥接层与 `FISHNET` 宏隔离」。
 - **G9**：TUI Addressable 层 P0 缺陷 —— 退出 Play 销毁 NRE 与 Release 恰一次已修（`18f0bfd`）；
   余下 Unload 状态复位、并发去重、句柄引用计数仍需在 Unity Editor 实测，`dotnet build` 无法验证运行时行为。
 - **G10**：asmdef GUID 约束 —— 已在 `AGENTS.md` 记录为新建模块的强制检查项。

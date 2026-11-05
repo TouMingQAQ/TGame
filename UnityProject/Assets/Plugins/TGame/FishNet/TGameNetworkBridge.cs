@@ -1,3 +1,4 @@
+#if FISHNET
 using FishNet.Connection;
 using FishNet.Object;
 using TGame.TCore.Runtime;
@@ -143,3 +144,4 @@ namespace GameNet.FishNet
         #endregion
     }
 }
+#endif

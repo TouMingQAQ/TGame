@@ -1,3 +1,4 @@
+#if FISHNET
 using System.Collections.Generic;
 using TGame.TCore.Runtime;
 using UnityEngine;
@@ -126,3 +127,4 @@ namespace GameNet.FishNet
         }
     }
 }
+#endif
