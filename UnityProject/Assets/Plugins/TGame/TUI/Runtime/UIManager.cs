@@ -37,6 +37,9 @@ namespace TGame.TUI
         /// <summary>默认 UIRoot</summary>
         public UIRoot UIRoot => _uiRoot;
 
+        /// <summary>默认浮窗 prefab（供各 UIRoot 注册）</summary>
+        public DefaultToolTip DefaultTooltip => _config ? _config.DefaultTooltip : null;
+
         /// <summary>共享 Addressable 句柄池</summary>
         public AddressableModule<BaseUIPanel> Addressables => GetModule<AddressableModule<BaseUIPanel>>();
 

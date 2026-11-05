@@ -34,6 +34,7 @@ namespace TGame.TCore.Runtime
             var module = new T();
             module.Init();
             module.Host = this;
+            module.Enable = true;
             _moduleMap[type] = module;
             return module;
         }

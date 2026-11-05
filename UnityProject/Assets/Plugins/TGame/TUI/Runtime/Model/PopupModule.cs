@@ -78,6 +78,9 @@ namespace TGame.TUI
             _prefabs[t] = prefab;
         }
 
+        /// <summary>是否已注册某类浮窗。</summary>
+        public bool Has<T>() where T : BaseUIPopup => _prefabs.ContainsKey(typeof(T));
+
         // ===== Show(屏幕坐标) =====
 
         public T Show<T>(Vector2 screenAnchor, Action<T> setup = null,

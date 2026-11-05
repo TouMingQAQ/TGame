@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 7067938581002604854}
   - component: {fileID: 2287181301420562347}
   - component: {fileID: 4662811987817800205}
+  - component: {fileID: 792210322307669404}
+  - component: {fileID: 7187086140147161382}
   m_Layer: 5
   m_Name: PauseButton
   m_TagString: Untagged
@@ -147,6 +149,64 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &792210322307669404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 309470858520094633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 7714995119143397932}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 2287181301420562347}
+  cursorAnchor: {fileID: 8546631206467566542}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &7187086140147161382
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 309470858520094633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 792210322307669404}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls: []
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls: []
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &912873126218845360
 GameObject:
   m_ObjectHideFlags: 0
@@ -160,6 +220,8 @@ GameObject:
   - component: {fileID: 3720020905873913931}
   - component: {fileID: 4662712814184304674}
   - component: {fileID: 132503586343659870}
+  - component: {fileID: 1742434924597202136}
+  - component: {fileID: 5735196007616685}
   m_Layer: 5
   m_Name: PlayButton
   m_TagString: Untagged
@@ -294,6 +356,64 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &1742434924597202136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912873126218845360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 7714995119143397932}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 4662712814184304674}
+  cursorAnchor: {fileID: 1824525537734889915}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5735196007616685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 912873126218845360}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 1742434924597202136}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls: []
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls: []
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &956500225274847562
 GameObject:
   m_ObjectHideFlags: 0
@@ -1072,6 +1192,8 @@ GameObject:
   - component: {fileID: 4079589090467108854}
   - component: {fileID: 1793683434161755396}
   - component: {fileID: 2889752882472837757}
+  - component: {fileID: 8711396290327235960}
+  - component: {fileID: 7559629418301068597}
   m_Layer: 5
   m_Name: TimeToButton
   m_TagString: Untagged
@@ -1206,6 +1328,64 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &8711396290327235960
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5425353747369054995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 7714995119143397932}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 1793683434161755396}
+  cursorAnchor: {fileID: 1995828286333068986}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &7559629418301068597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5425353747369054995}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 8711396290327235960}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls: []
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls: []
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &6899444011682326869
 GameObject:
   m_ObjectHideFlags: 0
@@ -1219,6 +1399,8 @@ GameObject:
   - component: {fileID: 7463718537516140625}
   - component: {fileID: 6615067865549421916}
   - component: {fileID: 4026033908296612200}
+  - component: {fileID: 3096936514856219491}
+  - component: {fileID: 3073105894352929946}
   m_Layer: 5
   m_Name: CloseButton
   m_TagString: Untagged
@@ -1365,6 +1547,64 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &3096936514856219491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6899444011682326869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 7714995119143397932}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 6615067865549421916}
+  cursorAnchor: {fileID: 315482864720736918}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3073105894352929946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6899444011682326869}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 3096936514856219491}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls: []
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls: []
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7430265047197672422
 GameObject:
   m_ObjectHideFlags: 0
@@ -1442,6 +1682,8 @@ GameObject:
   - component: {fileID: 1692961250980881217}
   - component: {fileID: 599908341306793860}
   - component: {fileID: 6784091965145002588}
+  - component: {fileID: 7714995119143397932}
+  - component: {fileID: 4858910466125108540}
   m_Layer: 5
   m_Name: TimePanel
   m_TagString: Untagged
@@ -1513,3 +1755,52 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp-firstpass::TGame.TUI.TimeView
   timeText: {fileID: 169279505937121103}
+--- !u!114 &7714995119143397932
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8977489666177432572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df059a2e245d40bb9e3726eb8e4884e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadFocus
+  manager: {fileID: 0}
+  parent: {fileID: 0}
+  children: []
+  defaultItem: {fileID: 0}
+  defaultList: {fileID: 0}
+  cursorSource: {fileID: 0}
+  wrapChildren: 1
+  wrapNavigation: 0
+  consumeCancel: 0
+  onEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  onExited:
+    m_PersistentCalls:
+      m_Calls: []
+  onCancel:
+    m_PersistentCalls:
+      m_Calls: []
+  onChildRequested:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4858910466125108540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8977489666177432572}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d465ba5ed7a54c5d987cd68ace019f93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadPanel
+  manager: {fileID: 0}
+  focus: {fileID: 7714995119143397932}
+  autoBindSelectables: 1
+  cursorPrefab: {fileID: 48867469179600876, guid: 2d5481cab3503f3448a90f7c066dde4d, type: 3}

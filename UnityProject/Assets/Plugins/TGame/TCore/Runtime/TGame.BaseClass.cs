@@ -21,6 +21,7 @@ namespace TGame.TCore.Runtime
             var module = new T();
             module.Init();
             module.Host = this;
+            module.Enable = true;
             _moduleMap[type] = module;
             Debug.Log($"<color=#66ccff>[{GetType()}]</color> add module:{type}");
             return module;

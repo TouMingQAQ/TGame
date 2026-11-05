@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 2740767798122114112}
   - component: {fileID: 2420263637243007050}
   - component: {fileID: 1657924911162742944}
+  - component: {fileID: 2664407926223084302}
+  - component: {fileID: 5361145192527911656}
   m_Layer: 5
   m_Name: TButtonPanel
   m_TagString: Untagged
@@ -106,6 +108,55 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2664407926223084302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 827831454998344669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df059a2e245d40bb9e3726eb8e4884e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadFocus
+  manager: {fileID: 0}
+  parent: {fileID: 0}
+  children: []
+  defaultItem: {fileID: 0}
+  defaultList: {fileID: 0}
+  cursorSource: {fileID: 0}
+  wrapChildren: 1
+  wrapNavigation: 0
+  consumeCancel: 0
+  onEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  onExited:
+    m_PersistentCalls:
+      m_Calls: []
+  onCancel:
+    m_PersistentCalls:
+      m_Calls: []
+  onChildRequested:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5361145192527911656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 827831454998344669}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d465ba5ed7a54c5d987cd68ace019f93, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadPanel
+  manager: {fileID: 0}
+  focus: {fileID: 2664407926223084302}
+  autoBindSelectables: 1
+  cursorPrefab: {fileID: 48867469179600876, guid: 2d5481cab3503f3448a90f7c066dde4d, type: 3}
 --- !u!1 &2807760515304758760
 GameObject:
   m_ObjectHideFlags: 0
@@ -257,6 +308,8 @@ GameObject:
   - component: {fileID: 1180955388715714257}
   - component: {fileID: 2508011073192404261}
   - component: {fileID: 4466854250215163642}
+  - component: {fileID: 1044404594577676763}
+  - component: {fileID: 281401282527533687}
   m_Layer: 5
   m_Name: TButton
   m_TagString: Untagged
@@ -405,8 +458,91 @@ MonoBehaviour:
   m_EditorClassIdentifier: TUI::TGame.TUI.DefaultToolTipTrigger
   _tooltipText: "\u9ED8\u8BA4\u7684TButton"
   _direction: 0
+  _offset: {x: 15, y: 15}
   _boundsArea: {fileID: 0}
   _followMouse: 1
+--- !u!114 &1044404594577676763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285318433352740959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 2664407926223084302}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 1180955388715714257}
+  cursorAnchor: {fileID: 577014982103308067}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &281401282527533687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7285318433352740959}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 1044404594577676763}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1180955388715714257}
+        m_TargetAssemblyTypeName: TGame.TUI.TButton, TUI
+        m_MethodName: PointDown
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1180955388715714257}
+        m_TargetAssemblyTypeName: TGame.TUI.TButton, TUI
+        m_MethodName: PointUp
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7935165423517216410
 GameObject:
   m_ObjectHideFlags: 0
@@ -769,6 +905,8 @@ GameObject:
   - component: {fileID: 1452015872788637372}
   - component: {fileID: 4845831002885653451}
   - component: {fileID: 5787272921440466175}
+  - component: {fileID: 5324544993220187900}
+  - component: {fileID: 304906119450385331}
   m_Layer: 5
   m_Name: Close
   m_TagString: Untagged
@@ -915,6 +1053,64 @@ MonoBehaviour:
   normalScale: {x: 1, y: 1, z: 1}
   downScale: {x: 0.95, y: 0.95, z: 0}
   enterScale: {x: 1.05, y: 1.05, z: 0}
+--- !u!114 &5324544993220187900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8368299601479358100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 2664407926223084302}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 4845831002885653451}
+  cursorAnchor: {fileID: 8505769010847585282}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &304906119450385331
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8368299601479358100}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 5324544993220187900}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls: []
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls: []
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &8750838020883334921
 GameObject:
   m_ObjectHideFlags: 0
@@ -931,6 +1127,8 @@ GameObject:
   - component: {fileID: 7082250028307681679}
   - component: {fileID: 3608651803164602418}
   - component: {fileID: 7458329499091407527}
+  - component: {fileID: 4730117141158019540}
+  - component: {fileID: 3930415759802771403}
   m_Layer: 5
   m_Name: TButtonHold
   m_TagString: Untagged
@@ -1122,8 +1320,91 @@ MonoBehaviour:
   m_EditorClassIdentifier: TUI::TGame.TUI.DefaultToolTipTrigger
   _tooltipText: "\u53EF\u4EE5\u957F\u6309\u7684Button"
   _direction: 0
+  _offset: {x: 15, y: 15}
   _boundsArea: {fileID: 0}
   _followMouse: 1
+--- !u!114 &4730117141158019540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8750838020883334921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5ff70801d4c4eadaef8f6b5ac905fbf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadItem
+  focus: {fileID: 2664407926223084302}
+  navigable: 1
+  interactable: 1
+  acceptsCursor: 1
+  selectable: {fileID: 1319956271763557992}
+  cursorAnchor: {fileID: 905858488827312663}
+  cursorOffset: {x: 0, y: 0}
+  up: {fileID: 0}
+  down: {fileID: 0}
+  left: {fileID: 0}
+  right: {fileID: 0}
+  onSelected:
+    m_PersistentCalls:
+      m_Calls: []
+  onDeselected:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3930415759802771403
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8750838020883334921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 825a6f0af6b745b189034e85ddeb3492, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: TGame.Gamepad::TGame.Gamepad.GamepadAction
+  item: {fileID: 4730117141158019540}
+  operation: Submit
+  priority: 0
+  consume: 1
+  invokePointerClick: 1
+  onPressed:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319956271763557992}
+        m_TargetAssemblyTypeName: TGame.TUI.TButton, TUI
+        m_MethodName: PointDown
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onRepeated:
+    m_PersistentCalls:
+      m_Calls: []
+  onReleased:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1319956271763557992}
+        m_TargetAssemblyTypeName: TGame.TUI.TButton, TUI
+        m_MethodName: PointUp
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onCanceled:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &8848251117459456324
 GameObject:
   m_ObjectHideFlags: 0

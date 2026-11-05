@@ -87,6 +87,11 @@ namespace TGame.TUI
             var popup = _moduleEntity.AddModule<PopupModule>();
             _moduleEntity.AddModule<UIVisibilityModule>();
 
+            // 每个 UIRoot 都注册默认浮窗，避免多 UIRoot/多 Canvas 场景下浮窗弹到别的根。
+            var defaultTooltip = uiManager != null ? uiManager.DefaultTooltip : null;
+            if (defaultTooltip != null && !popup.Has<DefaultToolTip>())
+                popup.Register(defaultTooltip);
+
             var layerRoots = _moduleEntity.GetModule<UILayerRootModule>();
             layerRoots.SetLayerRoot(UILayer.Background, _backgroundRoot);
             layerRoots.SetLayerRoot(UILayer.Scene, _sceneRoot);
